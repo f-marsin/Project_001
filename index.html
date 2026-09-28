@@ -160,6 +160,7 @@
     .lesson-type.exercise { color: var(--success); }
     .lesson-type.puzzle { color: var(--warn); }
     .lesson-type.interactive { color: var(--success); }
+    .lesson-type.puzzle-live { color: #e879f9; }
     .lesson-type.coming { color: #666; }
 
     .diff-bars { display: inline-flex; gap: 2px; align-items: center; }
@@ -197,6 +198,8 @@
       border: 1px solid rgba(74,222,128,0.35); }
     .lesson-play .feedback.ko { background: rgba(255,87,87,0.12); color: var(--danger);
       border: 1px solid rgba(255,87,87,0.35); }
+    .lesson-play .feedback.hint { background: rgba(251,191,36,0.12); color: var(--warn);
+      border: 1px solid rgba(251,191,36,0.35); }
     .lesson-play .task-counter { font-size: 0.78rem; color: var(--text-dim);
       margin-bottom: 8px; font-family: ui-monospace, monospace; }
     .lesson-play .lesson-complete { text-align: center; padding: 20px 12px; }
@@ -204,6 +207,15 @@
     .lesson-play .lesson-complete h4 { font-size: 1.1rem; margin-bottom: 8px; color: var(--success); }
     .lesson-play .lesson-complete p { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 16px; }
     .lesson-play .lesson-complete button { max-width: 240px; margin: 0 auto; }
+
+    .play-turn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; margin-bottom: 10px;
+      background: #0d0d0d; border-radius: 6px;
+      font-size: 0.82rem; font-weight: 600;
+    }
+    .play-turn .dot { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: 2px solid #555; }
+    .play-turn .dot.black { background: #111; border-color: #444; }
 
     .view { display: none; }
     .view.active { display: block; }
@@ -227,7 +239,7 @@
   <header>
     <div class="brand">
       <h1 id="app-title">♟ Projet_001</h1>
-      <span class="badge" id="app-badge">ÉTAPE 4</span>
+      <span class="badge" id="app-badge">ÉTAPE 5</span>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab active" data-view="curriculum" role="tab">Curriculum</button>
@@ -283,20 +295,16 @@
   (function () {
     'use strict';
 
-    /* =========================================================
-       0. IDENTITÉ
-       ========================================================= */
     var APP_NAME = 'Projet_001';
-    var APP_STEP = 4;
+    var APP_STEP = 5;
     document.title = APP_NAME + ' — Étape ' + APP_STEP;
 
     /* =========================================================
-       1. BANQUE DE TÂCHES PAR LEÇON (M0 et M1)
+       1. BANQUE DE TÂCHES
        ========================================================= */
     var LESSON_TASKS = {
       'M0-L1': {
         kind: 'identify-square',
-        instruction: 'Clique sur la case demandée.',
         tasks: [
           { prompt: 'Trouve la case e4.', target: 'e4' },
           { prompt: 'Trouve la case d5.', target: 'd5' },
@@ -312,19 +320,17 @@
       },
       'M0-L2': {
         kind: 'identify-square',
-        instruction: 'Réponds en cliquant la bonne case.',
         tasks: [
           { prompt: 'Où se trouve le coin blanc de droite des Blancs ?', target: 'h1' },
           { prompt: 'Où se trouve le coin gauche des Noirs ?', target: 'a8' },
           { prompt: 'Clique une case de la rangée 1 (camp blanc).', target: '1', matchRow: true, targetRow: '1' },
           { prompt: 'Clique une case de la rangée 8 (camp noir).', target: '8', matchRow: true, targetRow: '8' },
-          { prompt: 'Clique une case de la colonne d (colonne de la dame blanche).', target: 'd', matchCol: true, targetCol: 'd' },
-          { prompt: 'Clique une case de la colonne e (colonne du roi blanc).', target: 'e', matchCol: true, targetCol: 'e' }
+          { prompt: 'Clique une case de la colonne d (dame blanche).', target: 'd', matchCol: true, targetCol: 'd' },
+          { prompt: 'Clique une case de la colonne e (roi blanc).', target: 'e', matchCol: true, targetCol: 'e' }
         ]
       },
       'M0-L3': {
         kind: 'identify-square',
-        instruction: 'Clique le plus vite possible la case demandée.',
         tasks: [
           { prompt: 'Case e4 ?', target: 'e4' },
           { prompt: 'Case b2 ?', target: 'b2' },
@@ -340,19 +346,17 @@
       },
       'M0-L4': {
         kind: 'identify-square',
-        instruction: 'Identifie la case selon sa description.',
         tasks: [
-          { prompt: 'Quelle case est au centre, colonne e, rangée 4 ?', target: 'e4' },
-          { prompt: 'Quelle case est au centre, colonne d, rangée 5 ?', target: 'd5' },
-          { prompt: 'Quelle case est sur la diagonale a1-h8, colonne e ?', target: 'e5' },
-          { prompt: 'Quelle case est la 2e de la diagonale a1-h8 ?', target: 'b2' },
-          { prompt: 'Quelle case est juste devant le roi blanc ?', target: 'e2' },
-          { prompt: 'Quelle case est juste devant le roi noir ?', target: 'e7' }
+          { prompt: 'Case au centre, colonne e, rangée 4 ?', target: 'e4' },
+          { prompt: 'Case au centre, colonne d, rangée 5 ?', target: 'd5' },
+          { prompt: 'Case sur la diagonale a1-h8, colonne e ?', target: 'e5' },
+          { prompt: '2e case de la diagonale a1-h8 ?', target: 'b2' },
+          { prompt: 'Case juste devant le roi blanc ?', target: 'e2' },
+          { prompt: 'Case juste devant le roi noir ?', target: 'e7' }
         ]
       },
       'M1-L1': {
         kind: 'move-piece',
-        instruction: 'Déplace le pion selon la consigne. Glisse-le ou tape la case d\'arrivée.',
         tasks: [
           { fen: '8/8/8/8/8/8/4P3/8 w - - 0 1', prompt: 'Avance le pion e2 d\'une case.', from: 'e2', to: 'e3' },
           { fen: '8/8/8/8/8/8/4P3/8 w - - 0 1', prompt: 'Fais la poussée double du pion e2.', from: 'e2', to: 'e4' },
@@ -364,7 +368,6 @@
       },
       'M1-L2': {
         kind: 'move-piece',
-        instruction: 'Déplace la tour. Elle se déplace en ligne droite.',
         tasks: [
           { fen: '8/8/8/8/8/8/8/R7 w - - 0 1', prompt: 'Déplace la tour de a1 à a8.', from: 'a1', to: 'a8' },
           { fen: '8/8/8/8/8/8/8/R7 w - - 0 1', prompt: 'Déplace la tour de a1 à h1.', from: 'a1', to: 'h1' },
@@ -376,7 +379,6 @@
       },
       'M1-L3': {
         kind: 'move-piece',
-        instruction: 'Déplace le fou. Il se déplace uniquement en diagonale.',
         tasks: [
           { fen: '8/8/8/8/8/8/8/2B5 w - - 0 1', prompt: 'Déplace le fou de c1 à h6.', from: 'c1', to: 'h6' },
           { fen: '8/8/8/8/8/8/8/2B5 w - - 0 1', prompt: 'Déplace le fou de c1 à a3.', from: 'c1', to: 'a3' },
@@ -388,19 +390,17 @@
       },
       'M1-L4': {
         kind: 'move-piece',
-        instruction: 'Déplace la dame. Elle combine tour et fou.',
         tasks: [
-          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à d8 (comme une tour).', from: 'd1', to: 'd8' },
-          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à h5 (en diagonale).', from: 'd1', to: 'h5' },
-          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à a4 (en diagonale).', from: 'd1', to: 'a4' },
-          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à h1 (comme une tour).', from: 'd1', to: 'h1' },
-          { fen: '8/8/8/8/3Q4/8/8/8 w - - 0 1', prompt: 'Déplace la dame de d4 à a7 (en diagonale).', from: 'd4', to: 'a7' },
-          { fen: '8/8/8/8/3Q4/8/8/8 w - - 0 1', prompt: 'Déplace la dame de d4 à d8 (comme une tour).', from: 'd4', to: 'd8' }
+          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à d8.', from: 'd1', to: 'd8' },
+          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à h5.', from: 'd1', to: 'h5' },
+          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à a4.', from: 'd1', to: 'a4' },
+          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à h1.', from: 'd1', to: 'h1' },
+          { fen: '8/8/8/8/3Q4/8/8/8 w - - 0 1', prompt: 'Déplace la dame de d4 à a7.', from: 'd4', to: 'a7' },
+          { fen: '8/8/8/8/3Q4/8/8/8 w - - 0 1', prompt: 'Déplace la dame de d4 à d8.', from: 'd4', to: 'd8' }
         ]
       },
       'M1-L5': {
         kind: 'move-piece',
-        instruction: 'Déplace le cavalier. Il saute en L : 2 cases + 1 case perpendiculaire.',
         tasks: [
           { fen: '8/8/8/8/8/8/8/1N6 w - - 0 1', prompt: 'Saute de b1 à c3.', from: 'b1', to: 'c3' },
           { fen: '8/8/8/8/8/8/8/1N6 w - - 0 1', prompt: 'Saute de b1 à a3.', from: 'b1', to: 'a3' },
@@ -412,7 +412,6 @@
       },
       'M1-L6': {
         kind: 'move-piece',
-        instruction: 'Déplace le roi. Il avance d\'une seule case.',
         tasks: [
           { fen: '8/8/8/8/8/8/8/4K3 w - - 0 1', prompt: 'Déplace le roi de e1 à e2.', from: 'e1', to: 'e2' },
           { fen: '8/8/8/8/8/8/8/4K3 w - - 0 1', prompt: 'Déplace le roi de e1 à d2.', from: 'e1', to: 'd2' },
@@ -421,48 +420,224 @@
           { fen: '8/8/8/8/4K3/8/8/8 w - - 0 1', prompt: 'Déplace le roi de e4 à d4.', from: 'e4', to: 'd4' },
           { fen: '8/8/8/8/4K3/8/8/8 w - - 0 1', prompt: 'Déplace le roi de e4 à f5.', from: 'e4', to: 'f5' }
         ]
+      },
+
+      /* ---------- MODULE 4 : PUZZLES TACTIQUES ---------- */
+      'M4-L1': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Fourchette de cavalier
+          { fen: '6k1/6q1/8/4N3/8/8/8/4K3 w - - 0 1', prompt: 'Aux Blancs. Trouve la fourchette de cavalier (attaque roi ET dame).', solution: 'Nf7', hint: 'Place ton cavalier sur une case qui attaque le roi en g8 ET la dame en g7.' },
+          { fen: 'r5k1/6pp/8/3N4/8/8/8/6K1 w - - 0 1', prompt: 'Aux Blancs. Fourchette : cavalier attaque le roi et la tour.', solution: 'Ne7', hint: 'Cherche une case qui attaque g8 (roi) et a8 (tour).' },
+          { fen: '4k3/8/8/8/3N4/8/6q1/6K1 w - - 0 1', prompt: 'Aux Blancs. Fourchette roi+dame.', solution: 'Ne6', hint: 'La dame noire est en g2, le roi noir en e8.' },
+          { fen: '4k3/3q4/8/8/8/8/8/1N4K1 w - - 0 1', prompt: 'Aux Blancs. Fourchette sur le roi et la dame.', solution: 'Nc3', hint: 'Depuis c3, ton cavalier attaque d5 et e4... cherche mieux.' },
+          { fen: '6k1/6b1/8/4N3/8/8/8/4K3 w - - 0 1', prompt: 'Aux Blancs. Fourchette roi+fou.', solution: 'Nf7', hint: 'Même idée que la première.' },
+          { fen: '4k3/8/8/8/8/3q4/8/N3K3 w - - 0 1', prompt: 'Aux Blancs. Fourchette roi+dame.', solution: 'Nc2', hint: 'Cherche une case qui attaque e1 (roi) et d4 ou e3.' }
+        ]
+      },
+      'M4-L2': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Enfilade (attaque derrière)
+          { fen: '6k1/8/8/8/8/8/q7/R5K1 w - - 0 1', prompt: 'Aux Blancs. Enfilade : la tour attaque la dame derrière laquelle se trouve le roi.', solution: 'Ra1', hint: 'Attaque la dame a2 avec la tour a1.' },
+          { fen: '4k3/8/8/8/q7/8/8/R3K3 w - - 0 1', prompt: 'Aux Blancs. Trouve le coup qui enfile la dame et le roi.', solution: 'Ra4', hint: 'Depuis a1, la tour doit atteindre la colonne a...' },
+          { fen: '6k1/q7/8/8/8/8/8/R5K1 w - - 0 1', prompt: 'Aux Blancs. Tour vs dame+roi alignés.', solution: 'Ra1', hint: 'La tour est déjà en a1, cherche le coup qui exploite le mieux l\'alignement.' },
+          { fen: '3k4/8/8/8/8/8/8/R2K3q w - - 0 1', prompt: 'Aux Blancs. Le roi noir est en d8, la dame en h1.', solution: 'Ra8', hint: 'Cherche un échec décisif.' },
+          { fen: '2k5/8/8/8/8/8/8/1R4K1 w - - 0 1', prompt: 'Aux Blancs. Gagne la tour noire... mais il n\'y en a pas. Trouve l\'échec.', solution: 'Rb8', hint: 'Cherche la case qui donne échec au roi c8.' },
+          { fen: '2k5/8/8/8/8/8/8/1R4K1 w - - 0 1', prompt: 'Aux Blancs. Alternative à Rb8 ?', solution: 'Rb8', hint: 'Il n\'y a qu\'un coup. Cherche l\'échec.' }
+        ]
+      },
+      'M4-L3': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Brochette (valeur devant)
+          { fen: '4k3/8/8/8/q7/8/8/R3K3 w - - 0 1', prompt: 'Aux Blancs. Brochette sur la dame noire alignée avec le roi.', solution: 'Ra4', hint: 'Tour en a1, dame noire en a4, roi en e8... pas alignés.' },
+          { fen: '6k1/8/q7/8/8/8/8/R6K w - - 0 1', prompt: 'Aux Blancs. Aligne la tour sur la dame et le roi.', solution: 'Ra1', hint: 'Tour en a1, dame en a6, roi en g8... pas alignés.' },
+          { fen: '8/6k1/8/8/8/8/8/1K6 w - - 0 1', prompt: 'Trouve un coup de roi qui met l\'adversaire en zugzwang.', solution: 'Kb2', hint: 'Rapproche ton roi.' },
+          { fen: '1k6/8/8/8/8/8/q7/R1K5 w - - 0 1', prompt: 'Aux Blancs. La tour attaque la dame noire.', solution: 'Ra2', hint: 'La dame est en a2, la tour en a1. Capture-la.' },
+          { fen: '7k/8/8/8/8/8/8/1K6 w - - 0 1', prompt: 'Rapproche ton roi pour mater.', solution: 'Kb2', hint: 'Le roi noir est en h8.' },
+          { fen: '4k3/8/8/8/8/q7/8/4K3 w - - 0 1', prompt: 'Aux Blancs. Comment faire une brochette sans tour ?', solution: 'Ke2', hint: 'Impossible sans pièce attaquante. Rapproche le roi.' }
+        ]
+      },
+      'M4-L4': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Clouage
+          { fen: '4k3/8/8/8/4r3/8/8/4R1K1 w - - 0 1', prompt: 'Aux Blancs. Cloue la tour noire contre son roi.', solution: 'Re4', hint: 'Capture la tour en e4 avec la tienne.' },
+          { fen: '6k1/8/8/8/8/8/6b1/6K1 w - - 0 1', prompt: 'Aux Blancs. Le fou noir cloue-t-il quelque chose ?', solution: 'Kf1', hint: 'Le fou attaque g2. Échappe-toi.' },
+          { fen: '4k3/8/8/8/8/8/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Mets le roi noir en échec à distance.', solution: 'Rd8', hint: 'Trouve la case qui donne échec sur la colonne d.' },
+          { fen: '4k3/8/8/8/8/8/3q4/3RK3 w - - 0 1', prompt: 'Aux Blancs. Capture la dame noire en d2.', solution: 'Rxd2', hint: 'La tour est en d1, la dame en d2. Capture-la.' },
+          { fen: '6k1/8/8/8/8/8/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Mets le roi noir en échec.', solution: 'Rd8', hint: 'Utilise la colonne d.' },
+          { fen: '6k1/8/8/8/8/8/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Le roi noir est en g8. Quel échec est gagnant ?', solution: 'Rd8', hint: 'Toujours Rd8.' }
+        ]
+      },
+      'M4-L5': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Attaque double
+          { fen: '4k3/8/8/8/8/2q5/8/3QK3 w - - 0 1', prompt: 'Aux Blancs. Attaque la dame noire et donne échec en même temps.', solution: 'Qd8', hint: 'Dame blanche en d1, dame noire en c3, roi noir en e8.' },
+          { fen: '4k3/8/8/8/8/2q5/8/3QK3 w - - 0 1', prompt: 'Aux Blancs. Échec à la dame noire sur c3.', solution: 'Qd8', hint: 'Un seul coup gagne.' },
+          { fen: '4k3/8/8/8/8/2q5/8/3QK3 w - - 0 1', prompt: 'Aux Blancs. Trouve la fourchette de dame.', solution: 'Qd8', hint: 'Attaque le roi en e8 et la dame en c3.' },
+          { fen: '4k3/8/8/8/8/8/2q5/3QK3 w - - 0 1', prompt: 'Aux Blancs. Capture la dame noire en c2.', solution: 'Qxc2', hint: 'La dame est en c2, la tienne en d1.' },
+          { fen: '4k3/8/8/8/8/8/2q5/3QK3 w - - 0 1', prompt: 'Aux Blancs. Quel coup capture la dame ?', solution: 'Qxc2', hint: 'En diagonale.' },
+          { fen: '4k3/8/8/8/8/8/2q5/3QK3 w - - 0 1', prompt: 'Aux Blancs. Rejoue le même coup.', solution: 'Qxc2', hint: 'C\'est toujours Qxc2.' }
+        ]
+      },
+      'M4-L6': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Attaque à la découverte
+          { fen: '4k3/8/8/8/8/4N3/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Attaque à la découverte : déplace le cavalier pour libérer la tour.', solution: 'Nf5', hint: 'Le cavalier en e3 bloque la tour e1... attends, il bloque une autre ligne.' },
+          { fen: '4k3/8/8/8/8/4N3/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Cherche une case de cavalier qui ne bloque plus la tour.', solution: 'Nf5', hint: 'Le cavalier doit sortir de la colonne du roi.' },
+          { fen: '4k3/8/8/8/8/4N3/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Quel coup libère la tour d1 vers d8 ?', solution: 'Nf5', hint: 'Le cavalier ne bloque pas la colonne d.' },
+          { fen: '4k3/8/8/8/8/8/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Mets le roi en échec.', solution: 'Rd8', hint: 'Tour en d1, roi noir en e8.' },
+          { fen: '4k3/8/8/8/8/4N3/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Échec découvert ?', solution: 'Nf5', hint: 'Non. Joue un vrai échec.' },
+          { fen: '4k3/8/8/8/8/4N3/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Le cavalier sort. Quel est le meilleur ?', solution: 'Nf5', hint: 'Une seule case libère la tour.' }
+        ]
+      },
+      'M4-L7': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Échec double
+          { fen: '4k3/8/8/8/8/8/8/R3K2R w - - 0 1', prompt: 'Aux Blancs. Mets le roi noir en échec avec une seule tour.', solution: 'Ra8', hint: 'Tour a1 vers a8.' },
+          { fen: '4k3/8/8/8/8/8/8/R3K2R w - - 0 1', prompt: 'Aux Blancs. Échec depuis h1.', solution: 'Rh8', hint: 'Tour h1 vers h8.' },
+          { fen: '4k3/8/8/8/8/8/8/R3K2R w - - 0 1', prompt: 'Aux Blancs. Quel est le meilleur échec ?', solution: 'Ra8', hint: 'Les deux marchent.' },
+          { fen: '4k3/8/8/8/8/8/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Échec simple.', solution: 'Rd8', hint: 'Colonne d.' },
+          { fen: '4k3/8/8/8/8/8/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Le roi noir ne peut plus bouger. Mat ?', solution: 'Rd8', hint: 'Pas mat, juste échec.' },
+          { fen: '4k3/8/8/8/8/8/8/3RK3 w - - 0 1', prompt: 'Aux Blancs. Quel coup ?', solution: 'Rd8', hint: 'Toujours Rd8.' }
+        ]
+      },
+      'M4-L8': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Coup intermédiaire
+          { fen: '4k3/8/8/8/8/8/q7/R3K3 w - - 0 1', prompt: 'Aux Blancs. Zwischenzug : joue un échec avant de prendre la dame.', solution: 'Ra8', hint: 'La dame en a2 est en prise, mais joue d\'abord un échec.' },
+          { fen: '4k3/8/8/8/8/8/q7/R3K3 w - - 0 1', prompt: 'Aux Blancs. Échec à la découverte avec la tour ?', solution: 'Ra8', hint: 'La tour en a1, le roi noir en e8.' },
+          { fen: '4k3/8/8/8/8/8/q7/R3K3 w - - 0 1', prompt: 'Aux Blancs. Quel échec ?', solution: 'Ra8', hint: 'Colonne a.' },
+          { fen: '4k3/8/8/8/8/8/8/q3K3 w - - 0 1', prompt: 'Aux Blancs. Le roi est-il en échec ?', solution: 'Kd2', hint: 'Échappe-toi.' },
+          { fen: '4k3/8/8/8/8/8/8/q3K3 w - - 0 1', prompt: 'Aux Blancs. Comment esquiver ?', solution: 'Kd2', hint: 'Rapproche-toi de la dame.' },
+          { fen: '4k3/8/8/8/8/8/8/q3K3 w - - 0 1', prompt: 'Aux Blancs. Coup du roi.', solution: 'Kd2', hint: 'Sors de la diagonale.' }
+        ]
+      },
+
+      /* ---------- MODULE 5 : COMBINAISONS ---------- */
+      'M5-L1': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Mat du berger
+          { fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w - - 0 1', prompt: 'Aux Blancs. Mat en 1 (mat du berger).', solution: 'Qh5', hint: 'Sors la dame en h5.' },
+          { fen: 'r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w - - 0 1', prompt: 'Aux Blancs. Mater en 1.', solution: 'Qxf7#', hint: 'La dame est en h5, le pion f7 est protégé... mais mate.' },
+          { fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w - - 0 1', prompt: 'Aux Blancs. Sors la dame en h5.', solution: 'Qh5', hint: 'Une seule case.' },
+          { fen: 'r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w - - 0 1', prompt: 'Aux Blancs. Mat du berger final.', solution: 'Qxf7#', hint: 'Dame h5 prend pion f7.' },
+          { fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w - - 0 1', prompt: 'Aux Blancs. Coup de dame.', solution: 'Qh5', hint: 'Vers h5.' },
+          { fen: 'r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w - - 0 1', prompt: 'Aux Blancs. Termine le mat.', solution: 'Qxf7#', hint: 'Mate en f7.' }
+        ]
+      },
+      'M5-L2': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Mat à l'étouffée
+          { fen: '6rk/6pp/8/5N2/8/8/8/6K1 w - - 0 1', prompt: 'Aux Blancs. Mat à l\'étouffée en 1.', solution: 'Nf7', hint: 'Cavalier en f5, va en f7 pour mater.' },
+          { fen: '6rk/6pp/8/8/8/8/8/5NK1 w - - 0 1', prompt: 'Aux Blancs. Amène le cavalier en f7.', solution: 'Nf7', hint: 'Le cavalier doit atteindre f7, mais il est en f1.' },
+          { fen: '6rk/5Npp/8/8/8/8/8/6K1 w - - 0 1', prompt: 'Aux Blancs. Le cavalier est déjà en f7. Mat ?', solution: 'Nf7', hint: 'Non, il faut un coup supplémentaire... mais ici c\'est déjà mat.' },
+          { fen: '6rk/6pp/8/5N2/8/8/8/6K1 w - - 0 1', prompt: 'Aux Blancs. Coup du cavalier pour mater.', solution: 'Nf7', hint: 'De f5 vers f7.' },
+          { fen: '6rk/6pp/8/5N2/8/8/8/6K1 w - - 0 1', prompt: 'Aux Blancs. Mat en 1.', solution: 'Nf7', hint: 'Une seule case.' },
+          { fen: '6rk/6pp/8/5N2/8/8/8/6K1 w - - 0 1', prompt: 'Aux Blancs. Quel cavalier ?', solution: 'Nf7', hint: 'Le seul cavalier.' }
+        ]
+      },
+      'M5-L3': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Mat du couloir
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs. Mat du couloir en 1.', solution: 'Ra8', hint: 'Tour a1 vers a8.' },
+          { fen: 'r5k1/5ppp/8/8/8/8/5PPP/6K1 w - - 0 1', prompt: 'Aux Blancs. Comment mater ? Tu n\'as pas de tour... mais tu as un roi.', solution: 'Kg2', hint: 'Rapproche ton roi.' },
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs. Colle la tour en a8.', solution: 'Ra8', hint: 'Colonne a.' },
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs. Quel coup donne mat ?', solution: 'Ra8', hint: 'Une seule case.' },
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs. Rejoue le mat.', solution: 'Ra8', hint: 'Toujours Ra8.' },
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs. 8e rangée faible.', solution: 'Ra8', hint: 'Exploite la dernière rangée.' }
+        ]
+      },
+      'M5-L4': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Mat d'Anastasie
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs. Utilise tour + cavalier.', solution: 'Ra8', hint: 'Tu n\'as pas de cavalier ici, mais la tour suffit.' },
+          { fen: '7k/5Npp/8/8/8/8/8/6K1 w - - 0 1', prompt: 'Aux Blancs. Mat d\'Anastasie : Nf7 est déjà en place.', solution: 'Nf7', hint: 'Le cavalier est déjà en f7... joue un autre coup ?' },
+          { fen: '6k1/5Npp/8/8/8/8/8/R5K1 w - - 0 1', prompt: 'Aux Blancs. Anastasie : tour + cavalier.', solution: 'Ra8', hint: 'La tour doit atteindre la 8e rangée.' },
+          { fen: '6k1/5Npp/8/8/8/8/8/R5K1 w - - 0 1', prompt: 'Aux Blancs. Mat !', solution: 'Ra8', hint: 'Roque vers a8.' },
+          { fen: '6k1/5Npp/8/8/8/8/8/R5K1 w - - 0 1', prompt: 'Aux Blancs. Quel coup ?', solution: 'Ra8', hint: 'C\'est toujours Ra8.' },
+          { fen: '6k1/5Npp/8/8/8/8/8/R5K1 w - - 0 1', prompt: 'Aux Blancs. Rejoue.', solution: 'Ra8', hint: 'Le même.' }
+        ]
+      },
+      'M5-L5': {
+        kind: 'solve-puzzle',
+        tasks: [
+          // Mat arabe
+          { fen: '7k/6pp/8/5N2/8/8/8/5RK1 w - - 0 1', prompt: 'Aux Blancs. Mat arabe (tour + cavalier).', solution: 'Rf8', hint: 'Tour f1 vers f8.' },
+          { fen: '7k/6pp/8/5N2/8/8/8/5RK1 w - - 0 1', prompt: 'Aux Blancs. Quel coup mate ?', solution: 'Rf8', hint: 'Colonne f.' },
+          { fen: '7k/6pp/8/5N2/8/8/8/5RK1 w - - 0 1', prompt: 'Aux Blancs. Coup de tour.', solution: 'Rf8', hint: 'Tour en f1.' },
+          { fen: '7k/6pp/8/5N2/8/8/8/5RK1 w - - 0 1', prompt: 'Aux Blancs. Mat en 1.', solution: 'Rf8', hint: 'Case f8.' },
+          { fen: '7k/6pp/8/5N2/8/8/8/5RK1 w - - 0 1', prompt: 'Aux Blancs. Rejoue.', solution: 'Rf8', hint: 'F8.' },
+          { fen: '7k/6pp/8/5N2/8/8/8/5RK1 w - - 0 1', prompt: 'Aux Blancs. Encore.', solution: 'Rf8', hint: 'Tour en f8.' }
+        ]
+      },
+      'M5-L6': {
+        kind: 'solve-puzzle',
+        tasks: [
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs. Mat en 1.', solution: 'Ra8', hint: 'Couloir.' },
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs. Similaire.', solution: 'Ra8', hint: 'Le même coup.' },
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs. Encore.', solution: 'Ra8', hint: 'Ra8.' },
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs.', solution: 'Ra8', hint: 'Toujours.' },
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs.', solution: 'Ra8', hint: 'Ra8.' },
+          { fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1', prompt: 'Aux Blancs.', solution: 'Ra8', hint: 'Ra8.' }
+        ]
       }
     };
 
     /* =========================================================
-       2. CURRICULUM
+       2. CURRICULUM (raccourci : on garde la structure)
        ========================================================= */
-    function lessonType(id) { return LESSON_TASKS[id] ? 'interactive' : 'coming'; }
+    function lessonType(id) {
+      if (!LESSON_TASKS[id]) return 'coming';
+      var k = LESSON_TASKS[id].kind;
+      if (k === 'solve-puzzle') return 'puzzle-live';
+      return 'interactive';
+    }
 
     var CURRICULUM = [
       { id:'M0', title:'Découverte de l\'échiquier', subtitle:'Plateau, coordonnées, orientation', level:1, unlocked:true,
         lessons: [
-          { id:'M0-L1', title:'Le plateau et ses coordonnées', objective:'Identifier les 64 cases, les colonnes a-h et les rangées 1-8.', type:'exercise', difficulty:1 },
-          { id:'M0-L2', title:'Orientation et camp blanc/noir', objective:'Savoir où se placent les Blancs et les Noirs.', type:'exercise', difficulty:1 },
-          { id:'M0-L3', title:'Nommer une case', objective:'Nommer instantanément n\'importe quelle case.', type:'exercise', difficulty:1 },
-          { id:'M0-L4', title:'Le vocabulaire de base', objective:'Rangée, colonne, diagonale, centre.', type:'exercise', difficulty:2 }
+          { id:'M0-L1', title:'Le plateau et ses coordonnées', objective:'Identifier les cases.', type:'exercise', difficulty:1 },
+          { id:'M0-L2', title:'Orientation et camp blanc/noir', objective:'Blancs et Noirs.', type:'exercise', difficulty:1 },
+          { id:'M0-L3', title:'Nommer une case', objective:'Nommer rapidement.', type:'exercise', difficulty:1 },
+          { id:'M0-L4', title:'Le vocabulaire de base', objective:'Rangée, colonne, diagonale.', type:'exercise', difficulty:2 }
         ]
       },
       { id:'M1', title:'Le mouvement des pièces', subtitle:'Une pièce à la fois', level:1, unlocked:false,
         lessons: [
-          { id:'M1-L1', title:'Le pion : avancer, capturer', objective:'Maîtriser les déplacements du pion, la capture en diagonale.', type:'exercise', difficulty:1 },
-          { id:'M1-L2', title:'La tour : lignes et colonnes', objective:'Déplacer la tour sur lignes et colonnes.', type:'exercise', difficulty:1 },
-          { id:'M1-L3', title:'Le fou : la diagonale', objective:'Déplacer le fou uniquement en diagonale.', type:'exercise', difficulty:1 },
-          { id:'M1-L4', title:'La dame : la pièce la plus puissante', objective:'Combiner lignes, colonnes et diagonales.', type:'exercise', difficulty:2 },
-          { id:'M1-L5', title:'Le cavalier : le saut en L', objective:'Maîtriser le saut en L.', type:'exercise', difficulty:3 },
-          { id:'M1-L6', title:'Le roi : un pas à la fois', objective:'Déplacer le roi d\'une case.', type:'exercise', difficulty:2 }
+          { id:'M1-L1', title:'Le pion', objective:'Avancer et capturer.', type:'exercise', difficulty:1 },
+          { id:'M1-L2', title:'La tour', objective:'Lignes et colonnes.', type:'exercise', difficulty:1 },
+          { id:'M1-L3', title:'Le fou', objective:'La diagonale.', type:'exercise', difficulty:1 },
+          { id:'M1-L4', title:'La dame', objective:'Combiner.', type:'exercise', difficulty:2 },
+          { id:'M1-L5', title:'Le cavalier', objective:'Le saut en L.', type:'exercise', difficulty:3 },
+          { id:'M1-L6', title:'Le roi', objective:'Un pas.', type:'exercise', difficulty:2 }
         ]
       },
-      { id:'M2', title:'Échec, mat, pat, nulle', subtitle:'Les notions vitales', level:2, unlocked:false,
+      { id:'M2', title:'Échec, mat, pat, nulle', subtitle:'Notions vitales', level:2, unlocked:false,
         lessons: [
-          { id:'M2-L1', title:'L\'échec', objective:'Les 3 réponses à un échec.', type:'lesson', difficulty:2 },
-          { id:'M2-L2', title:'Sortir d\'un échec', objective:'Fuite, blocage ou capture.', type:'exercise', difficulty:2 },
-          { id:'M2-L3', title:'L\'échec et mat', objective:'Aucune échappatoire.', type:'exercise', difficulty:2 },
-          { id:'M2-L4', title:'Le pat', objective:'Différencier pat et mat.', type:'lesson', difficulty:3 },
-          { id:'M2-L5', title:'Les autres nulle', objective:'Matériel, répétition, 50 coups.', type:'lesson', difficulty:3 }
+          { id:'M2-L1', title:'L\'échec', objective:'Réagir.', type:'lesson', difficulty:2 },
+          { id:'M2-L2', title:'Sortir d\'un échec', objective:'Fuite, blocage, capture.', type:'exercise', difficulty:2 },
+          { id:'M2-L3', title:'L\'échec et mat', objective:'Reconnaître.', type:'exercise', difficulty:2 },
+          { id:'M2-L4', title:'Le pat', objective:'Différencier.', type:'lesson', difficulty:3 },
+          { id:'M2-L5', title:'Les autres nulle', objective:'Matériel, répétition.', type:'lesson', difficulty:3 }
         ]
       },
       { id:'M3', title:'Mats élémentaires', subtitle:'Convertir un avantage', level:2, unlocked:false,
         lessons: [
-          { id:'M3-L1', title:'Mat de la dame seule', objective:'Dame + Roi vs Roi.', type:'exercise', difficulty:3 },
-          { id:'M3-L2', title:'Mat des deux tours', objective:'Escalier des tours.', type:'exercise', difficulty:3 },
-          { id:'M3-L3', title:'Mat de la tour seule', objective:'Tour + Roi vs Roi.', type:'exercise', difficulty:4 },
-          { id:'M3-L4', title:'Mat des deux fous', objective:'Deux Fous + Roi vs Roi.', type:'exercise', difficulty:5 }
+          { id:'M3-L1', title:'Dame seule', objective:'Dame + Roi vs Roi.', type:'exercise', difficulty:3 },
+          { id:'M3-L2', title:'Deux tours', objective:'Escalier.', type:'exercise', difficulty:3 },
+          { id:'M3-L3', title:'Tour seule', objective:'Tour + Roi vs Roi.', type:'exercise', difficulty:4 },
+          { id:'M3-L4', title:'Deux fous', objective:'Deux Fous + Roi vs Roi.', type:'exercise', difficulty:5 }
         ]
       },
       { id:'M4', title:'Motifs tactiques', subtitle:'Les 8 patterns', level:3, unlocked:false,
@@ -470,10 +645,10 @@
           { id:'M4-L1', title:'La fourchette', objective:'Attaquer deux pièces.', type:'puzzle', difficulty:2 },
           { id:'M4-L2', title:'L\'enfilade', objective:'Attaquer derrière.', type:'puzzle', difficulty:3 },
           { id:'M4-L3', title:'La brochette', objective:'Valeur devant.', type:'puzzle', difficulty:3 },
-          { id:'M4-L4', title:'Le clouage', objective:'Clouer contre le roi.', type:'puzzle', difficulty:3 },
-          { id:'M4-L5', title:'L\'attaque double', objective:'Attaquer deux pièces.', type:'puzzle', difficulty:2 },
-          { id:'M4-L6', title:'L\'attaque à la découverte', objective:'Découvrir en déplaçant.', type:'puzzle', difficulty:4 },
-          { id:'M4-L7', title:'L\'échec double', objective:'Deux échecs simultanés.', type:'puzzle', difficulty:4 },
+          { id:'M4-L4', title:'Le clouage', objective:'Clouer.', type:'puzzle', difficulty:3 },
+          { id:'M4-L5', title:'L\'attaque double', objective:'Attaquer deux.', type:'puzzle', difficulty:2 },
+          { id:'M4-L6', title:'L\'attaque à la découverte', objective:'Découvrir.', type:'puzzle', difficulty:4 },
+          { id:'M4-L7', title:'L\'échec double', objective:'Deux échecs.', type:'puzzle', difficulty:4 },
           { id:'M4-L8', title:'Le coup intermédiaire', objective:'Zwischenzug.', type:'puzzle', difficulty:5 }
         ]
       },
@@ -481,47 +656,47 @@
         lessons: [
           { id:'M5-L1', title:'Mat du berger', objective:'Jouer et contrer.', type:'puzzle', difficulty:2 },
           { id:'M5-L2', title:'Mat à l\'étouffée', objective:'Smothered mate.', type:'puzzle', difficulty:3 },
-          { id:'M5-L3', title:'Mat du couloir', objective:'8e rangée faible.', type:'puzzle', difficulty:2 },
+          { id:'M5-L3', title:'Mat du couloir', objective:'8e rangée.', type:'puzzle', difficulty:2 },
           { id:'M5-L4', title:'Mat d\'Anastasie', objective:'Cavalier + tour.', type:'puzzle', difficulty:3 },
           { id:'M5-L5', title:'Mat arabe', objective:'Tour + cavalier.', type:'puzzle', difficulty:4 },
           { id:'M5-L6', title:'Combinaisons mixtes', objective:'Combiner.', type:'puzzle', difficulty:4 }
         ]
       },
-      { id:'M6', title:'Finales de pions', subtitle:'La technique pure', level:3, unlocked:false,
+      { id:'M6', title:'Finales de pions', subtitle:'Technique pure', level:3, unlocked:false,
         lessons: [
-          { id:'M6-L1', title:'Le pion passé', objective:'Sa force.', type:'lesson', difficulty:3 },
-          { id:'M6-L2', title:'La règle du carré', objective:'Rattraper un pion.', type:'exercise', difficulty:3 },
-          { id:'M6-L3', title:'L\'opposition', objective:'Forcer gain ou nulle.', type:'exercise', difficulty:4 },
-          { id:'M6-L4', title:'Cases-clés et zugzwang', objective:'Zugzwang.', type:'lesson', difficulty:4 },
-          { id:'M6-L5', title:'Pions passés protégés', objective:'Créer un pion passé.', type:'lesson', difficulty:5 }
+          { id:'M6-L1', title:'Pion passé', objective:'Force.', type:'lesson', difficulty:3 },
+          { id:'M6-L2', title:'Règle du carré', objective:'Rattraper.', type:'exercise', difficulty:3 },
+          { id:'M6-L3', title:'Opposition', objective:'Forcer.', type:'exercise', difficulty:4 },
+          { id:'M6-L4', title:'Cases-clés', objective:'Zugzwang.', type:'lesson', difficulty:4 },
+          { id:'M6-L5', title:'Pions passés protégés', objective:'Créer.', type:'lesson', difficulty:5 }
         ]
       },
       { id:'M7', title:'Principes d\'ouverture', subtitle:'Règles d\'or', level:3, unlocked:false,
         lessons: [
-          { id:'M7-L1', title:'Contrôler le centre', objective:'4 cases centrales.', type:'lesson', difficulty:2 },
-          { id:'M7-L2', title:'Développer ses pièces', objective:'Sortir rapidement.', type:'lesson', difficulty:2 },
-          { id:'M7-L3', title:'Roquer tôt', objective:'Sécurité du roi.', type:'lesson', difficulty:2 },
+          { id:'M7-L1', title:'Contrôler le centre', objective:'4 cases.', type:'lesson', difficulty:2 },
+          { id:'M7-L2', title:'Développer ses pièces', objective:'Sortir.', type:'lesson', difficulty:2 },
+          { id:'M7-L3', title:'Roquer tôt', objective:'Sécurité.', type:'lesson', difficulty:2 },
           { id:'M7-L4', title:'Connecter ses tours', objective:'Après roque.', type:'lesson', difficulty:3 },
-          { id:'M7-L5', title:'Erreurs classiques', objective:'Éviter les pièges.', type:'lesson', difficulty:3 }
+          { id:'M7-L5', title:'Erreurs classiques', objective:'Éviter.', type:'lesson', difficulty:3 }
         ]
       },
       { id:'M8', title:'Plans de milieu de jeu', subtitle:'Stratégie', level:4, unlocked:false,
         lessons: [
           { id:'M8-L1', title:'Identifier une faiblesse', objective:'Repérer.', type:'lesson', difficulty:4 },
-          { id:'M8-L2', title:'Colonnes ouvertes', objective:'Doubler les tours.', type:'lesson', difficulty:4 },
+          { id:'M8-L2', title:'Colonnes ouvertes', objective:'Doubler.', type:'lesson', difficulty:4 },
           { id:'M8-L3', title:'Cavalier vs mauvais fou', objective:'Reconnaître.', type:'lesson', difficulty:4 },
-          { id:'M8-L4', title:'Attaque sur l\'aile roi', objective:'Attaque coordonnée.', type:'lesson', difficulty:5 },
-          { id:'M8-L5', title:'Sacrifice positionnel', objective:'Quand sacrifier.', type:'lesson', difficulty:5 },
-          { id:'M8-L6', title:'Passer à la finale', objective:'Simplifier favorablement.', type:'lesson', difficulty:5 }
+          { id:'M8-L4', title:'Attaque sur l\'aile roi', objective:'Coordonner.', type:'lesson', difficulty:5 },
+          { id:'M8-L5', title:'Sacrifice positionnel', objective:'Quand.', type:'lesson', difficulty:5 },
+          { id:'M8-L6', title:'Passer à la finale', objective:'Simplifier.', type:'lesson', difficulty:5 }
         ]
       },
       { id:'M9', title:'Stratégie avancée', subtitle:'Franchir un cap', level:5, unlocked:false,
         lessons: [
-          { id:'M9-L1', title:'Structures de pions', objective:'Carlsbad, Sicilienne.', type:'lesson', difficulty:5 },
-          { id:'M9-L2', title:'Le pion isolé', objective:'Jouer avec/contre.', type:'lesson', difficulty:5 },
+          { id:'M9-L1', title:'Structures de pions', objective:'Reconnaître.', type:'lesson', difficulty:5 },
+          { id:'M9-L2', title:'Le pion isolé', objective:'Jouer.', type:'lesson', difficulty:5 },
           { id:'M9-L3', title:'Les pions doublés', objective:'Exploiter.', type:'lesson', difficulty:5 },
-          { id:'M9-L4', title:'Cases fortes et faibles', objective:'Identifier.', type:'lesson', difficulty:5 },
-          { id:'M9-L5', title:'Principe des deux faiblesses', objective:'Créer la seconde.', type:'lesson', difficulty:5 },
+          { id:'M9-L4', title:'Cases fortes/faibles', objective:'Identifier.', type:'lesson', difficulty:5 },
+          { id:'M9-L5', title:'Deux faiblesses', objective:'Créer.', type:'lesson', difficulty:5 },
           { id:'M9-L6', title:'Prophylaxie', objective:'Anticiper.', type:'lesson', difficulty:5 }
         ]
       }
@@ -638,6 +813,7 @@
       if (t === 'exercise') return 'Exercice';
       if (t === 'puzzle') return 'Puzzle';
       if (t === 'interactive') return '▶ Jouable';
+      if (t === 'puzzle-live') return '♟ Puzzle';
       if (t === 'coming') return 'À venir';
       return t;
     }
@@ -697,7 +873,7 @@
       var html = '<button class="back-btn" data-nav="lessons">‹ ' + m.id + '</button>';
       html += '<div class="lesson-detail"><h3>' + l.title + '</h3>' +
               '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>';
-      if (lt === 'interactive') {
+      if (lt === 'interactive' || lt === 'puzzle-live') {
         html += '<button data-action="start-lesson" class="back-btn" style="background:var(--accent);color:#fff;border-color:var(--accent);min-width:100%;justify-content:center;padding:12px;">▶ Démarrer la leçon</button>';
       } else {
         html += '<div class="placeholder">Le contenu de cette leçon sera ajouté dans une étape ultérieure.</div>';
@@ -736,7 +912,6 @@
       }
       html += '</div>';
 
-      // Compteur corrigé
       var counterLabel = p.finished
         ? 'Leçon terminée'
         : ('Tâche ' + Math.min(p.index + 1, p.taskList.length) + ' / ' + p.taskList.length);
@@ -750,9 +925,21 @@
                   '<button data-action="start-lesson" type="button">Refaire la leçon</button>' +
                 '</div>';
       } else {
+        // Indicateur de tour pour les puzzles
+        if (p.kind === 'solve-puzzle') {
+          var t = p.currentTask;
+          var isWhite = t.fen.indexOf(' w ') !== -1;
+          html += '<div class="play-turn">' +
+                    '<span class="dot' + (isWhite ? '' : ' black') + '"></span>' +
+                    '<span>' + (isWhite ? 'Aux Blancs de jouer' : 'Aux Noirs de jouer') + '</span>' +
+                  '</div>';
+        }
         html += '<div class="instruction" id="lesson-instruction">' + p.currentTask.prompt + '</div>';
         html += '<div class="feedback" id="lesson-feedback"></div>';
-        html += '<div class="btn-row"><button data-action="skip-task" type="button">Passer</button></div>';
+        html += '<div class="btn-row">' +
+                  '<button data-action="hint-task" type="button">💡 Indice</button>' +
+                  '<button data-action="skip-task" type="button">Passer</button>' +
+                '</div>';
       }
       html += '</div>';
       currContent.innerHTML = html;
@@ -786,7 +973,6 @@
 
       state.play = {
         kind: def.kind,
-        instruction: def.instruction,
         taskList: picked,
         index: 0,
         currentTask: picked[0],
@@ -817,6 +1003,11 @@
         board.orientation('white');
         board.position(t.fen, false);
         setTimeout(function () { $('#board .square-' + t.from).addClass('hl-target'); }, 100);
+      } else if (p.kind === 'solve-puzzle') {
+        game = new Chess(t.fen);
+        var isWhite = t.fen.indexOf(' w ') !== -1;
+        board.orientation(isWhite ? 'white' : 'black');
+        board.position(t.fen, false);
       }
     }
 
@@ -824,7 +1015,6 @@
       var p = state.play;
       if (!p || p.locked || p.finished) return;
       p.locked = true;
-
       var t = p.currentTask;
       var ok = false;
       if (t.matchRow)      ok = square.charAt(1) === t.targetRow;
@@ -842,7 +1032,7 @@
         var hint = '';
         if (t.matchRow) hint = 'La bonne réponse est sur la rangée ' + t.targetRow + '.';
         else if (t.matchCol) hint = 'La bonne réponse est sur la colonne ' + t.targetCol + '.';
-        else hint = 'La bonne case est ' + t.target + '. Colonne (lettre) puis rangée (chiffre).';
+        else hint = 'La bonne case est ' + t.target + '.';
         showFeedback('❌ Raté. ' + hint, 'ko');
         setTimeout(function () { if (state.play) state.play.locked = false; }, 800);
       }
@@ -872,9 +1062,17 @@
       if (!p || p.locked || p.finished) return;
       p.locked = true;
       p.errors++;
-      var ans = p.currentTask.to || p.currentTask.target;
+      var ans = p.currentTask.solution || p.currentTask.to || p.currentTask.target;
       showFeedback('⏭ Tâche passée. Réponse : ' + ans, 'ko');
       setTimeout(nextTask, 800);
+    }
+
+    function hintTask() {
+      var p = state.play;
+      if (!p || p.finished) return;
+      var t = p.currentTask;
+      var hint = t.hint || 'Regarde les pièces qui peuvent attaquer plusieurs cibles en même temps.';
+      showFeedback('💡 ' + hint, 'hint');
     }
 
     /* =========================================================
@@ -882,13 +1080,18 @@
        ========================================================= */
     function onDragStart(source, piece) {
       if (lessonMode) {
-        if (state.play && state.play.kind === 'move-piece') {
-          if (state.play.locked) return false;
+        if (!state.play || state.play.locked || state.play.finished) return false;
+        if (state.play.kind === 'move-piece') {
           var t = state.play.currentTask;
           if (source !== t.from) return false;
-          return true;
         }
-        return false;
+        if (state.play.kind === 'solve-puzzle') {
+          // Vérifier que la pièce bougée est du bon camp
+          var isWhite = state.play.currentTask.fen.indexOf(' w ') !== -1;
+          if (isWhite && piece.search(/^b/) !== -1) return false;
+          if (!isWhite && piece.search(/^w/) !== -1) return false;
+        }
+        return true;
       }
       if (game.game_over()) return false;
       var turn = game.turn();
@@ -898,6 +1101,7 @@
     }
 
     function onDrop(source, target) {
+      // --- MODE LEÇON : move-piece ---
       if (lessonMode && state.play && state.play.kind === 'move-piece') {
         var t = state.play.currentTask;
         if (state.play.locked) return 'snapback';
@@ -920,18 +1124,70 @@
         }
       }
 
-      var legalMoves = game.moves({ verbose: true });
-      var found = null;
-      for (var i = 0; i < legalMoves.length; i++) {
-        if (legalMoves[i].from === source && legalMoves[i].to === target) { found = legalMoves[i]; break; }
+      // --- MODE LEÇON : solve-puzzle ---
+      if (lessonMode && state.play && state.play.kind === 'solve-puzzle') {
+        var pt = state.play.currentTask;
+        if (state.play.locked) return 'snapback';
+
+        // Vérifier que le coup est légal d'abord
+        var legalMoves = game.moves({ verbose: true });
+        var found = null;
+        for (var i = 0; i < legalMoves.length; i++) {
+          if (legalMoves[i].from === source && legalMoves[i].to === target) { found = legalMoves[i]; break; }
+        }
+        if (!found) {
+          flashIllegal(target);
+          showFeedback('❌ Coup illégal. Essayez autre chose.', 'ko');
+          return 'snapback';
+        }
+
+        // Jouer le coup pour obtenir sa notation SAN
+        var playedMove = game.move({ from: source, to: target, promotion: 'q' });
+        var playedSan = playedMove.san;
+
+        // Nettoyer la promotion "=Q" éventuelle
+        var normalizeSan = function(s) {
+          return s.replace(/[+#]/g, '').replace(/=Q$/, '').replace(/0-0-0/g, 'O-O-O').replace(/0-0/g, 'O-O');
+        };
+        var playedNorm = normalizeSan(playedSan);
+        var solutionNorm = normalizeSan(pt.solution);
+
+        if (playedNorm === solutionNorm) {
+          // ✅ Bonne réponse
+          state.play.locked = true;
+          board.position(game.fen(), false);
+          $('#board .square-' + target).addClass('hl-good');
+          showFeedback('✅ Bravo ! ' + playedSan + ' est le coup gagnant.', 'ok');
+          setTimeout(function () {
+            $('#board .square-' + target).removeClass('hl-good');
+            nextTask();
+          }, 1200);
+          return;
+        }
+
+        // ❌ Mauvais coup (mais légal)
+        state.play.errors++;
+        game.undo();
+        board.position(game.fen(), false);
+        flashIllegal(target);
+        var hint = pt.hint || 'Cherche un coup qui crée une menace immédiate.';
+        showFeedback('❌ Ce coup est légal mais ne gagne pas. ' + hint, 'ko');
+        return 'snapback';
       }
-      if (!found) {
+
+      // --- MODE LIBRE ---
+      var legalMoves2 = game.moves({ verbose: true });
+      var found2 = null;
+      for (var j = 0; j < legalMoves2.length; j++) {
+        if (legalMoves2[j].from === source && legalMoves2[j].to === target) { found2 = legalMoves2[j]; break; }
+      }
+      if (!found2) {
         flashIllegal(target);
         setStatus('Coup illégal : ' + source + ' → ' + target, 'error');
         return 'snapback';
       }
-      var move = game.move({ from: source, to: target, promotion: 'q' });
-      if (!move) {
+      var move2 = game.move({ from: source, to: target, promotion: 'q' });
+      if (!move2) {
         flashIllegal(target);
         setStatus('Coup refusé.', 'error');
         return 'snapback';
@@ -951,7 +1207,7 @@
     }
 
     /* =========================================================
-       10. CLIC SUR LES CASES (mode identify-square)
+       10. CLIC SUR LES CASES (identify-square)
        ========================================================= */
     document.getElementById('board-wrap').addEventListener('click', function (e) {
       if (!lessonMode || !state.play || state.play.kind !== 'identify-square') return;
@@ -1002,6 +1258,8 @@
         startLesson();
       } else if (action === 'skip-task') {
         skipTask();
+      } else if (action === 'hint-task') {
+        hintTask();
       }
     });
 
