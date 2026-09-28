@@ -4,9 +4,13 @@
    Gère :
      - L'état de navigation (modules / lessons / lesson / play)
      - Le rendu des cartes modules, lignes de leçons
-     - Le rendu de la vue "leçon en cours" (avec progression)
+     - Le rendu de la vue "leçon en cours"
      - Les onglets Curriculum / Partie libre
      - Les boutons de contrôle de la partie libre
+
+   MODE DEV :
+     Si window.APP.DEV_MODE === true, tous les modules sont
+     cliquables, même si leur drapeau unlocked vaut false.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -14,18 +18,14 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* ---------- État ---------- */
   var state = {
-    view: 'curriculum',        // 'curriculum' | 'freeplay'
-    curriculumView: 'modules', // 'modules' | 'lessons' | 'lesson' | 'play'
+    view: 'curriculum',
+    curriculumView: 'modules',
     currentModuleId: null,
     currentLessonId: null
   };
 
-  /* ---------- Raccourcis DOM ---------- */
-  function $(sel) { return document.querySelector(sel); }
-  function $$(sel) { return document.querySelectorAll(sel); }
-
+  /* ---------- Helpers DOM ---------- */
   function crumbEl() { return document.getElementById('crumb'); }
   function currContent() { return document.getElementById('curriculum-content'); }
 
@@ -46,6 +46,16 @@ window.APP = window.APP || {};
     if (t === 'puzzle-live')  return '♟ Puzzle';
     if (t === 'coming')       return 'À venir';
     return t;
+  }
+
+  function isDevMode() {
+    return !!(window.APP && window.APP.DEV_MODE);
+  }
+
+  function isModuleUnlocked(m) {
+    if (!m) return false;
+    if (isDevMode()) return true;
+    return !!m.unlocked;
   }
 
   function findModule(mid) {
@@ -99,8 +109,9 @@ window.APP = window.APP || {};
     var arr = window.APP.CURRICULUM || [];
     for (var i = 0; i < arr.length; i++) {
       var m = arr[i];
-      var lock = m.unlocked ? '' : '<span class="module-lock">🔒</span>';
-      html += '<div class="module-card' + (m.unlocked ? '' : ' locked') + '" data-action="open-module" data-module="' + m.id + '">' +
+      var unlocked = isModuleUnlocked(m);
+      var lock = unlocked ? '' : '<span class="module-lock">🔒</span>';
+      html += '<div class="module-card' + (unlocked ? '' : ' locked') + '" data-action="open-module" data-module="' + m.id + '">' +
                 lock +
                 '<div class="module-head">' +
                   '<span class="module-id">' + m.id + '</span>' +
@@ -167,7 +178,6 @@ window.APP = window.APP || {};
     html += '<div class="lesson-play">';
     html += '<h3>' + l.title + '</h3>';
 
-    /* Progression */
     html += '<div class="lesson-progress">';
     for (var i = 0; i < p.taskList.length; i++) {
       var cls = 'pip';
@@ -190,7 +200,6 @@ window.APP = window.APP || {};
                 '<button data-action="start-lesson" type="button">Refaire la leçon</button>' +
               '</div>';
     } else {
-      /* Indicateur de tour pour les puzzles */
       if (p.kind === 'solve-puzzle') {
         var t = p.currentTask;
         var isWhite = t.fen.indexOf(' w ') !== -1;
@@ -219,20 +228,13 @@ window.APP = window.APP || {};
     else                                          renderLessonPlay();
   }
 
-  /* ---------- Délégation d'événements ---------- */
+  /* ---------- Délégation ---------- */
   function handleCurriculumClick(e) {
-    /* Navigation (crumb / boutons retour) */
     var navEl = e.target.closest('[data-nav]');
     if (navEl) {
       var target = navEl.getAttribute('data-nav');
-      if (target === 'modules') {
-        resetToModules();
-        return;
-      }
-      if (target === 'lessons') {
-        resetToLessons();
-        return;
-      }
+      if (target === 'modules') { resetToModules(); return; }
+      if (target === 'lessons') { resetToLessons(); return; }
     }
 
     var actionEl = e.target.closest('[data-action]');
@@ -242,7 +244,7 @@ window.APP = window.APP || {};
     if (action === 'open-module') {
       var mid = actionEl.getAttribute('data-module');
       var m = findModule(mid);
-      if (!m || !m.unlocked) return;
+      if (!isModuleUnlocked(m)) return;
       state.currentModuleId = mid;
       state.curriculumView = 'lessons';
       renderCurriculum();
@@ -260,7 +262,7 @@ window.APP = window.APP || {};
     }
   }
 
-  /* ---------- Reset navigation ---------- */
+  /* ---------- Resets ---------- */
   function resetToModules() {
     window.APP.LessonEngine.reset();
     window.APP.Board.setLessonMode(false);
@@ -285,7 +287,6 @@ window.APP = window.APP || {};
   function resetBoardToStart() {
     var B = window.APP.Board;
     B.reset();
-    /* Réactualise le panneau partie libre */
     var tg = document.getElementById('turn-label');
     var td = document.getElementById('turn-dot');
     if (tg) { tg.textContent = 'Aux Blancs de jouer'; tg.classList.remove('check','mate','draw'); }
@@ -309,12 +310,9 @@ window.APP = window.APP || {};
         renderCurriculum();
       },
       function onFinish(isDone) {
-        /* Re-render à chaque avancée ou fin */
         renderCurriculum();
         if (isDone) {
-          resetToLessons();
-          /* Puis re-affiche la leçon terminée */
-          state.currentModuleId = findModule(state.currentModuleId) ? state.currentModuleId : state.currentModuleId;
+          /* Reste sur l'écran de fin de leçon */
         }
       }
     );
@@ -322,13 +320,13 @@ window.APP = window.APP || {};
 
   /* ---------- Onglets ---------- */
   function bindTabs() {
-    var tabs = $$('.tab');
+    var tabs = document.querySelectorAll('.tab');
     for (var i = 0; i < tabs.length; i++) {
       tabs[i].addEventListener('click', function () {
         var v = this.getAttribute('data-view');
         state.view = v;
 
-        var all = $$('.tab');
+        var all = document.querySelectorAll('.tab');
         for (var j = 0; j < all.length; j++) all[j].classList.remove('active');
         this.classList.add('active');
 
@@ -358,7 +356,7 @@ window.APP = window.APP || {};
     }
   }
 
-  /* ---------- Boutons de la partie libre ---------- */
+  /* ---------- Boutons partie libre ---------- */
   function bindFreeplayButtons() {
     var btnReset = document.getElementById('btn-reset');
     var btnFlip  = document.getElementById('btn-flip');
@@ -502,21 +500,18 @@ window.APP = window.APP || {};
   /* ---------- API publique ---------- */
   window.APP.UINav = {
     init: function () {
-      /* Bind des événements */
       var cc = currContent();
       if (cc) cc.addEventListener('click', handleCurriculumClick);
 
       bindTabs();
       bindFreeplayButtons();
 
-      /* Rendu initial */
       renderCurriculum();
       updateTurnIndicator();
       updateHistory();
       setStatus('Position initiale. Aux Blancs.', 'ok');
     },
 
-    /* Ces fonctions sont appelées par le moteur de leçon via callback */
     refreshLessonPlay: function () {
       renderCurriculum();
     },
