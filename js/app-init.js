@@ -1,5 +1,7 @@
 /* =========================================================
    app-init.js — Point d'entrée + vérification des dépendances
+   =========================================================
+   v0.6.3 — Ajout vérification automatique des FEN au chargement.
    ========================================================= */
 
 (function () {
@@ -27,12 +29,74 @@
     document.body.innerHTML =
       '<div style="padding:40px;color:#ff5757;font-family:monospace;font-size:14px;line-height:1.6;background:#121212;min-height:100vh;">' +
       '<h2 style="color:#fff;margin-bottom:20px;">⚠️ Erreur de chargement</h2>' +
-      '<p style="color:#e8e8e8;margin-bottom:20px;">Certains modules n\'ont pas pu être chargés. Vérifie que les fichiers suivants existent et sont au bon endroit :</p>' +
+      '<p style="color:#e8e8e8;margin-bottom:20px;">Certains modules n\'ont pas pu être chargés :</p>' +
       '<ul style="margin-left:20px;color:#fbbf24;">' +
       missing.map(function (m) { return '<li>' + m + '</li>'; }).join('') +
       '</ul>' +
       '<p style="color:#9a9a9a;margin-top:30px;font-size:12px;">Astuce : ouvre la console (F12) pour plus de détails.</p>' +
       '</div>';
+  }
+
+  /* ---------- Vérification de toutes les FEN ---------- */
+  function validateAllFens() {
+    var problems = [];
+    var totalChecked = 0;
+
+    function checkPuzzle(lessonId, puzzle, index) {
+      totalChecked++;
+      if (!puzzle.fen) {
+        problems.push(lessonId + ' #' + (index + 1) + ' : pas de FEN');
+        return;
+      }
+      try {
+        var g = new Chess(puzzle.fen);
+        if (!g) {
+          problems.push(lessonId + ' #' + (index + 1) + ' : FEN rejetée');
+          return;
+        }
+        if (g.in_check()) {
+          var turn = g.turn() === 'w' ? 'Blancs' : 'Noirs';
+          problems.push(lessonId + ' #' + (index + 1) + ' : roi ' + turn + ' en échec au démarrage (FEN illégale) — FEN: ' + puzzle.fen);
+        }
+      } catch (err) {
+        problems.push(lessonId + ' #' + (index + 1) + ' : ' + err.message + ' — FEN: ' + puzzle.fen);
+      }
+    }
+
+    /* Vérifier toutes les banques de puzzles */
+    if (window.APP.PUZZLE_TASKS) {
+      for (var lid in window.APP.PUZZLE_TASKS) {
+        if (!window.APP.PUZZLE_TASKS.hasOwnProperty(lid)) continue;
+        var def = window.APP.PUZZLE_TASKS[lid];
+        for (var i = 0; i < def.tasks.length; i++) {
+          checkPuzzle(lid, def.tasks[i], i);
+        }
+      }
+    }
+
+    /* Vérifier toutes les leçons move-piece */
+    if (window.APP.LESSON_TASKS) {
+      for (var lid2 in window.APP.LESSON_TASKS) {
+        if (!window.APP.LESSON_TASKS.hasOwnProperty(lid2)) continue;
+        var def2 = window.APP.LESSON_TASKS[lid2];
+        if (def2.kind === 'move-piece') {
+          for (var j = 0; j < def2.tasks.length; j++) {
+            checkPuzzle(lid2, def2.tasks[j], j);
+          }
+        }
+      }
+    }
+
+    if (window.console) {
+      if (problems.length === 0) {
+        console.log('[FEN Check] ✅ ' + totalChecked + ' positions vérifiées, aucune erreur.');
+      } else {
+        console.warn('[FEN Check] ⚠️ ' + problems.length + ' problème(s) sur ' + totalChecked + ' positions :');
+        problems.forEach(function (p) { console.warn('  - ' + p); });
+      }
+    }
+
+    return { total: totalChecked, problems: problems };
   }
 
   /* ---------- Identité visuelle ---------- */
@@ -129,6 +193,11 @@
 
     try {
       applyIdentity();
+
+      /* Vérification des FEN */
+      validateAllFens();
+
+      /* Init échiquier + UI */
       window.APP.Board.init();
       bindBoardEvents();
       window.APP.UINav.init();
