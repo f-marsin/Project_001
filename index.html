@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#121212">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Échecs Maître — Étape 1</title>
+  <title>Échecs Maître — Étape 2</title>
 
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
 
@@ -19,8 +19,12 @@
       --text: #e8e8e8;
       --text-dim: #9a9a9a;
       --accent: #4a9eff;
+      --danger: #ff5757;
+      --success: #4ade80;
+      --warn: #fbbf24;
       --square-light: #6b6b6b;
       --square-dark: #2e2e2e;
+      --highlight: rgba(74, 158, 255, 0.45);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,21 +53,10 @@
       z-index: 10;
       padding-top: max(14px, env(safe-area-inset-top));
     }
-
-    header h1 {
-      font-size: 1.05rem;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-    }
-
+    header h1 { font-size: 1.05rem; font-weight: 600; letter-spacing: 0.3px; }
     header .badge {
-      font-size: 0.65rem;
-      background: var(--accent);
-      color: #fff;
-      padding: 3px 8px;
-      border-radius: 20px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
+      font-size: 0.65rem; background: var(--accent); color: #fff;
+      padding: 3px 8px; border-radius: 20px; font-weight: 600; letter-spacing: 0.5px;
     }
 
     main {
@@ -75,7 +68,6 @@
       margin: 0 auto;
       width: 100%;
     }
-
     @media (min-width: 900px) {
       main {
         grid-template-columns: minmax(340px, 560px) 1fr;
@@ -94,11 +86,7 @@
       user-select: none;
       position: relative;
     }
-
-    #board {
-      width: 100%;
-      touch-action: none;
-    }
+    #board { width: 100%; touch-action: none; }
 
     #board .board-b72b1 {
       border: none !important;
@@ -114,59 +102,58 @@
       font-weight: 700;
     }
 
+    /* Highlight derniers coups */
+    #board .square-55d63.hl-from,
+    #board .square-55d63.hl-to {
+      box-shadow: inset 0 0 0 4px var(--highlight);
+    }
+
+    /* Feedback coup illégal */
+    #board .square-55d63.illegal-flash {
+      animation: illegalFlash 0.5s ease-out;
+    }
+    @keyframes illegalFlash {
+      0%   { box-shadow: inset 0 0 0 4px var(--danger); }
+      100% { box-shadow: inset 0 0 0 0 transparent; }
+    }
+
     .panel {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 18px;
     }
+    @media (min-width: 900px) {
+      .panel { position: sticky; top: 90px; }
+    }
 
     .panel h2 {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      color: var(--text-dim);
-      margin-bottom: 12px;
-      font-weight: 700;
+      font-size: 0.8rem; text-transform: uppercase;
+      letter-spacing: 1.2px; color: var(--text-dim);
+      margin-bottom: 12px; font-weight: 700;
     }
 
-    .panel p {
-      font-size: 0.9rem;
-      line-height: 1.55;
-      color: var(--text-dim);
-      margin-bottom: 14px;
-    }
-
-    .panel p strong { color: var(--text); }
-
-    .btn-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    button {
-      flex: 1;
-      min-width: 120px;
-      padding: 12px 16px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
+    .turn-indicator {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
       background: var(--surface-2);
-      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 12px;
       font-size: 0.9rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-      touch-action: manipulation;
-      font-family: inherit;
     }
-
-    button:hover, button:active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
+    .turn-dot {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid #555;
+      background: #fff;
+      flex-shrink: 0;
+      transition: background 0.2s, border-color 0.2s;
     }
+    .turn-dot.black { background: #111; border-color: #444; }
+    .turn-label { font-weight: 600; }
+    .turn-label.mate { color: var(--danger); }
+    .turn-label.check { color: var(--warn); }
+    .turn-label.draw { color: var(--text-dim); }
 
     .status {
       font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -179,31 +166,111 @@
       word-break: break-word;
       min-height: 40px;
       line-height: 1.4;
+      margin-bottom: 12px;
     }
+    .status.error { color: var(--danger); }
+    .status.warn  { color: var(--warn); }
+    .status.ok    { color: var(--success); }
+
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+
+    button {
+      flex: 1; min-width: 110px;
+      padding: 11px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      touch-action: manipulation;
+      font-family: inherit;
+    }
+    button:hover:not(:disabled), button:active:not(:disabled) {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .history-title {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px;
+    }
+    .history-title h2 { margin: 0; }
+
+    .history {
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      max-height: 260px;
+      overflow-y: auto;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.82rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .history-empty {
+      padding: 14px;
+      color: var(--text-dim);
+      text-align: center;
+      font-style: italic;
+      font-size: 0.8rem;
+    }
+    .history-row {
+      display: grid;
+      grid-template-columns: 40px 1fr 1fr;
+      border-bottom: 1px solid var(--border);
+    }
+    .history-row:last-child { border-bottom: none; }
+    .history-row > div { padding: 8px 10px; }
+    .history-row .num { color: var(--text-dim); background: var(--surface-2); }
+    .history-row .san-w { color: #e8e8e8; }
+    .history-row .san-b { color: #c8c8c8; }
+    .history-row .san-w.empty,
+    .history-row .san-b.empty { color: #444; }
 
     .info-list {
-      list-style: none;
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      line-height: 1.8;
-      margin-top: 4px;
+      list-style: none; font-size: 0.82rem;
+      color: var(--text-dim); line-height: 1.75; margin-top: 4px;
     }
     .info-list li::before {
-      content: "▸ ";
-      color: var(--accent);
-      margin-right: 4px;
-      font-weight: 700;
+      content: "▸ "; color: var(--accent);
+      margin-right: 4px; font-weight: 700;
     }
 
-    @media (min-width: 900px) {
-      .panel { position: sticky; top: 90px; }
+    /* Modale de fin de partie */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: none;
+      align-items: center; justify-content: center;
+      z-index: 100;
+      padding: 20px;
+      padding-top: max(20px, env(safe-area-inset-top));
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
+    .overlay.show { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      max-width: 380px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    }
+    .modal h3 { font-size: 1.3rem; margin-bottom: 8px; }
+    .modal p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 18px; line-height: 1.5; }
+    .modal button { width: 100%; }
   </style>
 </head>
 <body>
   <header>
     <h1>♟ Échecs Maître</h1>
-    <span class="badge">ÉTAPE 1</span>
+    <span class="badge">ÉTAPE 2</span>
   </header>
 
   <main>
@@ -212,88 +279,307 @@
     </section>
 
     <aside class="panel">
-      <h2>Panneau de contrôle</h2>
-      <p>
-        Échiquier interactif — déplacez les pièces par
-        <strong>glisser-déposer</strong> (PC) ou
-        <strong>toucher-sélectionner / toucher-déplacer</strong> (iPhone).
-      </p>
+      <div class="turn-indicator">
+        <span class="turn-dot" id="turn-dot"></span>
+        <span class="turn-label" id="turn-label">Aux Blancs de jouer</span>
+      </div>
 
-      <div class="status" id="status">Position initiale chargée.</div>
+      <div class="status" id="status">Position initiale. Aux Blancs.</div>
 
       <div class="btn-row">
-        <button id="btn-reset" type="button">Réinitialiser</button>
+        <button id="btn-reset" type="button">Nouvelle partie</button>
         <button id="btn-flip" type="button">Retourner</button>
+      </div>
+      <div class="btn-row">
+        <button id="btn-undo" type="button">Annuler coup</button>
+        <button id="btn-copy-pgn" type="button">Copier PGN</button>
+      </div>
+
+      <div class="history-title">
+        <h2>Historique des coups</h2>
+      </div>
+      <div class="history" id="history">
+        <div class="history-empty">Aucun coup joué.</div>
       </div>
 
       <h2 style="margin-top: 22px;">Fondations actives</h2>
       <ul class="info-list">
-        <li>Dark Mode #121212 universel</li>
-        <li>Responsive PC (2 colonnes) / iPhone (vertical)</li>
-        <li>Tactile : <code>touch-action: none</code>, anti-zoom, anti-pull-refresh</li>
-        <li>Chessboard.js + jQuery via CDN</li>
-        <li>Prochaine étape : règles légales (chess.js)</li>
+        <li>Règles légales via chess.js</li>
+        <li>Détection échec / mat / pat / nulle</li>
+        <li>Historique SAN + PGN</li>
+        <li>Highlight du dernier coup</li>
+        <li>Undo, rotation, reset</li>
       </ul>
     </aside>
   </main>
 
+  <div class="overlay" id="overlay">
+    <div class="modal">
+      <h3 id="modal-title">Partie terminée</h3>
+      <p id="modal-text"></p>
+      <button id="modal-close" type="button">Fermer</button>
+    </div>
+  </div>
+
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
   <script>
     (function () {
       'use strict';
 
-      var statusEl = document.getElementById('status');
+      // ---------- Références DOM ----------
+      var statusEl    = document.getElementById('status');
+      var historyEl   = document.getElementById('history');
+      var turnDot     = document.getElementById('turn-dot');
+      var turnLabel   = document.getElementById('turn-label');
+      var overlay     = document.getElementById('overlay');
+      var modalTitle  = document.getElementById('modal-title');
+      var modalText   = document.getElementById('modal-text');
+      var modalClose  = document.getElementById('modal-close');
+      var boardWrap   = document.getElementById('board-wrap');
+
+      // ---------- État global ----------
       var board = null;
+      var game  = new Chess();
+      var lastMove = null; // { from, to }
 
-      function setStatus(msg) { statusEl.textContent = msg; }
+      // ---------- Utilitaires ----------
+      function setStatus(msg, kind) {
+        statusEl.textContent = msg;
+        statusEl.className = 'status' + (kind ? ' ' + kind : '');
+      }
 
-      var boardConfig = {
-        draggable: true,
-        position: 'start',
-        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-        showNotation: true,
-        onDragStart: onDragStart,
-        onDrop: onDrop,
-        onSnapEnd: onSnapEnd
-      };
+      function clearHighlights() {
+        var $b = $('#board .square-55d63');
+        $b.removeClass('hl-from hl-to');
+      }
 
+      function applyLastMoveHighlight() {
+        clearHighlights();
+        if (!lastMove) return;
+        $('#board .square-' + lastMove.from).addClass('hl-from');
+        $('#board .square-' + lastMove.to).addClass('hl-to');
+      }
+
+      function flashIllegal(square) {
+        var $sq = $('#board .square-' + square);
+        if (!$sq.length) return;
+        $sq.addClass('illegal-flash');
+        setTimeout(function () { $sq.removeClass('illegal-flash'); }, 500);
+      }
+
+      // ---------- Rendu du panneau ----------
+      function updateTurnIndicator() {
+        var turn = game.turn(); // 'w' ou 'b'
+        if (game.game_over()) {
+          turnDot.classList.remove('black');
+          turnLabel.classList.remove('check','mate','draw');
+
+          if (game.in_checkmate()) {
+            turnLabel.classList.add('mate');
+            turnLabel.textContent = 'Échec et mat — ' + (turn === 'w' ? 'Noirs gagnent' : 'Blancs gagnent');
+          } else if (game.in_stalemate()) {
+            turnLabel.classList.add('draw');
+            turnLabel.textContent = 'Pat — Match nul';
+          } else if (game.in_threefold_repetition && game.in_threefold_repetition()) {
+            turnLabel.classList.add('draw');
+            turnLabel.textContent = 'Nulle — Triple répétition';
+          } else if (game.insufficient_material()) {
+            turnLabel.classList.add('draw');
+            turnLabel.textContent = 'Nulle — Matériel insuffisant';
+          } else if (game.in_draw()) {
+            turnLabel.classList.add('draw');
+            turnLabel.textContent = 'Nulle (règle des 50 coups)';
+          } else {
+            turnLabel.textContent = 'Partie terminée';
+          }
+          return;
+        }
+
+        turnLabel.classList.remove('check','mate','draw');
+        if (turn === 'w') {
+          turnDot.classList.remove('black');
+          turnLabel.textContent = 'Aux Blancs de jouer';
+        } else {
+          turnDot.classList.add('black');
+          turnLabel.textContent = 'Aux Noirs de jouer';
+        }
+        if (game.in_check()) {
+          turnLabel.classList.add('check');
+          turnLabel.textContent += ' — ÉCHEC !';
+        }
+      }
+
+      function updateHistory() {
+        var hist = game.history(); // SAN
+        if (hist.length === 0) {
+          historyEl.innerHTML = '<div class="history-empty">Aucun coup joué.</div>';
+          return;
+        }
+        var html = '';
+        for (var i = 0; i < hist.length; i += 2) {
+          var n = (i / 2) + 1;
+          var w = hist[i] || '';
+          var b = hist[i + 1] || '';
+          html += '<div class="history-row">' +
+                    '<div class="num">' + n + '.</div>' +
+                    '<div class="san-w' + (w ? '' : ' empty') + '">' + (w || '—') + '</div>' +
+                    '<div class="san-b' + (b ? '' : ' empty') + '">' + (b || '—') + '</div>' +
+                  '</div>';
+        }
+        historyEl.innerHTML = html;
+        historyEl.scrollTop = historyEl.scrollHeight;
+      }
+
+      function updateStatusAfterMove(move) {
+        var san = move.san;
+        if (game.in_checkmate()) {
+          setStatus('Échec et mat ! ' + san, 'error');
+          showEndModal('Échec et mat', (move.color === 'w' ? 'Les Blancs gagnent.' : 'Les Noirs gagnent.'));
+        } else if (game.in_stalemate()) {
+          setStatus('Pat — match nul après ' + san, 'warn');
+          showEndModal('Pat', 'Aucun coup légal possible et le roi n\'est pas en échec. Match nul.');
+        } else if (game.insufficient_material()) {
+          setStatus('Nulle — matériel insuffisant (' + san + ')', 'warn');
+          showEndModal('Nulle', 'Matériel insuffisant pour mater.');
+        } else if (game.in_threefold_repetition && game.in_threefold_repetition()) {
+          setStatus('Nulle — triple répétition (' + san + ')', 'warn');
+          showEndModal('Nulle', 'Position répétée trois fois.');
+        } else if (game.in_draw()) {
+          setStatus('Nulle — règle des 50 coups (' + san + ')', 'warn');
+          showEndModal('Nulle', '50 coups sans capture ni poussée de pion.');
+        } else if (game.in_check()) {
+          setStatus('Échec au roi ' + (game.turn() === 'w' ? 'blanc' : 'noir') + ' après ' + san, 'warn');
+        } else {
+          setStatus('Coup joué : ' + san + '. ' +
+            (game.turn() === 'w' ? 'Aux Blancs.' : 'Aux Noirs.'), 'ok');
+        }
+      }
+
+      function showEndModal(title, text) {
+        modalTitle.textContent = title;
+        modalText.textContent = text;
+        overlay.classList.add('show');
+      }
+
+      // ---------- Chessboard.js callbacks ----------
       function onDragStart(source, piece) {
-        // Étape 1 : tout est déplaçable (règles légales ajoutées à l'Étape 2)
+        // Interdit de déplacer une pièce du camp adverse ou quand la partie est finie
+        if (game.game_over()) return false;
+        var turn = game.turn();
+        if (turn === 'w' && piece.search(/^b/) !== -1) return false;
+        if (turn === 'b' && piece.search(/^w/) !== -1) return false;
         return true;
       }
 
       function onDrop(source, target) {
-        if (source === target) return 'snapback';
-        // Pas de validation légale pour l'instant — accepté librement
-        return;
+        // Interdit de capturer le roi (chess.js le refuse, mais on bloque visuellement)
+        var legalMoves = game.moves({ verbose: true });
+        var found = null;
+        for (var i = 0; i < legalMoves.length; i++) {
+          if (legalMoves[i].from === source && legalMoves[i].to === target) {
+            found = legalMoves[i]; break;
+          }
+        }
+        if (!found) {
+          flashIllegal(target);
+          setStatus('Coup illégal : ' + source + ' → ' + target, 'error');
+          return 'snapback';
+        }
+        // Joue le coup
+        var move = game.move({ from: source, to: target, promotion: 'q' });
+        if (!move) {
+          flashIllegal(target);
+          setStatus('Coup refusé par les règles.', 'error');
+          return 'snapback';
+        }
+        lastMove = { from: source, to: target };
+        return; // accepté
       }
 
       function onSnapEnd() {
-        var pos = board.position();
-        var count = Object.keys(pos).length;
-        setStatus('Position mise à jour — ' + count + ' pièces sur l\'échiquier.');
+        board.position(game.fen());
+        applyLastMoveHighlight();
+        updateTurnIndicator();
+        updateHistory();
+        updateStatusAfterMove(game.history({ verbose: true }).slice(-1)[0]);
       }
 
-      function initBoard() {
-        board = Chessboard('board', boardConfig);
-        setTimeout(resizeBoard, 50);
-      }
-
-      function resizeBoard() {
-        if (board && typeof board.resize === 'function') board.resize();
-      }
-
+      // ---------- Contrôles ----------
       document.getElementById('btn-reset').addEventListener('click', function () {
-        board.position('start');
-        setStatus('Position initiale restaurée.');
+        game = new Chess();
+        lastMove = null;
+        board.position('start', false);
+        board.orientation('white');
+        clearHighlights();
+        updateTurnIndicator();
+        updateHistory();
+        setStatus('Nouvelle partie. Position initiale. Aux Blancs.', 'ok');
       });
 
       document.getElementById('btn-flip').addEventListener('click', function () {
         board.flip();
-        setStatus('Échiquier retourné.');
       });
 
+      document.getElementById('btn-undo').addEventListener('click', function () {
+        var undone = game.undo();
+        if (!undone) {
+          setStatus('Aucun coup à annuler.', 'warn');
+          return;
+        }
+        lastMove = null;
+        var hist = game.history({ verbose: true });
+        if (hist.length > 0) {
+          var prev = hist[hist.length - 1];
+          lastMove = { from: prev.from, to: prev.to };
+        }
+        board.position(game.fen(), false);
+        applyLastMoveHighlight();
+        updateTurnIndicator();
+        updateHistory();
+        setStatus('Coup annulé : ' + undone.san + '.', 'warn');
+      });
+
+      document.getElementById('btn-copy-pgn').addEventListener('click', function () {
+        var pgn = game.pgn();
+        if (!pgn) { setStatus('Aucun coup à copier.', 'warn'); return; }
+        copyToClipboard(pgn).then(function (ok) {
+          setStatus(ok ? 'PGN copié dans le presse-papiers.' : 'Copie impossible — sélectionne manuellement.', ok ? 'ok' : 'warn');
+        });
+      });
+
+      modalClose.addEventListener('click', function () {
+        overlay.classList.remove('show');
+      });
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) overlay.classList.remove('show');
+      });
+
+      function copyToClipboard(text) {
+        return new Promise(function (resolve) {
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(function () { resolve(true); }, function () { resolve(false); });
+          } else {
+            try {
+              var ta = document.createElement('textarea');
+              ta.value = text;
+              ta.style.position = 'fixed'; ta.style.left = '-9999px';
+              document.body.appendChild(ta);
+              ta.select();
+              document.execCommand('copy');
+              document.body.removeChild(ta);
+              resolve(true);
+            } catch (err) { resolve(false); }
+          }
+        });
+      }
+
+      // ---------- Resize / orientation ----------
+      function resizeBoard() {
+        if (board && typeof board.resize === 'function') board.resize();
+        applyLastMoveHighlight();
+      }
       var resizeTimer = null;
       window.addEventListener('resize', function () {
         clearTimeout(resizeTimer);
@@ -303,7 +589,7 @@
         setTimeout(resizeBoard, 250);
       });
 
-      // Anti double-tap zoom sur Safari iOS (zone application entière)
+      // ---------- Anti-zoom / anti-pull-refresh iOS ----------
       var lastTouchEnd = 0;
       document.addEventListener('touchend', function (e) {
         var now = Date.now();
@@ -311,11 +597,26 @@
         lastTouchEnd = now;
       }, { passive: false });
 
-      // Anti pull-to-refresh et anti-scroll parasites dans la zone échiquier
-      var boardWrap = document.getElementById('board-wrap');
       boardWrap.addEventListener('touchmove', function (e) {
         e.preventDefault();
       }, { passive: false });
+
+      // ---------- Init ----------
+      function initBoard() {
+        board = Chessboard('board', {
+          draggable: true,
+          position: 'start',
+          pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+          showNotation: true,
+          onDragStart: onDragStart,
+          onDrop: onDrop,
+          onSnapEnd: onSnapEnd
+        });
+        setTimeout(resizeBoard, 50);
+        updateTurnIndicator();
+        updateHistory();
+        setStatus('Position initiale. Aux Blancs.', 'ok');
+      }
 
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initBoard);
