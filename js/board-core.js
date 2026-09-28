@@ -1,5 +1,5 @@
 /* =========================================================
-   board-core.js — Échiquier + règles légales + état de partie
+   board-core.js — Échiquier + règles légales + validation FEN
    =========================================================
    Expose window.APP.Board avec :
      - init()               : crée l'échiquier
@@ -21,6 +21,7 @@
      - applyLastMoveHighlight()
      - flashIllegal(square)
      - getBoardInstance()
+     - validateFen(fen)     : NOUVEAU — retourne { valid, error }
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -57,6 +58,33 @@ window.APP = window.APP || {};
     setTimeout(function () { $sq.removeClass('illegal-flash'); }, 500);
   }
 
+  /* ---------- Validation FEN ---------- */
+  function validateFen(fen) {
+    if (!fen || typeof fen !== 'string') {
+      return { valid: false, error: 'FEN vide ou non-chaîne' };
+    }
+    try {
+      var testGame = new Chess(fen);
+      if (!testGame) {
+        return { valid: false, error: 'Échec de création de la partie' };
+      }
+      var turn = testGame.turn();
+      /* Vérification : le camp au trait ne doit pas être en échec
+         APRÈS avoir chargé la position (sauf si c'est la position de départ). */
+      if (testGame.in_check()) {
+        return {
+          valid: true,
+          warning: 'Le camp au trait (' + (turn === 'w' ? 'Blancs' : 'Noirs') + ') est en échec dans cette position de départ.',
+          turn: turn,
+          inCheck: true
+        };
+      }
+      return { valid: true, turn: turn, inCheck: false };
+    } catch (err) {
+      return { valid: false, error: err.message || 'Erreur inconnue' };
+    }
+  }
+
   /* ---------- Callbacks par défaut ---------- */
   function defaultOnDragStart(source, piece) {
     if (lessonMode) return true;
@@ -68,13 +96,11 @@ window.APP = window.APP || {};
   }
 
   function defaultOnDrop(source, target) {
-    // Handler custom (mode leçon/puzzle) prioritaire
     if (onDropHandler) {
       var result = onDropHandler(source, target);
       if (result !== undefined) return result;
     }
 
-    // Mode libre par défaut
     var legalMoves = game.moves({ verbose: true });
     var found = null;
     for (var i = 0; i < legalMoves.length; i++) {
@@ -134,18 +160,9 @@ window.APP = window.APP || {};
       clearHighlights();
     },
 
-    flip: function () {
-      if (board) board.flip();
-    },
-
-    position: function (fen, animate) {
-      if (board) board.position(fen, animate !== false);
-    },
-
-    orientation: function (color) {
-      if (board) board.orientation(color);
-    },
-
+    flip: function () { if (board) board.flip(); },
+    position: function (fen, animate) { if (board) board.position(fen, animate !== false); },
+    orientation: function (color) { if (board) board.orientation(color); },
     resize: function () {
       if (board && typeof board.resize === 'function') board.resize();
     },
@@ -166,6 +183,7 @@ window.APP = window.APP || {};
     clearHighlights: clearHighlights,
     applyLastMoveHighlight: applyLastMoveHighlight,
     flashIllegal: flashIllegal,
+    validateFen: validateFen,
 
     getBoardInstance: function () { return board; }
   };
