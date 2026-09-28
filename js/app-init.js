@@ -1,41 +1,58 @@
 /* =========================================================
-   app-init.js — Point d'entrée de l'application
-   =========================================================
-   S'exécute en dernier, une fois tous les autres modules
-   chargés. Orchestre :
-     - La mise à jour du badge d'en-tête (ÉTAPE N)
-     - L'initialisation de l'échiquier (Board)
-     - L'initialisation de la navigation (UINav)
-     - Le branchement du resize / orientation
-     - Le branchement des interactions tactiles
+   app-init.js — Point d'entrée + vérification des dépendances
    ========================================================= */
 
 (function () {
   'use strict';
 
-  /* ---------- Mise à jour du titre + badge ---------- */
+  /* ---------- Vérification des dépendances ---------- */
+  function checkDependencies() {
+    var missing = [];
+    if (!window.jQuery) missing.push('jQuery');
+    if (!window.Chessboard) missing.push('Chessboard.js');
+    if (!window.Chess) missing.push('chess.js');
+    if (!window.APP) missing.push('window.APP (config.js)');
+    if (!window.APP || !window.APP.CONFIG) missing.push('config.js');
+    if (!window.APP || !window.APP.CURRICULUM) missing.push('data-curriculum.js');
+    if (!window.APP || !window.APP.LESSON_TASKS) missing.push('data-lessons.js');
+    if (!window.APP || !window.APP.PUZZLE_TASKS) missing.push('data-puzzles.js');
+    if (!window.APP || !window.APP.Board) missing.push('board-core.js');
+    if (!window.APP || !window.APP.PreQuestion) missing.push('pre-question.js');
+    if (!window.APP || !window.APP.LessonEngine) missing.push('lesson-engine.js');
+    if (!window.APP || !window.APP.UINav) missing.push('ui-nav.js');
+    return missing;
+  }
+
+  function showFatalError(missing) {
+    document.body.innerHTML =
+      '<div style="padding:40px;color:#ff5757;font-family:monospace;font-size:14px;line-height:1.6;background:#121212;min-height:100vh;">' +
+      '<h2 style="color:#fff;margin-bottom:20px;">⚠️ Erreur de chargement</h2>' +
+      '<p style="color:#e8e8e8;margin-bottom:20px;">Certains modules n\'ont pas pu être chargés. Vérifie que les fichiers suivants existent et sont au bon endroit :</p>' +
+      '<ul style="margin-left:20px;color:#fbbf24;">' +
+      missing.map(function (m) { return '<li>' + m + '</li>'; }).join('') +
+      '</ul>' +
+      '<p style="color:#9a9a9a;margin-top:30px;font-size:12px;">Astuce : ouvre la console (F12) pour plus de détails.</p>' +
+      '</div>';
+  }
+
+  /* ---------- Identité visuelle ---------- */
   function applyIdentity() {
     var CFG = window.APP.CONFIG;
     if (!CFG) return;
     document.title = CFG.FULLNAME;
-
     var badge = document.getElementById('app-badge');
     if (badge) badge.textContent = 'ÉTAPE ' + CFG.STEP;
-
     var title = document.getElementById('app-title');
     if (title) title.textContent = '♟ ' + CFG.NAME;
   }
 
-  /* ---------- Branchement des événements Board ---------- */
+  /* ---------- Board events ---------- */
   function bindBoardEvents() {
-    /* Le onSnapEnd du Board doit remonter à UINav pour rafraîchir le panneau */
     window.APP.Board.setOnSnapEndHandler(function () {
       if (window.APP.Board.isLessonMode()) return;
-
       var game = window.APP.Board.getGame();
       window.APP.Board.position(game.fen(), false);
       window.APP.Board.applyLastMoveHighlight();
-
       var hist = game.history({ verbose: true });
       var lastMove = hist.length > 0 ? hist[hist.length - 1] : null;
       if (window.APP.UINav) {
@@ -44,14 +61,16 @@
     });
   }
 
-  /* ---------- Redimensionnement ---------- */
+  /* ---------- Resize ---------- */
   function bindResize() {
     var timer = null;
     window.addEventListener('resize', function () {
       clearTimeout(timer);
       timer = setTimeout(function () {
-        if (window.APP.Board) window.APP.Board.resize();
-        if (window.APP.Board) window.APP.Board.applyLastMoveHighlight();
+        if (window.APP.Board) {
+          window.APP.Board.resize();
+          window.APP.Board.applyLastMoveHighlight();
+        }
       }, 120);
     });
     window.addEventListener('orientationchange', function () {
@@ -61,9 +80,8 @@
     });
   }
 
-  /* ---------- Interactions tactiles iOS ---------- */
+  /* ---------- Tactile iOS ---------- */
   function bindTouchHandlers() {
-    /* Anti double-tap zoom */
     var lastTouchEnd = 0;
     document.addEventListener('touchend', function (e) {
       var now = Date.now();
@@ -71,7 +89,6 @@
       lastTouchEnd = now;
     }, { passive: false });
 
-    /* Anti pull-to-refresh dans la zone échiquier */
     var boardWrap = document.getElementById('board-wrap');
     if (boardWrap) {
       boardWrap.addEventListener('touchmove', function (e) {
@@ -80,7 +97,7 @@
     }
   }
 
-  /* ---------- Branchement clic sur les cases (identify-square) ---------- */
+  /* ---------- Clic cases (identify-square) ---------- */
   function bindSquareClicks() {
     var wrap = document.getElementById('board-wrap');
     if (!wrap) return;
@@ -102,53 +119,20 @@
     }, false);
   }
 
-  /* ---------- Init principal ---------- */
+  /* ---------- Init ---------- */
   function init() {
-    try {
-      /* 1. Identité visuelle */
-      applyIdentity();
-
-      /* 2. Échiquier */
-      window.APP.Board.init();
-
-      /* 3. Handlers Board vers UINav */
-      bindBoardEvents();
-
-      /* 4. Navigation + panneau */
-      window.APP.UINav.init();
-
-      /* 5. Redimensionnement */
-      bindResize();
-
-      /* 6. Tactile */
-      bindTouchHandlers();
-
-      /* 7. Clic cases (identify-square) */
-      bindSquareClicks();
-
-      /* 8. Petit délai puis resize final (au cas où le CSS n'est pas encore appliqué) */
-      setTimeout(function () {
-        window.APP.Board.resize();
-      }, 100);
-
-    } catch (err) {
-      /* Diagnostic visible sur la page en cas de problème d'init */
-      var panel = document.querySelector('.panel');
-      if (panel) {
-        var box = document.createElement('div');
-        box.style.cssText = 'background:#3a1010;color:#ff5757;padding:14px;border-radius:8px;margin-bottom:12px;font-family:monospace;font-size:12px;line-height:1.4;';
-        box.textContent = '⚠️ Erreur d\'initialisation : ' + err.message;
-        panel.insertBefore(box, panel.firstChild);
-      }
-      /* Log console pour debug */
-      if (window.console && console.error) console.error('[Projet_001] Init error:', err);
+    var missing = checkDependencies();
+    if (missing.length > 0) {
+      showFatalError(missing);
+      return;
     }
-  }
 
-  /* ---------- Démarrage ---------- */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
-})();
+    try {
+      applyIdentity();
+      window.APP.Board.init();
+      bindBoardEvents();
+      window.APP.UINav.init();
+      bindResize();
+      bindTouchHandlers();
+      bindSquareClicks();
+      setTimeout(function
