@@ -135,4 +135,24 @@
       bindResize();
       bindTouchHandlers();
       bindSquareClicks();
-      setTimeout(function
+      setTimeout(function () {
+        window.APP.Board.resize();
+      }, 100);
+    } catch (err) {
+      var panel = document.querySelector('.panel');
+      if (panel) {
+        var box = document.createElement('div');
+        box.style.cssText = 'background:#3a1010;color:#ff5757;padding:14px;border-radius:8px;margin-bottom:12px;font-family:monospace;font-size:12px;line-height:1.4;';
+        box.textContent = '⚠️ Erreur d\'initialisation : ' + err.message;
+        panel.insertBefore(box, panel.firstChild);
+      }
+      if (window.console && console.error) console.error('[Projet_001] Init error:', err);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
