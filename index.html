@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#121212">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Échecs Maître — Étape 1</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+
+  <style>
+    :root {
+      --bg: #121212;
+      --surface: #1e1e1e;
+      --surface-2: #262626;
+      --border: #2e2e2e;
+      --text: #e8e8e8;
+      --text-dim: #9a9a9a;
+      --accent: #4a9eff;
+      --square-light: #6b6b6b;
+      --square-dark: #2e2e2e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      min-height: 100dvh;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      padding-top: max(14px, env(safe-area-inset-top));
+    }
+
+    header h1 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+    }
+
+    header .badge {
+      font-size: 0.65rem;
+      background: var(--accent);
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+      padding: 14px;
+      max-width: 1280px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (min-width: 900px) {
+      main {
+        grid-template-columns: minmax(340px, 560px) 1fr;
+        align-items: start;
+        gap: 28px;
+        padding: 28px;
+      }
+    }
+
+    .board-wrap {
+      width: 100%;
+      max-width: min(94vw, 560px);
+      margin: 0 auto;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      position: relative;
+    }
+
+    #board {
+      width: 100%;
+      touch-action: none;
+    }
+
+    #board .board-b72b1 {
+      border: none !important;
+      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.55);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    #board .white-1e1d7 { background-color: var(--square-light) !important; }
+    #board .black-3c85d { background-color: var(--square-dark) !important; }
+    #board .notation-322f9 {
+      color: #c8c8c8 !important;
+      font-size: 11px !important;
+      font-weight: 700;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .panel h2 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .panel p {
+      font-size: 0.9rem;
+      line-height: 1.55;
+      color: var(--text-dim);
+      margin-bottom: 14px;
+    }
+
+    .panel p strong { color: var(--text); }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    button {
+      flex: 1;
+      min-width: 120px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+      touch-action: manipulation;
+      font-family: inherit;
+    }
+
+    button:hover, button:active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .status {
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.78rem;
+      background: #0d0d0d;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: #7dd3fc;
+      word-break: break-word;
+      min-height: 40px;
+      line-height: 1.4;
+    }
+
+    .info-list {
+      list-style: none;
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.8;
+      margin-top: 4px;
+    }
+    .info-list li::before {
+      content: "▸ ";
+      color: var(--accent);
+      margin-right: 4px;
+      font-weight: 700;
+    }
+
+    @media (min-width: 900px) {
+      .panel { position: sticky; top: 90px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>♟ Échecs Maître</h1>
+    <span class="badge">ÉTAPE 1</span>
+  </header>
+
+  <main>
+    <section class="board-wrap" id="board-wrap">
+      <div id="board"></div>
+    </section>
+
+    <aside class="panel">
+      <h2>Panneau de contrôle</h2>
+      <p>
+        Échiquier interactif — déplacez les pièces par
+        <strong>glisser-déposer</strong> (PC) ou
+        <strong>toucher-sélectionner / toucher-déplacer</strong> (iPhone).
+      </p>
+
+      <div class="status" id="status">Position initiale chargée.</div>
+
+      <div class="btn-row">
+        <button id="btn-reset" type="button">Réinitialiser</button>
+        <button id="btn-flip" type="button">Retourner</button>
+      </div>
+
+      <h2 style="margin-top: 22px;">Fondations actives</h2>
+      <ul class="info-list">
+        <li>Dark Mode #121212 universel</li>
+        <li>Responsive PC (2 colonnes) / iPhone (vertical)</li>
+        <li>Tactile : <code>touch-action: none</code>, anti-zoom, anti-pull-refresh</li>
+        <li>Chessboard.js + jQuery via CDN</li>
+        <li>Prochaine étape : règles légales (chess.js)</li>
+      </ul>
+    </aside>
+  </main>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+  <script>
+    (function () {
+      'use strict';
+
+      var statusEl = document.getElementById('status');
+      var board = null;
+
+      function setStatus(msg) { statusEl.textContent = msg; }
+
+      var boardConfig = {
+        draggable: true,
+        position: 'start',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+        showNotation: true,
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onSnapEnd: onSnapEnd
+      };
+
+      function onDragStart(source, piece) {
+        // Étape 1 : tout est déplaçable (règles légales ajoutées à l'Étape 2)
+        return true;
+      }
+
+      function onDrop(source, target) {
+        if (source === target) return 'snapback';
+        // Pas de validation légale pour l'instant — accepté librement
+        return;
+      }
+
+      function onSnapEnd() {
+        var pos = board.position();
+        var count = Object.keys(pos).length;
+        setStatus('Position mise à jour — ' + count + ' pièces sur l\'échiquier.');
+      }
+
+      function initBoard() {
+        board = Chessboard('board', boardConfig);
+        setTimeout(resizeBoard, 50);
+      }
+
+      function resizeBoard() {
+        if (board && typeof board.resize === 'function') board.resize();
+      }
+
+      document.getElementById('btn-reset').addEventListener('click', function () {
+        board.position('start');
+        setStatus('Position initiale restaurée.');
+      });
+
+      document.getElementById('btn-flip').addEventListener('click', function () {
+        board.flip();
+        setStatus('Échiquier retourné.');
+      });
+
+      var resizeTimer = null;
+      window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(resizeBoard, 120);
+      });
+      window.addEventListener('orientationchange', function () {
+        setTimeout(resizeBoard, 250);
+      });
+
+      // Anti double-tap zoom sur Safari iOS (zone application entière)
+      var lastTouchEnd = 0;
+      document.addEventListener('touchend', function (e) {
+        var now = Date.now();
+        if (now - lastTouchEnd <= 300) e.preventDefault();
+        lastTouchEnd = now;
+      }, { passive: false });
+
+      // Anti pull-to-refresh et anti-scroll parasites dans la zone échiquier
+      var boardWrap = document.getElementById('board-wrap');
+      boardWrap.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+      }, { passive: false });
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBoard);
+      } else {
+        initBoard();
+      }
+    })();
+  </script>
+</body>
+</html>
