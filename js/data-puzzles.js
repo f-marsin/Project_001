@@ -520,4 +520,253 @@ window.APP.PUZZLE_TASKS = {
       {
         fen: '4k3/8/8/8/8/8/q7/R3K3 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. La dame noire en a2 est-elle
+          text: 'Aux Blancs. La dame noire en a2 est-elle prenable immédiatement ?',
+          options: ['Oui, mais un échec intermédiaire est plus fort', 'Non, elle est protégée', 'Oui, RxA2 immédiat'],
+          correctIndex: 0,
+          whyWrong: 'On peut jouer Ra8+ d\'abord pour gagner du temps, puis prendre la dame.'
+        },
+        prompt: 'Joue le coup intermédiaire.',
+        solution: 'Ra8+',
+        hint: 'Échec d\'abord, puis capture.'
+      },
+      {
+        fen: '4k3/8/8/8/8/8/q7/R3K3 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Pourquoi ne pas capturer la dame tout de suite ?',
+          options: ['Un coup intermédiaire gagne plus', 'La capture est illégale', 'La dame est protégée'],
+          correctIndex: 0,
+          whyWrong: 'Un zwischenzug (coup intermédiaire) peut forcer une meilleure position avant la capture.'
+        },
+        prompt: 'Coup intermédiaire.',
+        solution: 'Ra8+',
+        hint: 'Colonne a, rangée 8.'
+      },
+      {
+        fen: '4k3/8/8/8/8/8/8/q3K3 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Ton roi est en e1, la dame en a1. Es-tu en échec ?',
+          options: ['Oui, je dois esquiver', 'Non', 'Je peux capturer la dame'],
+          correctIndex: 0,
+          whyWrong: 'La dame en a1 attaque toute la rangée 1, dont ton roi en e1.'
+        },
+        prompt: 'Échappe-toi.',
+        solution: 'Kd2',
+        hint: 'Sors de la rangée 1.'
+      }
+    ]
+  },
+
+  /* =========================================================
+     MODULE 5 — COMBINAISONS À 2-3 COUPS
+     ========================================================= */
+
+  /* ---------- M5-L1 : MAT DU BERGER ---------- */
+  'M5-L1': {
+    kind: 'solve-puzzle',
+    tasks: [
+      {
+        fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Quelle pièce doit sortir pour menacer f7 ?',
+          options: ['La dame en h5', 'Le cavalier en f3', 'Le fou en b5'],
+          correctIndex: 0,
+          whyWrong: 'La dame en h5 vise f7 et h7, les points faibles classiques.'
+        },
+        prompt: 'Sors la dame.',
+        solution: 'Qh5',
+        hint: 'Dame d1 vers h5.'
+      },
+      {
+        fen: 'r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Comment mater en un coup ?',
+          options: ['Qxf7#', 'Qxe5+', 'Qh4'],
+          correctIndex: 0,
+          whyWrong: 'Le mat du berger passe par Qxf7# : la dame capture en f7 avec protection du fou.'
+        },
+        prompt: 'Mater en 1.',
+        solution: 'Qxf7#',
+        hint: 'Dame h5 prend pion f7.'
+      },
+      {
+        fen: 'r1bqkbnr/pppp1ppp/2n5/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Quel est le coup qui commence le mat du berger ?',
+          options: ['Qh5', 'Nf3', 'Bb5'],
+          correctIndex: 0,
+          whyWrong: 'Le mat du berger commence toujours par Qh5.'
+        },
+        prompt: 'Premier coup du mat du berger.',
+        solution: 'Qh5',
+        hint: 'Vers h5.'
+      }
+    ]
+  },
+
+  /* ---------- M5-L2 : MAT À L'ÉTOUFFÉE ---------- */
+  'M5-L2': {
+    kind: 'solve-puzzle',
+    tasks: [
+      {
+        fen: '6rk/6pp/8/5N2/8/8/8/6K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Le roi noir est étouffé en h8 par ses propres pièces. Quelle pièce mate ?',
+          options: ['Le cavalier en f5 → f7', 'La dame', 'Aucune'],
+          correctIndex: 0,
+          whyWrong: 'Un cavalier en f7 donne échec et mat à un roi étouffé en h8.'
+        },
+        prompt: 'Mat à l\'étouffée.',
+        solution: 'Nf7#',
+        hint: 'Cavalier en f5 va en f7.'
+      },
+      {
+        fen: '6rk/6pp/8/8/5N2/8/8/6K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Même configuration mais cavalier en f4. Que faire ?',
+          options: ['Nf7#', 'Nh5', 'Nd5'],
+          correctIndex: 0,
+          whyWrong: 'Un cavalier en f4 peut tout à fait atteindre f7 pour mater.'
+        },
+        prompt: 'Mat à l\'étouffée.',
+        solution: 'Nf7#',
+        hint: 'De f4 vers f7.'
+      },
+      {
+        fen: '6rk/6pp/8/5N2/8/8/8/6K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Le roi noir en h8 est-il en échec ?',
+          options: ['Non, pas encore', 'Oui, déjà', 'Je ne sais pas'],
+          correctIndex: 0,
+          whyWrong: 'Le roi noir n\'est pas encore en échec, mais il est étouffé.'
+        },
+        prompt: 'Mat à l\'étouffée.',
+        solution: 'Nf7#',
+        hint: 'Case f7.'
+      }
+    ]
+  },
+
+  /* ---------- M5-L3 : MAT DU COULOIR ---------- */
+  'M5-L3': {
+    kind: 'solve-puzzle',
+    tasks: [
+      {
+        fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Les pions noirs f7, g7, h7 bloquent le roi. Où mater ?',
+          options: ['En a8 (mat du couloir)', 'En h1', 'Avec le roi'],
+          correctIndex: 0,
+          whyWrong: 'Le mat du couloir exploite la 8e rangée faible : Ra8#.'
+        },
+        prompt: 'Mat du couloir.',
+        solution: 'Ra8#',
+        hint: 'Tour a1 vers a8.'
+      },
+      {
+        fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Les trois pions noirs bloquent-ils le roi noir ?',
+          options: ['Oui, roi étouffé sur la 8e', 'Non, il peut bouger', 'Partiellement'],
+          correctIndex: 0,
+          whyWrong: 'Les pions f7 g7 h7 ferment les cases de fuite. Ra8# est mat.'
+        },
+        prompt: 'Mat du couloir.',
+        solution: 'Ra8#',
+        hint: 'Colonne a, rangée 8.'
+      }
+    ]
+  },
+
+  /* ---------- M5-L4 : MAT D'ANASTASIE ---------- */
+  'M5-L4': {
+    kind: 'solve-puzzle',
+    tasks: [
+      {
+        fen: '6k1/5Npp/8/8/8/8/8/R5K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Ton cavalier en f7 contrôle h8 et h6. Que peut faire la tour ?',
+          options: ['Ra8#', 'Rh1', 'Rf1'],
+          correctIndex: 0,
+          whyWrong: 'Avec un cavalier en f7, une tour en a8 donne mat (Anastasie).'
+        },
+        prompt: 'Mat d\'Anastasie.',
+        solution: 'Ra8#',
+        hint: 'Tour vers a8.'
+      },
+      {
+        fen: '6k1/5Npp/8/8/8/8/8/R5K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Le roi noir est en g8. Quelle case de tour mate ?',
+          options: ['a8', 'h1', 'f1'],
+          correctIndex: 0,
+          whyWrong: 'Ra8# sur la 8e rangée, avec le cavalier en f7 qui couvre les fuites.'
+        },
+        prompt: 'Mat d\'Anastasie.',
+        solution: 'Ra8#',
+        hint: 'Colonne a.'
+      }
+    ]
+  },
+
+  /* ---------- M5-L5 : MAT ARABE ---------- */
+  'M5-L5': {
+    kind: 'solve-puzzle',
+    tasks: [
+      {
+        fen: '7k/6pp/8/5N2/8/8/8/5RK1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Roi noir en h8, cavalier en f5. Quelle case de tour mate ?',
+          options: ['f8#', 'f1', 'h1'],
+          correctIndex: 0,
+          whyWrong: 'Rf8# avec le cavalier en f5 (attaque h6 et g7).'
+        },
+        prompt: 'Mat arabe.',
+        solution: 'Rf8#',
+        hint: 'Tour f1 vers f8.'
+      },
+      {
+        fen: '7k/6pp/8/5N2/8/8/8/5RK1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. La tour en f1 doit atteindre quelle case ?',
+          options: ['f8', 'a1', 'h1'],
+          correctIndex: 0,
+          whyWrong: 'f8 est la case de mat.'
+        },
+        prompt: 'Mat arabe.',
+        solution: 'Rf8#',
+        hint: 'Colonne f, rangée 8.'
+      }
+    ]
+  },
+
+  /* ---------- M5-L6 : COMBINAISONS MIXTES ---------- */
+  'M5-L6': {
+    kind: 'solve-puzzle',
+    tasks: [
+      {
+        fen: '6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Reconnais-tu ce motif classique ?',
+          options: ['Mat du couloir', 'Mat à l\'étouffée', 'Fourchette'],
+          correctIndex: 0,
+          whyWrong: 'Les pions f7 g7 h7 bloquent le roi sur la 8e : c\'est le mat du couloir.'
+        },
+        prompt: 'Mat en 1.',
+        solution: 'Ra8#',
+        hint: 'Colonne a.'
+      },
+      {
+        fen: '6k1/5Npp/8/8/8/8/8/R5K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Reconnais-tu ce motif ?',
+          options: ['Mat d\'Anastasie', 'Fourchette', 'Enfilade'],
+          correctIndex: 0,
+          whyWrong: 'Cavalier + tour contre roi coincé = mat d\'Anastasie.'
+        },
+        prompt: 'Mat en 1.',
+        solution: 'Ra8#',
+        hint: 'Tour en a8.'
+      }
+    ]
+  }
+};
