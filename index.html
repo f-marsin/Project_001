@@ -20,36 +20,29 @@
       --text: #e8e8e8;
       --text-dim: #9a9a9a;
       --accent: #4a9eff;
-      --accent-dim: #2c6ab8;
       --danger: #ff5757;
       --success: #4ade80;
       --warn: #fbbf24;
       --square-light: #6b6b6b;
       --square-dark: #2e2e2e;
       --highlight: rgba(74, 158, 255, 0.45);
+      --good: rgba(74, 222, 128, 0.55);
+      --bad: rgba(255, 87, 87, 0.55);
+      --target: rgba(251, 191, 36, 0.5);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
-      background: var(--bg);
-      color: var(--text);
+      background: var(--bg); color: var(--text);
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      min-height: 100vh;
-      min-height: 100dvh;
+      min-height: 100vh; min-height: 100dvh;
       -webkit-text-size-adjust: 100%;
       -webkit-tap-highlight-color: transparent;
       overscroll-behavior: none;
     }
     header {
-      padding: 14px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      background: var(--surface);
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      padding: 14px 16px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; background: var(--surface); position: sticky; top: 0; z-index: 10;
       padding-top: max(14px, env(safe-area-inset-top));
     }
     header .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -58,117 +51,70 @@
       font-size: 0.65rem; background: var(--accent); color: #fff;
       padding: 3px 8px; border-radius: 20px; font-weight: 600; letter-spacing: 0.5px;
     }
-
     .tabs {
-      display: flex;
-      gap: 4px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 3px;
-      flex-shrink: 0;
+      display: flex; gap: 4px; background: var(--surface-2);
+      border: 1px solid var(--border); border-radius: 8px; padding: 3px; flex-shrink: 0;
     }
     .tab {
-      padding: 7px 12px;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-dim);
-      cursor: pointer;
-      border: none;
-      background: transparent;
-      font-family: inherit;
-      transition: background 0.15s, color 0.15s;
-      touch-action: manipulation;
+      padding: 7px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+      color: var(--text-dim); cursor: pointer; border: none; background: transparent;
+      font-family: inherit; transition: background 0.15s, color 0.15s; touch-action: manipulation;
     }
     .tab.active { background: var(--accent); color: #fff; }
     .tab:hover:not(.active) { color: var(--text); }
 
     main {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
-      padding: 14px;
-      max-width: 1280px;
-      margin: 0 auto;
-      width: 100%;
+      display: grid; grid-template-columns: 1fr; gap: 14px;
+      padding: 14px; max-width: 1280px; margin: 0 auto; width: 100%;
     }
     @media (min-width: 900px) {
       main {
         grid-template-columns: minmax(340px, 560px) 1fr;
-        align-items: start;
-        gap: 28px;
-        padding: 28px;
+        align-items: start; gap: 28px; padding: 28px;
       }
     }
-
     .board-wrap {
-      width: 100%;
-      max-width: min(94vw, 560px);
-      margin: 0 auto;
-      touch-action: none;
-      -webkit-user-select: none;
-      user-select: none;
-      position: relative;
+      width: 100%; max-width: min(94vw, 560px); margin: 0 auto;
+      touch-action: none; -webkit-user-select: none; user-select: none; position: relative;
     }
     #board { width: 100%; touch-action: none; }
     #board .board-b72b1 {
-      border: none !important;
-      box-shadow: 0 6px 28px rgba(0, 0, 0, 0.55);
-      border-radius: 8px;
-      overflow: hidden;
+      border: none !important; box-shadow: 0 6px 28px rgba(0, 0, 0, 0.55);
+      border-radius: 8px; overflow: hidden;
     }
     #board .white-1e1d7 { background-color: var(--square-light) !important; }
     #board .black-3c85d { background-color: var(--square-dark) !important; }
-    #board .notation-322f9 {
-      color: #c8c8c8 !important;
-      font-size: 11px !important;
-      font-weight: 700;
-    }
+    #board .notation-322f9 { color: #c8c8c8 !important; font-size: 11px !important; font-weight: 700; }
     #board .square-55d63.hl-from,
-    #board .square-55d63.hl-to {
-      box-shadow: inset 0 0 0 4px var(--highlight);
-    }
-    #board .square-55d63.illegal-flash {
-      animation: illegalFlash 0.5s ease-out;
-    }
+    #board .square-55d63.hl-to { box-shadow: inset 0 0 0 4px var(--highlight); }
+    #board .square-55d63.hl-target { box-shadow: inset 0 0 0 4px var(--target); }
+    #board .square-55d63.hl-good { background-color: var(--good) !important; }
+    #board .square-55d63.hl-bad  { background-color: var(--bad) !important; }
+    #board .square-55d63.illegal-flash { animation: illegalFlash 0.5s ease-out; }
     @keyframes illegalFlash {
       0%   { box-shadow: inset 0 0 0 4px var(--danger); }
       100% { box-shadow: inset 0 0 0 0 transparent; }
     }
+    #board .square-55d63.clickable { cursor: pointer; }
 
     .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 18px;
-      min-height: 300px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 18px; min-height: 300px;
     }
-    @media (min-width: 900px) {
-      .panel { position: sticky; top: 90px; }
-    }
-
+    @media (min-width: 900px) { .panel { position: sticky; top: 90px; } }
     .panel h2 {
-      font-size: 0.8rem; text-transform: uppercase;
-      letter-spacing: 1.2px; color: var(--text-dim);
-      margin-bottom: 12px; font-weight: 700;
+      font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--text-dim); margin-bottom: 12px; font-weight: 700;
     }
 
     .turn-indicator {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 12px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-bottom: 12px;
-      font-size: 0.9rem;
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 12px; font-size: 0.9rem;
     }
     .turn-dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid #555;
-      background: #fff;
-      flex-shrink: 0;
-      transition: background 0.2s, border-color 0.2s;
+      width: 14px; height: 14px; border-radius: 50%; border: 2px solid #555;
+      background: #fff; flex-shrink: 0; transition: background 0.2s, border-color 0.2s;
     }
     .turn-dot.black { background: #111; border-color: #444; }
     .turn-label { font-weight: 600; }
@@ -178,16 +124,9 @@
 
     .status {
       font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-      font-size: 0.78rem;
-      background: #0d0d0d;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 10px 12px;
-      color: #7dd3fc;
-      word-break: break-word;
-      min-height: 40px;
-      line-height: 1.4;
-      margin-bottom: 12px;
+      font-size: 0.78rem; background: #0d0d0d; border: 1px solid var(--border);
+      border-radius: 6px; padding: 10px 12px; color: #7dd3fc;
+      word-break: break-word; min-height: 40px; line-height: 1.4; margin-bottom: 12px;
     }
     .status.error { color: var(--danger); }
     .status.warn  { color: var(--warn); }
@@ -195,18 +134,11 @@
 
     .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
     button {
-      flex: 1; min-width: 110px;
-      padding: 11px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--surface-2);
-      color: var(--text);
-      font-size: 0.88rem;
-      font-weight: 500;
-      cursor: pointer;
+      flex: 1; min-width: 110px; padding: 11px 14px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+      font-size: 0.88rem; font-weight: 500; cursor: pointer;
       transition: background 0.15s, border-color 0.15s, color 0.15s;
-      touch-action: manipulation;
-      font-family: inherit;
+      touch-action: manipulation; font-family: inherit;
     }
     button:hover:not(:disabled), button:active:not(:disabled) {
       background: var(--accent); border-color: var(--accent); color: #fff;
@@ -214,18 +146,14 @@
     button:disabled { opacity: 0.4; cursor: not-allowed; }
 
     .history {
-      background: #0d0d0d;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      max-height: 200px;
-      overflow-y: auto;
+      background: #0d0d0d; border: 1px solid var(--border); border-radius: 8px;
+      max-height: 200px; overflow-y: auto;
       font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-      font-size: 0.82rem;
-      -webkit-overflow-scrolling: touch;
+      font-size: 0.82rem; -webkit-overflow-scrolling: touch;
     }
     .history-empty {
-      padding: 14px; color: var(--text-dim);
-      text-align: center; font-style: italic; font-size: 0.8rem;
+      padding: 14px; color: var(--text-dim); text-align: center;
+      font-style: italic; font-size: 0.8rem;
     }
     .history-row {
       display: grid; grid-template-columns: 40px 1fr 1fr;
@@ -234,99 +162,60 @@
     .history-row:last-child { border-bottom: none; }
     .history-row > div { padding: 8px 10px; }
     .history-row .num { color: var(--text-dim); background: var(--surface-2); }
-    .history-row .san-w { color: #e8e8e8; }
-    .history-row .san-b { color: #c8c8c8; }
 
     /* ---------- CURRICULUM ---------- */
     .crumb {
-      font-size: 0.78rem;
-      color: var(--text-dim);
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
+      font-size: 0.78rem; color: var(--text-dim); margin-bottom: 12px;
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
     }
-    .crumb a {
-      color: var(--accent);
-      text-decoration: none;
-      cursor: pointer;
-      font-weight: 600;
-    }
+    .crumb a { color: var(--accent); text-decoration: none; cursor: pointer; font-weight: 600; }
     .crumb a:hover { text-decoration: underline; }
     .crumb .sep { color: #555; }
 
     .module-card {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 10px;
-      cursor: pointer;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px; margin-bottom: 10px; cursor: pointer;
       transition: border-color 0.15s, background 0.15s;
-      touch-action: manipulation;
-      position: relative;
+      touch-action: manipulation; position: relative;
     }
     .module-card:hover { border-color: var(--accent); background: var(--surface-3); }
     .module-card.locked { opacity: 0.55; cursor: not-allowed; }
     .module-card.locked:hover { border-color: var(--border); background: var(--surface-2); }
-
-    .module-head {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 6px;
-    }
+    .module-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
     .module-id {
       font-size: 0.7rem; font-weight: 800; letter-spacing: 1px;
       color: var(--accent); text-transform: uppercase;
     }
     .module-count {
       font-size: 0.72rem; color: var(--text-dim);
-      background: #0d0d0d;
-      padding: 2px 8px; border-radius: 12px;
+      background: #0d0d0d; padding: 2px 8px; border-radius: 12px;
     }
-    .module-title {
-      font-size: 0.95rem; font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .module-sub {
-      font-size: 0.78rem; color: var(--text-dim);
-      line-height: 1.4;
-    }
+    .module-title { font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+    .module-sub { font-size: 0.78rem; color: var(--text-dim); line-height: 1.4; }
     .module-lock {
       position: absolute; top: 12px; right: 12px;
       font-size: 0.9rem; color: var(--warn);
     }
 
     .lesson-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px;
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-bottom: 8px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      touch-action: manipulation;
+      display: flex; align-items: center; gap: 10px; padding: 12px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 8px; margin-bottom: 8px; cursor: pointer;
+      transition: border-color 0.15s, background 0.15s; touch-action: manipulation;
     }
     .lesson-row:hover { border-color: var(--accent); background: var(--surface-3); }
     .lesson-row.locked { opacity: 0.5; cursor: not-allowed; }
     .lesson-row.locked:hover { border-color: var(--border); background: var(--surface-2); }
-
+    .lesson-row.done { border-color: rgba(74, 222, 128, 0.4); }
     .lesson-num {
-      font-size: 0.7rem; font-weight: 700;
-      background: #0d0d0d;
-      color: var(--accent);
-      padding: 4px 8px; border-radius: 6px;
-      min-width: 32px;
-      text-align: center;
-      flex-shrink: 0;
+      font-size: 0.7rem; font-weight: 700; background: #0d0d0d;
+      color: var(--accent); padding: 4px 8px; border-radius: 6px;
+      min-width: 32px; text-align: center; flex-shrink: 0;
     }
+    .lesson-row.done .lesson-num { color: var(--success); }
     .lesson-info { flex: 1; min-width: 0; }
     .lesson-title {
-      font-size: 0.88rem; font-weight: 600;
-      margin-bottom: 2px;
+      font-size: 0.88rem; font-weight: 600; margin-bottom: 2px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .lesson-meta {
@@ -334,14 +223,14 @@
       display: flex; gap: 8px; align-items: center;
     }
     .lesson-type {
-      text-transform: uppercase;
-      font-weight: 700;
-      font-size: 0.65rem;
-      letter-spacing: 0.5px;
+      text-transform: uppercase; font-weight: 700;
+      font-size: 0.65rem; letter-spacing: 0.5px;
     }
     .lesson-type.lesson { color: var(--accent); }
     .lesson-type.exercise { color: var(--success); }
     .lesson-type.puzzle { color: var(--warn); }
+    .lesson-type.interactive { color: var(--success); }
+    .lesson-type.coming { color: #666; }
 
     .diff-bars { display: inline-flex; gap: 2px; align-items: center; }
     .diff-bars span {
@@ -351,78 +240,91 @@
     .diff-bars span.on { background: var(--accent); }
 
     .lesson-detail {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px;
     }
-    .lesson-detail h3 {
-      font-size: 1rem; margin-bottom: 8px;
-    }
+    .lesson-detail h3 { font-size: 1rem; margin-bottom: 8px; }
     .lesson-detail .objective {
-      font-size: 0.85rem;
-      color: var(--text-dim);
-      line-height: 1.55;
-      margin-bottom: 14px;
-      padding: 10px 12px;
-      background: #0d0d0d;
-      border-left: 3px solid var(--accent);
-      border-radius: 4px;
+      font-size: 0.85rem; color: var(--text-dim); line-height: 1.55;
+      margin-bottom: 14px; padding: 10px 12px; background: #0d0d0d;
+      border-left: 3px solid var(--accent); border-radius: 4px;
     }
     .lesson-detail .placeholder {
-      font-size: 0.82rem;
-      color: var(--text-dim);
-      text-align: center;
-      padding: 24px 12px;
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      font-style: italic;
+      font-size: 0.82rem; color: var(--text-dim);
+      text-align: center; padding: 24px 12px;
+      border: 1px dashed var(--border); border-radius: 8px; font-style: italic;
     }
     .back-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--accent);
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-      margin-bottom: 12px;
-      font-family: inherit;
-      touch-action: manipulation;
-      flex: 0 1 auto;
-      min-width: auto;
+      display: inline-flex; align-items: center; gap: 6px;
+      background: transparent; border: 1px solid var(--border); color: var(--accent);
+      padding: 6px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600;
+      cursor: pointer; margin-bottom: 12px; font-family: inherit;
+      touch-action: manipulation; flex: 0 1 auto; min-width: auto;
     }
     .back-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    /* ---------- INTERACTIVE LESSON ---------- */
+    .lesson-play {
+      background: var(--surface-2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px;
+    }
+    .lesson-progress {
+      display: flex; gap: 4px; margin-bottom: 12px;
+    }
+    .lesson-progress .pip {
+      flex: 1; height: 5px; background: #0d0d0d; border-radius: 3px;
+      overflow: hidden;
+    }
+    .lesson-progress .pip.done { background: var(--success); }
+    .lesson-progress .pip.current { background: var(--accent); }
+    .lesson-play h3 { font-size: 1rem; margin-bottom: 8px; }
+    .lesson-play .instruction {
+      font-size: 0.92rem; color: var(--text);
+      padding: 12px 14px; background: #0d0d0d; border-left: 3px solid var(--accent);
+      border-radius: 4px; margin-bottom: 12px; line-height: 1.5; font-weight: 500;
+    }
+    .lesson-play .feedback {
+      font-size: 0.85rem; padding: 10px 12px; border-radius: 6px;
+      margin-bottom: 12px; line-height: 1.5; min-height: 40px;
+      display: none;
+    }
+    .lesson-play .feedback.show { display: block; }
+    .lesson-play .feedback.ok {
+      background: rgba(74, 222, 128, 0.12); color: var(--success);
+      border: 1px solid rgba(74, 222, 128, 0.35);
+    }
+    .lesson-play .feedback.ko {
+      background: rgba(255, 87, 87, 0.12); color: var(--danger);
+      border: 1px solid rgba(255, 87, 87, 0.35);
+    }
+    .lesson-play .task-counter {
+      font-size: 0.78rem; color: var(--text-dim); margin-bottom: 8px;
+      font-family: ui-monospace, monospace;
+    }
+    .lesson-play .lesson-complete {
+      text-align: center; padding: 20px 12px;
+    }
+    .lesson-play .lesson-complete .icon { font-size: 2.5rem; margin-bottom: 10px; }
+    .lesson-play .lesson-complete h4 { font-size: 1.1rem; margin-bottom: 8px; color: var(--success); }
+    .lesson-play .lesson-complete p { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 16px; }
+    .lesson-play .lesson-complete button { max-width: 240px; margin: 0 auto; }
 
     .view { display: none; }
     .view.active { display: block; }
 
     .overlay {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-      display: none;
-      align-items: center; justify-content: center;
-      z-index: 100;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center; z-index: 100;
       padding: 20px;
       padding-top: max(20px, env(safe-area-inset-top));
       padding-bottom: max(20px, env(safe-area-inset-bottom));
     }
     .overlay.show { display: flex; }
     .modal {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px;
-      max-width: 380px;
-      width: 100%;
-      text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 24px; max-width: 380px; width: 100%;
+      text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
     }
     .modal h3 { font-size: 1.3rem; margin-bottom: 8px; }
     .modal p { color: var(--text-dim); font-size: 0.9rem; margin-bottom: 18px; line-height: 1.5; }
@@ -433,7 +335,7 @@
   <header>
     <div class="brand">
       <h1 id="app-title">♟ Projet_001</h1>
-      <span class="badge" id="app-badge">ÉTAPE 3</span>
+      <span class="badge" id="app-badge">ÉTAPE 4</span>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab active" data-view="curriculum" role="tab">Curriculum</button>
@@ -497,161 +399,287 @@
     'use strict';
 
     /* =========================================================
-       0. IDENTITÉ DE L'APPLICATION (titre dynamique)
-       =========================================================
-       Pour changer de nom ou d'étape, modifie UNIQUEMENT ici.
-       Le <title> de l'onglet et le <h1> de l'en-tête seront
-       mis à jour automatiquement.                                */
+       0. IDENTITÉ
+       ========================================================= */
     var APP_NAME     = 'Projet_001';
-    var APP_STEP     = 3;
+    var APP_STEP     = 4;
     var APP_FULLNAME = APP_NAME + ' — Étape ' + APP_STEP;
-
-    // Application immédiate du titre (avant même le DOM ready)
     document.title = APP_FULLNAME;
 
     /* =========================================================
-       1. DONNÉES DU CURRICULUM — 10 modules / 55 leçons
+       1. BANQUE DE TÂCHES PAR LEÇON (M0 et M1)
+       ---------------------------------------------------------
+       Types de tâches :
+         - identify-square  : cliquer une case nommée
+         - move-piece       : déplacer une pièce d'une case à une autre
+         - capture-piece    : capturer une pièce précise
+       Chaque leçon a entre 6 et 10 tâches possibles ; 5 sont
+       tirées aléatoirement à chaque session.
        ========================================================= */
+    var LESSON_TASKS = {
+
+      /* ---------- MODULE 0 ---------- */
+      'M0-L1': {
+        kind: 'identify-square',
+        instruction: 'Clique sur la case demandée.',
+        tasks: [
+          { prompt: 'Trouve la case e4.', target: 'e4' },
+          { prompt: 'Trouve la case d5.', target: 'd5' },
+          { prompt: 'Trouve la case a1.', target: 'a1' },
+          { prompt: 'Trouve la case h8.', target: 'h8' },
+          { prompt: 'Trouve la case c6.', target: 'c6' },
+          { prompt: 'Trouve la case f3.', target: 'f3' },
+          { prompt: 'Trouve la case b7.', target: 'b7' },
+          { prompt: 'Trouve la case g2.', target: 'g2' },
+          { prompt: 'Trouve la case e5.', target: 'e5' },
+          { prompt: 'Trouve la case d4.', target: 'd4' }
+        ]
+      },
+      'M0-L2': {
+        kind: 'identify-square',
+        instruction: 'Réponds en cliquant la bonne case.',
+        tasks: [
+          { prompt: 'Où se trouve le coin blanc de droite des Blancs ?', target: 'h1' },
+          { prompt: 'Où se trouve le coin gauche des Noirs ?', target: 'a8' },
+          { prompt: 'Sur quelle rangée se trouve le camp blanc au départ ?', target: '1' , matchRow: true, targetRow: '1' },
+          { prompt: 'Sur quelle rangée se trouve le camp noir au départ ?', target: '8', matchRow: true, targetRow: '8' },
+          { prompt: 'Quelle colonne porte le nom de la dame blanche ?', target: 'd', matchCol: true, targetCol: 'd' },
+          { prompt: 'Quelle colonne porte le nom du roi blanc ?', target: 'e', matchCol: true, targetCol: 'e' }
+        ]
+      },
+      'M0-L3': {
+        kind: 'identify-square',
+        instruction: 'Clique le plus vite possible la case demandée.',
+        tasks: [
+          { prompt: 'Case e4 ?', target: 'e4' },
+          { prompt: 'Case b2 ?', target: 'b2' },
+          { prompt: 'Case g7 ?', target: 'g7' },
+          { prompt: 'Case a5 ?', target: 'a5' },
+          { prompt: 'Case f6 ?', target: 'f6' },
+          { prompt: 'Case h3 ?', target: 'h3' },
+          { prompt: 'Case c8 ?', target: 'c8' },
+          { prompt: 'Case d1 ?', target: 'd1' },
+          { prompt: 'Case e5 ?', target: 'e5' },
+          { prompt: 'Case b4 ?', target: 'b4' }
+        ]
+      },
+      'M0-L4': {
+        kind: 'identify-square',
+        instruction: 'Identifie la case selon sa description.',
+        tasks: [
+          { prompt: 'Quelle case est au centre de l\'échiquier, sur la colonne e et la rangée 4 ?', target: 'e4' },
+          { prompt: 'Quelle case est au centre de l\'échiquier, sur la colonne d et la rangée 5 ?', target: 'd5' },
+          { prompt: 'Quelle case est sur la diagonale a1-h8, colonne e ?', target: 'e5' },
+          { prompt: 'Quelle case est la 2e case de la diagonale a1-h8 ?', target: 'b2' },
+          { prompt: 'Quelle case est juste devant le roi blanc ?', target: 'e2' },
+          { prompt: 'Quelle case est juste devant le roi noir ?', target: 'e7' }
+        ]
+      },
+
+      /* ---------- MODULE 1 : LE PION ---------- */
+      'M1-L1': {
+        kind: 'move-piece',
+        instruction: 'Déplace le pion selon la consigne. Glisse-le ou tape la case d\'arrivée.',
+        tasks: [
+          { fen: '8/8/8/8/8/8/4P3/8 w - - 0 1', prompt: 'Avance le pion e2 d\'une case.', from: 'e2', to: 'e3' },
+          { fen: '8/8/8/8/8/8/4P3/8 w - - 0 1', prompt: 'Fais la poussée double du pion e2.', from: 'e2', to: 'e4' },
+          { fen: '8/8/8/8/8/4P3/8/8 w - - 0 1', prompt: 'Avance le pion e3 vers e4.', from: 'e3', to: 'e4' },
+          { fen: '8/8/8/4p3/3P4/8/8/8 w - - 0 1', prompt: 'Capture le pion noir en e5.', from: 'd4', to: 'e5' },
+          { fen: '8/8/8/3p4/4P3/8/8/8 w - - 0 1', prompt: 'Capture le pion noir en d5.', from: 'e4', to: 'd5' },
+          { fen: '8/8/8/8/8/8/7P/8 w - - 0 1', prompt: 'Fais avancer le pion h2 de deux cases.', from: 'h2', to: 'h4' }
+        ]
+      },
+
+      /* ---------- MODULE 1 : LA TOUR ---------- */
+      'M1-L2': {
+        kind: 'move-piece',
+        instruction: 'Déplace la tour. Elle se déplace en ligne droite.',
+        tasks: [
+          { fen: '8/8/8/8/8/8/8/R7 w - - 0 1', prompt: 'Déplace la tour de a1 à a8.', from: 'a1', to: 'a8' },
+          { fen: '8/8/8/8/8/8/8/R7 w - - 0 1', prompt: 'Déplace la tour de a1 à h1.', from: 'a1', to: 'h1' },
+          { fen: '8/8/8/8/8/8/8/4R3 w - - 0 1', prompt: 'Déplace la tour de e1 à e5.', from: 'e1', to: 'e5' },
+          { fen: '8/8/8/8/8/8/8/4R3 w - - 0 1', prompt: 'Déplace la tour de e1 à a1.', from: 'e1', to: 'a1' },
+          { fen: '8/8/8/8/3R4/8/8/8 w - - 0 1', prompt: 'Déplace la tour de d4 à d8.', from: 'd4', to: 'd8' },
+          { fen: '8/8/8/8/3R4/8/8/8 w - - 0 1', prompt: 'Déplace la tour de d4 à h4.', from: 'd4', to: 'h4' }
+        ]
+      },
+
+      /* ---------- MODULE 1 : LE FOU ---------- */
+      'M1-L3': {
+        kind: 'move-piece',
+        instruction: 'Déplace le fou. Il se déplace uniquement en diagonale.',
+        tasks: [
+          { fen: '8/8/8/8/8/8/8/2B5 w - - 0 1', prompt: 'Déplace le fou de c1 à h6.', from: 'c1', to: 'h6' },
+          { fen: '8/8/8/8/8/8/8/2B5 w - - 0 1', prompt: 'Déplace le fou de c1 à a3.', from: 'c1', to: 'a3' },
+          { fen: '8/8/8/8/8/8/8/5B2 w - - 0 1', prompt: 'Déplace le fou de f1 à b5.', from: 'f1', to: 'b5' },
+          { fen: '8/8/8/8/8/8/8/5B2 w - - 0 1', prompt: 'Déplace le fou de f1 à h3.', from: 'f1', to: 'h3' },
+          { fen: '8/8/8/8/4B3/8/8/8 w - - 0 1', prompt: 'Déplace le fou de e4 à h7.', from: 'e4', to: 'h7' },
+          { fen: '8/8/8/8/4B3/8/8/8 w - - 0 1', prompt: 'Déplace le fou de e4 à b1.', from: 'e4', to: 'b1' }
+        ]
+      },
+
+      /* ---------- MODULE 1 : LA DAME ---------- */
+      'M1-L4': {
+        kind: 'move-piece',
+        instruction: 'Déplace la dame. Elle combine tour et fou.',
+        tasks: [
+          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à d8 (comme une tour).', from: 'd1', to: 'd8' },
+          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à h5 (en diagonale).', from: 'd1', to: 'h5' },
+          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à a4 (en diagonale).', from: 'd1', to: 'a4' },
+          { fen: '8/8/8/8/8/8/8/3Q4 w - - 0 1', prompt: 'Déplace la dame de d1 à h1 (comme une tour).', from: 'd1', to: 'h1' },
+          { fen: '8/8/8/8/3Q4/8/8/8 w - - 0 1', prompt: 'Déplace la dame de d4 à a7 (en diagonale).', from: 'd4', to: 'a7' },
+          { fen: '8/8/8/8/3Q4/8/8/8 w - - 0 1', prompt: 'Déplace la dame de d4 à d8 (comme une tour).', from: 'd4', to: 'd8' }
+        ]
+      },
+
+      /* ---------- MODULE 1 : LE CAVALIER ---------- */
+      'M1-L5': {
+        kind: 'move-piece',
+        instruction: 'Déplace le cavalier. Il saute en L : 2 cases + 1 case perpendiculaire.',
+        tasks: [
+          { fen: '8/8/8/8/8/8/8/1N6 w - - 0 1', prompt: 'Saute de b1 à c3.', from: 'b1', to: 'c3' },
+          { fen: '8/8/8/8/8/8/8/1N6 w - - 0 1', prompt: 'Saute de b1 à a3.', from: 'b1', to: 'a3' },
+          { fen: '8/8/8/8/8/8/8/6N1 w - - 0 1', prompt: 'Saute de g1 à f3.', from: 'g1', to: 'f3' },
+          { fen: '8/8/8/8/8/8/8/6N1 w - - 0 1', prompt: 'Saute de g1 à h3.', from: 'g1', to: 'h3' },
+          { fen: '8/8/8/8/3N4/8/8/8 w - - 0 1', prompt: 'Saute de d4 à e6.', from: 'd4', to: 'e6' },
+          { fen: '8/8/8/8/3N4/8/8/8 w - - 0 1', prompt: 'Saute de d4 à f5.', from: 'd4', to: 'f5' }
+        ]
+      },
+
+      /* ---------- MODULE 1 : LE ROI ---------- */
+      'M1-L6': {
+        kind: 'move-piece',
+        instruction: 'Déplace le roi. Il avance d\'une seule case.',
+        tasks: [
+          { fen: '8/8/8/8/8/8/8/4K3 w - - 0 1', prompt: 'Déplace le roi de e1 à e2.', from: 'e1', to: 'e2' },
+          { fen: '8/8/8/8/8/8/8/4K3 w - - 0 1', prompt: 'Déplace le roi de e1 à d2.', from: 'e1', to: 'd2' },
+          { fen: '8/8/8/8/8/8/8/4K3 w - - 0 1', prompt: 'Déplace le roi de e1 à f1.', from: 'e1', to: 'f1' },
+          { fen: '8/8/8/8/4K3/8/8/8 w - - 0 1', prompt: 'Déplace le roi de e4 à e5.', from: 'e4', to: 'e5' },
+          { fen: '8/8/8/8/4K3/8/8/8 w - - 0 1', prompt: 'Déplace le roi de e4 à d4.', from: 'e4', to: 'd4' },
+          { fen: '8/8/8/8/4K3/8/8/8 w - - 0 1', prompt: 'Déplace le roi de e4 à f5.', from: 'e4', to: 'f5' }
+        ]
+      }
+    };
+
+    /* =========================================================
+       2. CURRICULUM — 10 modules / 55 leçons
+       ========================================================= */
+    function lessonType(id) {
+      return LESSON_TASKS[id] ? 'interactive' : 'coming';
+    }
+
     var CURRICULUM = [
-      {
-        id: 'M0', title: 'Découverte de l\'échiquier',
-        subtitle: 'Plateau, coordonnées, orientation',
-        level: 1, unlocked: true,
+      { id:'M0', title:'Découverte de l\'échiquier', subtitle:'Plateau, coordonnées, orientation', level:1, unlocked:true,
         lessons: [
-          { id: 'M0-L1', title: 'Le plateau et ses coordonnées', objective: 'Identifier les 64 cases, les colonnes a-h et les rangées 1-8.', type: 'lesson', difficulty: 1 },
-          { id: 'M0-L2', title: 'Orientation et camp blanc/noir', objective: 'Savoir où se placent les Blancs et les Noirs, reconnaître un échiquier retourné.', type: 'lesson', difficulty: 1 },
-          { id: 'M0-L3', title: 'Nommer une case', objective: 'Nommer instantanément n\'importe quelle case (ex : e4, h7) sans hésitation.', type: 'exercise', difficulty: 1 },
-          { id: 'M0-L4', title: 'Le vocabulaire de base', objective: 'Comprendre rangée, colonne, diagonale, centre, aile roi, aile dame.', type: 'lesson', difficulty: 2 }
+          { id:'M0-L1', title:'Le plateau et ses coordonnées', objective:'Identifier les 64 cases, les colonnes a-h et les rangées 1-8.', type:'exercise', difficulty:1 },
+          { id:'M0-L2', title:'Orientation et camp blanc/noir', objective:'Savoir où se placent les Blancs et les Noirs.', type:'exercise', difficulty:1 },
+          { id:'M0-L3', title:'Nommer une case', objective:'Nommer instantanément n\'importe quelle case.', type:'exercise', difficulty:1 },
+          { id:'M0-L4', title:'Le vocabulaire de base', objective:'Rangée, colonne, diagonale, centre.', type:'exercise', difficulty:2 }
         ]
       },
-      {
-        id: 'M1', title: 'Le mouvement des pièces',
-        subtitle: 'Une pièce à la fois, en isolation',
-        level: 1, unlocked: false,
+      { id:'M1', title:'Le mouvement des pièces', subtitle:'Une pièce à la fois', level:1, unlocked:false,
         lessons: [
-          { id: 'M1-L1', title: 'Le pion : avancer, capturer', objective: 'Maîtriser les déplacements du pion, la capture en diagonale, la poussée initiale double.', type: 'exercise', difficulty: 1 },
-          { id: 'M1-L2', title: 'La tour : lignes et colonnes', objective: 'Déplacer la tour sur les lignes et colonnes, comprendre la portée infinie.', type: 'exercise', difficulty: 1 },
-          { id: 'M1-L3', title: 'Le fou : la diagonale', objective: 'Déplacer le fou uniquement en diagonale, comprendre le fou clair/foncé.', type: 'exercise', difficulty: 1 },
-          { id: 'M1-L4', title: 'La dame : la pièce la plus puissante', objective: 'Combiner lignes, colonnes et diagonales avec la dame.', type: 'exercise', difficulty: 2 },
-          { id: 'M1-L5', title: 'Le cavalier : le saut en L', objective: 'Maîtriser le saut en L et la particularité du cavalier qui change de couleur de case.', type: 'exercise', difficulty: 3 },
-          { id: 'M1-L6', title: 'Le roi : un pas à la fois', objective: 'Déplacer le roi d\'une case dans toutes les directions, comprendre son statut spécial.', type: 'exercise', difficulty: 2 }
+          { id:'M1-L1', title:'Le pion : avancer, capturer', objective:'Maîtriser les déplacements du pion, la capture en diagonale.', type:'exercise', difficulty:1 },
+          { id:'M1-L2', title:'La tour : lignes et colonnes', objective:'Déplacer la tour sur lignes et colonnes.', type:'exercise', difficulty:1 },
+          { id:'M1-L3', title:'Le fou : la diagonale', objective:'Déplacer le fou uniquement en diagonale.', type:'exercise', difficulty:1 },
+          { id:'M1-L4', title:'La dame : la pièce la plus puissante', objective:'Combiner lignes, colonnes et diagonales.', type:'exercise', difficulty:2 },
+          { id:'M1-L5', title:'Le cavalier : le saut en L', objective:'Maîtriser le saut en L.', type:'exercise', difficulty:3 },
+          { id:'M1-L6', title:'Le roi : un pas à la fois', objective:'Déplacer le roi d\'une case.', type:'exercise', difficulty:2 }
         ]
       },
-      {
-        id: 'M2', title: 'Échec, mat, pat, nulle',
-        subtitle: 'Les notions vitales du jeu',
-        level: 2, unlocked: false,
+      { id:'M2', title:'Échec, mat, pat, nulle', subtitle:'Les notions vitales', level:2, unlocked:false,
         lessons: [
-          { id: 'M2-L1', title: 'L\'échec : obligation de réagir', objective: 'Reconnaître un échec et comprendre les 3 seules réponses légales (fuir, bloquer, capturer).', type: 'lesson', difficulty: 2 },
-          { id: 'M2-L2', title: 'Sortir d\'un échec', objective: 'Trouver systématiquement la sortie d\'échec par fuite, blocage ou capture.', type: 'exercise', difficulty: 2 },
-          { id: 'M2-L3', title: 'L\'échec et mat', objective: 'Reconnaître un mat : roi en échec ET aucune échappatoire légale.', type: 'exercise', difficulty: 2 },
-          { id: 'M2-L4', title: 'Le pat : match nul involontaire', objective: 'Différencier pat et mat, éviter le pat quand on est gagnant.', type: 'lesson', difficulty: 3 },
-          { id: 'M2-L5', title: 'Les autres nulle', objective: 'Connaître les nulles : matériel insuffisant, triple répétition, règle des 50 coups.', type: 'lesson', difficulty: 3 }
+          { id:'M2-L1', title:'L\'échec : obligation de réagir', objective:'Reconnaître un échec et les 3 réponses.', type:'lesson', difficulty:2 },
+          { id:'M2-L2', title:'Sortir d\'un échec', objective:'Fuite, blocage ou capture.', type:'exercise', difficulty:2 },
+          { id:'M2-L3', title:'L\'échec et mat', objective:'Roi en échec ET aucune échappatoire.', type:'exercise', difficulty:2 },
+          { id:'M2-L4', title:'Le pat', objective:'Différencier pat et mat.', type:'lesson', difficulty:3 },
+          { id:'M2-L5', title:'Les autres nulle', objective:'Matériel, répétition, 50 coups.', type:'lesson', difficulty:3 }
         ]
       },
-      {
-        id: 'M3', title: 'Mats élémentaires',
-        subtitle: 'Convertir un avantage en victoire',
-        level: 2, unlocked: false,
+      { id:'M3', title:'Mats élémentaires', subtitle:'Convertir un avantage en victoire', level:2, unlocked:false,
         lessons: [
-          { id: 'M3-L1', title: 'Mat de la dame seule', objective: 'Mater avec Dame + Roi contre Roi seul en poussant vers le bord.', type: 'exercise', difficulty: 3 },
-          { id: 'M3-L2', title: 'Mat des deux tours', objective: 'Utiliser l\'escalier des tours pour mater le roi seul.', type: 'exercise', difficulty: 3 },
-          { id: 'M3-L3', title: 'Mat de la tour seule', objective: 'Mater avec Tour + Roi contre Roi, méthode d\'opposition.', type: 'exercise', difficulty: 4 },
-          { id: 'M3-L4', title: 'Mat des deux fous', objective: 'Mater avec deux Fous + Roi contre Roi, méthode du triangle.', type: 'exercise', difficulty: 5 }
+          { id:'M3-L1', title:'Mat de la dame seule', objective:'Dame + Roi contre Roi.', type:'exercise', difficulty:3 },
+          { id:'M3-L2', title:'Mat des deux tours', objective:'Escalier des tours.', type:'exercise', difficulty:3 },
+          { id:'M3-L3', title:'Mat de la tour seule', objective:'Tour + Roi contre Roi.', type:'exercise', difficulty:4 },
+          { id:'M3-L4', title:'Mat des deux fous', objective:'Deux Fous + Roi contre Roi.', type:'exercise', difficulty:5 }
         ]
       },
-      {
-        id: 'M4', title: 'Motifs tactiques fondamentaux',
-        subtitle: 'Les 8 patterns qui gagnent des pièces',
-        level: 3, unlocked: false,
+      { id:'M4', title:'Motifs tactiques fondamentaux', subtitle:'Les 8 patterns', level:3, unlocked:false,
         lessons: [
-          { id: 'M4-L1', title: 'La fourchette', objective: 'Repérer et exécuter une fourchette (souvent du cavalier) qui attaque deux pièces.', type: 'puzzle', difficulty: 2 },
-          { id: 'M4-L2', title: 'L\'enfilade', objective: 'Reconnaître une enfilade : attaquer une pièce derrière laquelle se trouve une pièce plus précieuse.', type: 'puzzle', difficulty: 3 },
-          { id: 'M4-L3', title: 'La brochette', objective: 'Différencier la brochette de l\'enfilade : pièce de valeur devant, pièce moins précieuse derrière.', type: 'puzzle', difficulty: 3 },
-          { id: 'M4-L4', title: 'Le clouage', objective: 'Clouer une pièce contre le roi ou une pièce plus précieuse.', type: 'puzzle', difficulty: 3 },
-          { id: 'M4-L5', title: 'L\'attaque double', objective: 'Attaquer simultanément deux pièces avec une seule pièce (dame, tour, fou).', type: 'puzzle', difficulty: 2 },
-          { id: 'M4-L6', title: 'L\'attaque à la découverte', objective: 'Découvrir une attaque en déplaçant une pièce qui masquait une autre.', type: 'puzzle', difficulty: 4 },
-          { id: 'M4-L7', title: 'L\'échec double', objective: 'Donner échec avec deux pièces simultanément (le roi doit fuir).', type: 'puzzle', difficulty: 4 },
-          { id: 'M4-L8', title: 'Le coup intermédiaire', objective: 'Placer un coup intermédiaire avant une reprise, souvent décisif.', type: 'puzzle', difficulty: 5 }
+          { id:'M4-L1', title:'La fourchette', objective:'Attaquer deux pièces.', type:'puzzle', difficulty:2 },
+          { id:'M4-L2', title:'L\'enfilade', objective:'Attaquer derrière une pièce.', type:'puzzle', difficulty:3 },
+          { id:'M4-L3', title:'La brochette', objective:'Différencier enfilade/brochette.', type:'puzzle', difficulty:3 },
+          { id:'M4-L4', title:'Le clouage', objective:'Clouer contre le roi.', type:'puzzle', difficulty:3 },
+          { id:'M4-L5', title:'L\'attaque double', objective:'Attaquer deux pièces.', type:'puzzle', difficulty:2 },
+          { id:'M4-L6', title:'L\'attaque à la découverte', objective:'Découvrir en déplaçant.', type:'puzzle', difficulty:4 },
+          { id:'M4-L7', title:'L\'échec double', objective:'Deux échecs simultanés.', type:'puzzle', difficulty:4 },
+          { id:'M4-L8', title:'Le coup intermédiaire', objective:'Zwischenzug.', type:'puzzle', difficulty:5 }
         ]
       },
-      {
-        id: 'M5', title: 'Combinaisons à 2-3 coups',
-        subtitle: 'Enchaîner les motifs',
-        level: 3, unlocked: false,
+      { id:'M5', title:'Combinaisons à 2-3 coups', subtitle:'Enchaîner les motifs', level:3, unlocked:false,
         lessons: [
-          { id: 'M5-L1', title: 'Mat du berger et réfutations', objective: 'Connaître le mat du berger, savoir le jouer et le contrer.', type: 'puzzle', difficulty: 2 },
-          { id: 'M5-L2', title: 'Mat à l\'étouffée', objective: 'Reconnaître et exécuter le mat à l\'étouffée du cavalier.', type: 'puzzle', difficulty: 3 },
-          { id: 'M5-L3', title: 'Le mat du couloir', objective: 'Exploiter la 8e rangée faible avec tour ou dame.', type: 'puzzle', difficulty: 2 },
-          { id: 'M5-L4', title: 'Le mat d\'Anastasie', objective: 'Reconnaître ce mat classique : cavalier + tour contre roi coincé.', type: 'puzzle', difficulty: 3 },
-          { id: 'M5-L5', title: 'Le mat arabe', objective: 'Reconnaître le mat arabe : tour + cavalier en coordination.', type: 'puzzle', difficulty: 4 },
-          { id: 'M5-L6', title: 'Combinaisons mixtes', objective: 'Combiner plusieurs motifs dans une même combinaison de 2-3 coups.', type: 'puzzle', difficulty: 4 }
+          { id:'M5-L1', title:'Mat du berger', objective:'Le jouer et le contrer.', type:'puzzle', difficulty:2 },
+          { id:'M5-L2', title:'Mat à l\'étouffée', objective:'Smothered mate.', type:'puzzle', difficulty:3 },
+          { id:'M5-L3', title:'Mat du couloir', objective:'8e rangée faible.', type:'puzzle', difficulty:2 },
+          { id:'M5-L4', title:'Mat d\'Anastasie', objective:'Cavalier + tour.', type:'puzzle', difficulty:3 },
+          { id:'M5-L5', title:'Mat arabe', objective:'Tour + cavalier.', type:'puzzle', difficulty:4 },
+          { id:'M5-L6', title:'Combinaisons mixtes', objective:'Combiner plusieurs motifs.', type:'puzzle', difficulty:4 }
         ]
       },
-      {
-        id: 'M6', title: 'Finales de pions',
-        subtitle: 'La technique pure',
-        level: 3, unlocked: false,
+      { id:'M6', title:'Finales de pions', subtitle:'La technique pure', level:3, unlocked:false,
         lessons: [
-          { id: 'M6-L1', title: 'Le pion passé', objective: 'Reconnaître un pion passé et comprendre sa force en finale.', type: 'lesson', difficulty: 3 },
-          { id: 'M6-L2', title: 'La règle du carré', objective: 'Utiliser la règle du carré pour savoir si un roi rattrape un pion.', type: 'exercise', difficulty: 3 },
-          { id: 'M6-L3', title: 'L\'opposition', objective: 'Utiliser l\'opposition pour forcer le gain ou la nulle en finale de rois.', type: 'exercise', difficulty: 4 },
-          { id: 'M6-L4', title: 'Cases-clés et zugzwang', objective: 'Identifier les cases-clés et exploiter le zugzwang.', type: 'lesson', difficulty: 4 },
-          { id: 'M6-L5', title: 'Pions passés protégés', objective: 'Utiliser un pion passé protégé pour créer un pion passé plus loin.', type: 'lesson', difficulty: 5 }
+          { id:'M6-L1', title:'Le pion passé', objective:'Reconnaître sa force.', type:'lesson', difficulty:3 },
+          { id:'M6-L2', title:'La règle du carré', objective:'Rattraper un pion.', type:'exercise', difficulty:3 },
+          { id:'M6-L3', title:'L\'opposition', objective:'Forcer gain ou nulle.', type:'exercise', difficulty:4 },
+          { id:'M6-L4', title:'Cases-clés et zugzwang', objective:'Exploiter le zugzwang.', type:'lesson', difficulty:4 },
+          { id:'M6-L5', title:'Pions passés protégés', objective:'Créer un pion passé.', type:'lesson', difficulty:5 }
         ]
       },
-      {
-        id: 'M7', title: 'Principes d\'ouverture',
-        subtitle: 'Les règles d\'or du début de partie',
-        level: 3, unlocked: false,
+      { id:'M7', title:'Principes d\'ouverture', subtitle:'Les règles d\'or', level:3, unlocked:false,
         lessons: [
-          { id: 'M7-L1', title: 'Contrôler le centre', objective: 'Comprendre pourquoi le contrôle des 4 cases centrales est primordial.', type: 'lesson', difficulty: 2 },
-          { id: 'M7-L2', title: 'Développer ses pièces', objective: 'Sortir cavaliers et fous rapidement, éviter de bouger la même pièce deux fois.', type: 'lesson', difficulty: 2 },
-          { id: 'M7-L3', title: 'Roquer tôt', objective: 'Comprendre l\'importance du roque pour la sécurité du roi.', type: 'lesson', difficulty: 2 },
-          { id: 'M7-L4', title: 'Connecter ses tours', objective: 'Coordonner les tours au centre après le développement.', type: 'lesson', difficulty: 3 },
-          { id: 'M7-L5', title: 'Erreurs classiques d\'ouverture', objective: 'Éviter les pièges courants : sortie prématurée de la dame, pions affaiblis, roque tardif.', type: 'lesson', difficulty: 3 }
+          { id:'M7-L1', title:'Contrôler le centre', objective:'4 cases centrales.', type:'lesson', difficulty:2 },
+          { id:'M7-L2', title:'Développer ses pièces', objective:'Sortir rapidement.', type:'lesson', difficulty:2 },
+          { id:'M7-L3', title:'Roquer tôt', objective:'Sécurité du roi.', type:'lesson', difficulty:2 },
+          { id:'M7-L4', title:'Connecter ses tours', objective:'Coordonner après roque.', type:'lesson', difficulty:3 },
+          { id:'M7-L5', title:'Erreurs classiques', objective:'Éviter les pièges.', type:'lesson', difficulty:3 }
         ]
       },
-      {
-        id: 'M8', title: 'Plans de milieu de jeu',
-        subtitle: 'Structurer sa pensée stratégique',
-        level: 4, unlocked: false,
+      { id:'M8', title:'Plans de milieu de jeu', subtitle:'Stratégie', level:4, unlocked:false,
         lessons: [
-          { id: 'M8-L1', title: 'Identifier une faiblesse', objective: 'Repérer une case ou un pion faible dans le camp adverse.', type: 'lesson', difficulty: 4 },
-          { id: 'M8-L2', title: 'Jouer sur les colonnes ouvertes', objective: 'Doubler les tours sur une colonne ouverte.', type: 'lesson', difficulty: 4 },
-          { id: 'M8-L3', title: 'Le bon cavalier contre le mauvais fou', objective: 'Reconnaître les positions où un cavalier domine un fou.', type: 'lesson', difficulty: 4 },
-          { id: 'M8-L4', title: 'Attaque sur l\'aile roi', objective: 'Mener une attaque coordonnée sur l\'aile roi.', type: 'lesson', difficulty: 5 },
-          { id: 'M8-L5', title: 'Le sacrifice positionnel', objective: 'Comprendre quand sacrifier du matériel pour un avantage positionnel.', type: 'lesson', difficulty: 5 },
-          { id: 'M8-L6', title: 'Passer à la finale favorable', objective: 'Simplifier vers une finale techniquement gagnante.', type: 'lesson', difficulty: 5 }
+          { id:'M8-L1', title:'Identifier une faiblesse', objective:'Repérer une faiblesse.', type:'lesson', difficulty:4 },
+          { id:'M8-L2', title:'Colonnes ouvertes', objective:'Doubler les tours.', type:'lesson', difficulty:4 },
+          { id:'M8-L3', title:'Cavalier vs mauvais fou', objective:'Reconnaître les positions.', type:'lesson', difficulty:4 },
+          { id:'M8-L4', title:'Attaque sur l\'aile roi', objective:'Attaque coordonnée.', type:'lesson', difficulty:5 },
+          { id:'M8-L5', title:'Sacrifice positionnel', objective:'Quand sacrifier.', type:'lesson', difficulty:5 },
+          { id:'M8-L6', title:'Passer à la finale', objective:'Simplifier favorablement.', type:'lesson', difficulty:5 }
         ]
       },
-      {
-        id: 'M9', title: 'Stratégie avancée',
-        subtitle: 'Pour franchir un cap',
-        level: 5, unlocked: false,
+      { id:'M9', title:'Stratégie avancée', subtitle:'Franchir un cap', level:5, unlocked:false,
         lessons: [
-          { id: 'M9-L1', title: 'Les structures de pions', objective: 'Reconnaître les grandes structures : Carlsbad, Sicilienne, Française.', type: 'lesson', difficulty: 5 },
-          { id: 'M9-L2', title: 'Le pion isolé', objective: 'Jouer avec ou contre un pion isolé.', type: 'lesson', difficulty: 5 },
-          { id: 'M9-L3', title: 'Les pions doublés', objective: 'Exploiter ou neutraliser les pions doublés.', type: 'lesson', difficulty: 5 },
-          { id: 'M9-L4', title: 'Cases fortes et cases faibles', objective: 'Identifier et exploiter les cases fortes pour ses pièces.', type: 'lesson', difficulty: 5 },
-          { id: 'M9-L5', title: 'Le principe des deux faiblesses', objective: 'Créer une seconde faiblesse quand la première ne suffit pas.', type: 'lesson', difficulty: 5 },
-          { id: 'M9-L6', title: 'Prophylaxie', objective: 'Anticiper les plans adverses et les empêcher avant qu\'ils ne se réalisent.', type: 'lesson', difficulty: 5 }
+          { id:'M9-L1', title:'Structures de pions', objective:'Carlsbad, Sicilienne.', type:'lesson', difficulty:5 },
+          { id:'M9-L2', title:'Le pion isolé', objective:'Jouer avec ou contre.', type:'lesson', difficulty:5 },
+          { id:'M9-L3', title:'Les pions doublés', objective:'Exploiter ou neutraliser.', type:'lesson', difficulty:5 },
+          { id:'M9-L4', title:'Cases fortes et faibles', objective:'Identifier.', type:'lesson', difficulty:5 },
+          { id:'M9-L5', title:'Principe des deux faiblesses', objective:'Créer la seconde.', type:'lesson', difficulty:5 },
+          { id:'M9-L6', title:'Prophylaxie', objective:'Anticiper l\'adversaire.', type:'lesson', difficulty:5 }
         ]
       }
     ];
 
     /* =========================================================
-       2. ÉTAT DE L'APPLICATION
+       3. ÉTAT
        ========================================================= */
     var state = {
-      view: 'curriculum',        // 'curriculum' | 'freeplay'
-      curriculumView: 'modules', // 'modules' | 'lessons' | 'lesson'
+      view: 'curriculum',
+      curriculumView: 'modules',
       currentModuleId: null,
-      currentLessonId: null
+      currentLessonId: null,
+      // État de la leçon interactive en cours
+      play: null  // { taskList, index, currentTask, errors, awaiting, phase }
     };
 
     /* =========================================================
-       3. DOM
+       4. DOM
        ========================================================= */
     var statusEl    = document.getElementById('status');
     var historyEl   = document.getElementById('history');
@@ -665,25 +693,26 @@
     var crumbEl     = document.getElementById('crumb');
     var currContent = document.getElementById('curriculum-content');
 
-    // Badge en-tête : on affiche juste "ÉTAPE N"
     document.getElementById('app-badge').textContent = 'ÉTAPE ' + APP_STEP;
     document.getElementById('app-title').textContent = '♟ ' + APP_NAME;
 
     /* =========================================================
-       4. ÉCHIQUIER / PARTIE LIBRE
+       5. ÉCHIQUIER
        ========================================================= */
     var board = null;
     var game  = new Chess();
     var lastMove = null;
+    var lessonMode = false; // true quand une leçon interactive est active
 
     function setStatus(msg, kind) {
       statusEl.textContent = msg;
       statusEl.className = 'status' + (kind ? ' ' + kind : '');
     }
     function clearHighlights() {
-      $('#board .square-55d63').removeClass('hl-from hl-to');
+      $('#board .square-55d63').removeClass('hl-from hl-to hl-target hl-good hl-bad clickable');
     }
     function applyLastMoveHighlight() {
+      if (lessonMode) return;
       clearHighlights();
       if (!lastMove) return;
       $('#board .square-' + lastMove.from).addClass('hl-from');
@@ -702,13 +731,10 @@
         turnLabel.classList.remove('check','mate','draw');
         if (game.in_checkmate()) {
           turnLabel.classList.add('mate');
-          turnLabel.textContent = 'Échec et mat — ' + (turn === 'w' ? 'Noirs gagnent' : 'Blancs gagnent');
+          turnLabel.textContent = 'Échec et mat';
         } else if (game.in_stalemate()) {
           turnLabel.classList.add('draw');
-          turnLabel.textContent = 'Pat — Match nul';
-        } else if (game.insufficient_material()) {
-          turnLabel.classList.add('draw');
-          turnLabel.textContent = 'Nulle — Matériel insuffisant';
+          turnLabel.textContent = 'Pat';
         } else {
           turnLabel.classList.add('draw');
           turnLabel.textContent = 'Nulle';
@@ -774,154 +800,58 @@
       modalText.textContent = text;
       overlay.classList.add('show');
     }
-    function onDragStart(source, piece) {
-      if (game.game_over()) return false;
-      var turn = game.turn();
-      if (turn === 'w' && piece.search(/^b/) !== -1) return false;
-      if (turn === 'b' && piece.search(/^w/) !== -1) return false;
-      return true;
-    }
-    function onDrop(source, target) {
-      var legalMoves = game.moves({ verbose: true });
-      var found = null;
-      for (var i = 0; i < legalMoves.length; i++) {
-        if (legalMoves[i].from === source && legalMoves[i].to === target) {
-          found = legalMoves[i]; break;
-        }
-      }
-      if (!found) {
-        flashIllegal(target);
-        setStatus('Coup illégal : ' + source + ' → ' + target, 'error');
-        return 'snapback';
-      }
-      var move = game.move({ from: source, to: target, promotion: 'q' });
-      if (!move) {
-        flashIllegal(target);
-        setStatus('Coup refusé par les règles.', 'error');
-        return 'snapback';
-      }
-      lastMove = { from: source, to: target };
-      return;
-    }
-    function onSnapEnd() {
-      board.position(game.fen());
-      applyLastMoveHighlight();
-      updateTurnIndicator();
-      updateHistory();
-      var hist = game.history({ verbose: true });
-      if (hist.length > 0) updateStatusAfterMove(hist[hist.length - 1]);
-    }
-
-    document.getElementById('btn-reset').addEventListener('click', function () {
-      game = new Chess();
-      lastMove = null;
-      board.position('start', false);
-      board.orientation('white');
-      clearHighlights();
-      updateTurnIndicator();
-      updateHistory();
-      setStatus('Nouvelle partie. Position initiale. Aux Blancs.', 'ok');
-    });
-    document.getElementById('btn-flip').addEventListener('click', function () {
-      board.flip();
-    });
-    document.getElementById('btn-undo').addEventListener('click', function () {
-      var undone = game.undo();
-      if (!undone) { setStatus('Aucun coup à annuler.', 'warn'); return; }
-      lastMove = null;
-      var hist = game.history({ verbose: true });
-      if (hist.length > 0) {
-        var prev = hist[hist.length - 1];
-        lastMove = { from: prev.from, to: prev.to };
-      }
-      board.position(game.fen(), false);
-      applyLastMoveHighlight();
-      updateTurnIndicator();
-      updateHistory();
-      setStatus('Coup annulé : ' + undone.san + '.', 'warn');
-    });
-    document.getElementById('btn-copy-pgn').addEventListener('click', function () {
-      var pgn = game.pgn();
-      if (!pgn) { setStatus('Aucun coup à copier.', 'warn'); return; }
-      copyToClipboard(pgn).then(function (ok) {
-        setStatus(ok ? 'PGN copié dans le presse-papiers.' : 'Copie impossible.', ok ? 'ok' : 'warn');
-      });
-    });
-    modalClose.addEventListener('click', function () {
-      overlay.classList.remove('show');
-    });
-    overlay.addEventListener('click', function (e) {
-      if (e.target === overlay) overlay.classList.remove('show');
-    });
-    function copyToClipboard(text) {
-      return new Promise(function (resolve) {
-        if (navigator.clipboard && window.isSecureContext) {
-          navigator.clipboard.writeText(text).then(function () { resolve(true); }, function () { resolve(false); });
-        } else {
-          try {
-            var ta = document.createElement('textarea');
-            ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
-            document.body.appendChild(ta); ta.select();
-            document.execCommand('copy'); document.body.removeChild(ta);
-            resolve(true);
-          } catch (err) { resolve(false); }
-        }
-      });
-    }
 
     /* =========================================================
-       5. CURRICULUM — RENDU
+       6. CURRICULUM — navigation
        ========================================================= */
-    function diffBars(level) {
-      var s = '<span class="diff-bars">';
-      for (var i = 1; i <= 5; i++) {
-        s += '<span class="' + (i <= level ? 'on' : '') + '"></span>';
-      }
-      return s + '</span>';
-    }
-
     function typeLabel(t) {
-      if (t === 'lesson')   return 'Leçon';
+      if (t === 'lesson') return 'Leçon';
       if (t === 'exercise') return 'Exercice';
-      if (t === 'puzzle')   return 'Puzzle';
+      if (t === 'puzzle') return 'Puzzle';
+      if (t === 'interactive') return '▶ Jouable';
+      if (t === 'coming') return 'À venir';
       return t;
     }
-
     function findModule(mid) {
-      for (var i = 0; i < CURRICULUM.length; i++) {
-        if (CURRICULUM[i].id === mid) return CURRICULUM[i];
-      }
+      for (var i = 0; i < CURRICULUM.length; i++) if (CURRICULUM[i].id === mid) return CURRICULUM[i];
       return null;
     }
     function findLesson(mid, lid) {
-      var m = findModule(mid);
-      if (!m) return null;
-      for (var i = 0; i < m.lessons.length; i++) {
-        if (m.lessons[i].id === lid) return m.lessons[i];
-      }
+      var m = findModule(mid); if (!m) return null;
+      for (var i = 0; i < m.lessons.length; i++) if (m.lessons[i].id === lid) return m.lessons[i];
       return null;
     }
-
+    function diffBars(level) {
+      var s = '<span class="diff-bars">';
+      for (var i = 1; i <= 5; i++) s += '<span class="' + (i <= level ? 'on' : '') + '"></span>';
+      return s + '</span>';
+    }
     function renderCrumb() {
       if (state.curriculumView === 'modules') {
-        crumbEl.innerHTML = '<span>Parcours</span>';
-        return;
+        crumbEl.innerHTML = '<span>Parcours</span>'; return;
       }
       var m = findModule(state.currentModuleId);
       if (state.curriculumView === 'lessons') {
         crumbEl.innerHTML = '<a data-nav="modules">Parcours</a>' +
                             '<span class="sep">›</span>' +
                             '<span>' + m.id + ' — ' + m.title + '</span>';
-      } else {
+      } else if (state.curriculumView === 'lesson') {
         var l = findLesson(state.currentModuleId, state.currentLessonId);
         crumbEl.innerHTML = '<a data-nav="modules">Parcours</a>' +
                             '<span class="sep">›</span>' +
                             '<a data-nav="lessons">' + m.id + '</a>' +
                             '<span class="sep">›</span>' +
                             '<span>' + l.title + '</span>';
+      } else {
+        var m2 = findModule(state.currentModuleId);
+        var l2 = findLesson(state.currentModuleId, state.currentLessonId);
+        crumbEl.innerHTML = '<a data-nav="modules">Parcours</a>' +
+                            '<span class="sep">›</span>' +
+                            '<a data-nav="lessons">' + m2.id + '</a>' +
+                            '<span class="sep">›</span>' +
+                            '<span>' + l2.title + '</span>';
       }
     }
-
     function renderModules() {
       var html = '<h2>Modules du parcours</h2>';
       for (var i = 0; i < CURRICULUM.length; i++) {
@@ -939,19 +869,19 @@
       }
       currContent.innerHTML = html;
     }
-
     function renderLessons() {
       var m = findModule(state.currentModuleId);
       var html = '<button class="back-btn" data-nav="modules">‹ Modules</button>';
       html += '<h2>' + m.id + ' — ' + m.title + '</h2>';
       for (var i = 0; i < m.lessons.length; i++) {
         var l = m.lessons[i];
+        var lt = lessonType(l.id);
         html += '<div class="lesson-row" data-action="open-lesson" data-module="' + m.id + '" data-lesson="' + l.id + '">' +
                   '<span class="lesson-num">' + (i + 1) + '</span>' +
                   '<div class="lesson-info">' +
                     '<div class="lesson-title">' + l.title + '</div>' +
                     '<div class="lesson-meta">' +
-                      '<span class="lesson-type ' + l.type + '">' + typeLabel(l.type) + '</span>' +
+                      '<span class="lesson-type ' + lt + '">' + typeLabel(lt) + '</span>' +
                       diffBars(l.difficulty) +
                     '</div>' +
                   '</div>' +
@@ -959,20 +889,20 @@
       }
       currContent.innerHTML = html;
     }
-
     function renderLesson() {
       var m = findModule(state.currentModuleId);
       var l = findLesson(state.currentModuleId, state.currentLessonId);
+      var lt = lessonType(l.id);
       var html = '<button class="back-btn" data-nav="lessons">‹ ' + m.id + '</button>';
       html += '<div class="lesson-detail">' +
                 '<h3>' + l.title + '</h3>' +
-                '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>' +
-                '<div class="lesson-meta" style="margin-bottom:12px;">' +
-                  '<span class="lesson-type ' + l.type + '">' + typeLabel(l.type) + '</span>' +
-                  diffBars(l.difficulty) +
-                '</div>' +
-                '<div class="placeholder">L\'exercice interactif de cette leçon sera ajouté à l\'Étape 4.</div>' +
-              '</div>';
+                '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>';
+      if (lt === 'interactive') {
+        html += '<button data-action="start-lesson" class="back-btn" style="background:var(--accent);color:#fff;border-color:var(--accent);min-width:100%;justify-content:center;padding:12px;">▶ Démarrer la leçon</button>';
+      } else {
+        html += '<div class="placeholder">Le contenu de cette leçon sera ajouté dans une étape ultérieure.</div>';
+      }
+      html += '</div>';
       currContent.innerHTML = html;
     }
 
@@ -980,16 +910,299 @@
       renderCrumb();
       if (state.curriculumView === 'modules')      renderModules();
       else if (state.curriculumView === 'lessons') renderLessons();
-      else                                         renderLesson();
+      else if (state.curriculumView === 'lesson')  renderLesson();
+      else                                          renderLessonPlay();
     }
 
-    /* Délégation d'événements sur le panneau curriculum */
+    /* =========================================================
+       7. LEÇON INTERACTIVE — RENDU DU PANNEAU
+       ========================================================= */
+    function renderLessonPlay() {
+      var m = findModule(state.currentModuleId);
+      var l = findLesson(state.currentModuleId, state.currentLessonId);
+      var p = state.play;
+      if (!p) { state.curriculumView = 'lesson'; renderLesson(); return; }
+
+      var html = '<button class="back-btn" data-nav="lessons">‹ ' + m.id + '</button>';
+      html += '<div class="lesson-play">';
+      html += '<h3>' + l.title + '</h3>';
+
+      // Barre de progression
+      html += '<div class="lesson-progress">';
+      for (var i = 0; i < p.taskList.length; i++) {
+        var cls = 'pip';
+        if (i < p.index) cls += ' done';
+        else if (i === p.index) cls += ' current';
+        html += '<span class="' + cls + '"></span>';
+      }
+      html += '</div>';
+
+      html += '<div class="task-counter">Tâche ' + (p.index + 1) + ' / ' + p.taskList.length + '</div>';
+
+      if (p.finished) {
+        html += '<div class="lesson-complete">' +
+                  '<div class="icon">🏆</div>' +
+                  '<h4>Leçon terminée !</h4>' +
+                  '<p>Tu as réussi ' + p.taskList.length + ' tâche(s) avec ' + p.errors + ' erreur(s) au total.</p>' +
+                  '<button data-action="start-lesson" type="button">Refaire la leçon</button>' +
+                '</div>';
+      } else {
+        html += '<div class="instruction" id="lesson-instruction">' + p.currentTask.prompt + '</div>';
+        html += '<div class="feedback" id="lesson-feedback"></div>';
+        html += '<div class="btn-row">' +
+                  '<button data-action="skip-task" type="button">Passer</button>' +
+                '</div>';
+      }
+
+      html += '</div>';
+      currContent.innerHTML = html;
+    }
+
+    function showFeedback(msg, kind) {
+      var el = document.getElementById('lesson-feedback');
+      if (!el) return;
+      el.className = 'feedback show ' + kind;
+      el.textContent = msg;
+    }
+
+    /* =========================================================
+       8. LEÇON INTERACTIVE — LOGIQUE
+       ========================================================= */
+    function shuffle(arr) {
+      var a = arr.slice();
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+
+    function startLesson() {
+      var lid = state.currentLessonId;
+      var def = LESSON_TASKS[lid];
+      if (!def) return;
+
+      // Tire 5 tâches au hasard
+      var picked = shuffle(def.tasks).slice(0, 5);
+
+      state.play = {
+        kind: def.kind,
+        instruction: def.instruction,
+        taskList: picked,
+        index: 0,
+        currentTask: picked[0],
+        errors: 0,
+        finished: false
+      };
+
+      lessonMode = true;
+      state.curriculumView = 'play';
+      renderCurriculum();
+      applyLessonTask();
+    }
+
+    function applyLessonTask() {
+      var p = state.play;
+      if (!p || p.finished) return;
+      var t = p.currentTask;
+
+      // Configure l'échiquier pour la tâche
+      clearHighlights();
+
+      if (p.kind === 'identify-square') {
+        // Échiquier vide, toutes les cases cliquables
+        game = new Chess();
+        board.orientation('white');
+        // On affiche un échiquier vide
+        var emptyFen = '8/8/8/8/8/8/8/8 w - - 0 1';
+        board.position(emptyFen, false);
+        // Active le clic sur les cases
+        setTimeout(activateSquareClicks, 100);
+      } else if (p.kind === 'move-piece') {
+        // Charge la position FEN
+        game = new Chess(t.fen);
+        board.orientation('white');
+        board.position(t.fen, false);
+        // Highlight la case de départ
+        setTimeout(function () {
+          $('#board .square-' + t.from).addClass('hl-target');
+        }, 100);
+      }
+    }
+
+    function activateSquareClicks() {
+      $('#board .square-55d63').addClass('clickable');
+    }
+
+    function checkIdentifySquare(square) {
+      var p = state.play;
+      var t = p.currentTask;
+      var ok = false;
+
+      if (t.matchRow) {
+        ok = square.charAt(1) === t.targetRow;
+      } else if (t.matchCol) {
+        ok = square.charAt(0) === t.targetCol;
+      } else {
+        ok = square === t.target;
+      }
+
+      if (ok) {
+        $('#board .square-' + square).addClass('hl-good');
+        showFeedback('✅ Bravo ! ' + square + ' est la bonne case.', 'ok');
+        setTimeout(nextTask, 900);
+      } else {
+        p.errors++;
+        $('#board .square-' + square).addClass('hl-bad');
+        setTimeout(function () { $('#board .square-' + square).removeClass('hl-bad'); }, 700);
+        var hint = '';
+        if (t.matchRow) hint = 'La bonne réponse est sur la rangée ' + t.targetRow + '.';
+        else if (t.matchCol) hint = 'La bonne réponse est sur la colonne ' + t.targetCol + '.';
+        else hint = 'La bonne case est ' + t.target + '. Regarde la colonne (lettre) et la rangée (chiffre).';
+        showFeedback('❌ Raté. ' + hint, 'ko');
+      }
+    }
+
+    function nextTask() {
+      var p = state.play;
+      p.index++;
+      if (p.index >= p.taskList.length) {
+        p.finished = true;
+        lessonMode = false;
+        renderLessonPlay();
+      } else {
+        p.currentTask = p.taskList[p.index];
+        renderCurriculum();
+        applyLessonTask();
+      }
+    }
+
+    function skipTask() {
+      var p = state.play;
+      if (!p) return;
+      p.errors++;
+      showFeedback('⏭ Tâche passée. Réponse : ' + (p.currentTask.to || p.currentTask.target), 'ko');
+      setTimeout(nextTask, 800);
+    }
+
+    /* =========================================================
+       9. CALLBACKS CHESSBOARD (mode libre + mode leçon)
+       ========================================================= */
+    function onDragStart(source, piece) {
+      if (lessonMode) {
+        // En mode leçon "move-piece", autoriser uniquement la pièce attendue
+        if (state.play && state.play.kind === 'move-piece') {
+          var t = state.play.currentTask;
+          if (source !== t.from) return false;
+          return true;
+        }
+        return false;
+      }
+      if (game.game_over()) return false;
+      var turn = game.turn();
+      if (turn === 'w' && piece.search(/^b/) !== -1) return false;
+      if (turn === 'b' && piece.search(/^w/) !== -1) return false;
+      return true;
+    }
+
+    function onDrop(source, target) {
+      // Mode leçon
+      if (lessonMode && state.play && state.play.kind === 'move-piece') {
+        var t = state.play.currentTask;
+        if (source === t.from && target === t.to) {
+          // Bonne réponse
+          var move = game.move({ from: source, to: target, promotion: 'q' });
+          board.position(game.fen(), false);
+          $('#board .square-' + target).addClass('hl-good');
+          showFeedback('✅ Coup correct ! ' + (move ? move.san : ''), 'ok');
+          setTimeout(function () {
+            $('#board .square-' + target).removeClass('hl-good');
+            nextTask();
+          }, 900);
+          return;
+        } else {
+          state.play.errors++;
+          flashIllegal(target);
+          showFeedback('❌ Ce n\'est pas le bon coup. Indice : la pièce doit aller en ' + t.to + '.', 'ko');
+          return 'snapback';
+        }
+      }
+
+      // Mode libre
+      var legalMoves = game.moves({ verbose: true });
+      var found = null;
+      for (var i = 0; i < legalMoves.length; i++) {
+        if (legalMoves[i].from === source && legalMoves[i].to === target) { found = legalMoves[i]; break; }
+      }
+      if (!found) {
+        flashIllegal(target);
+        setStatus('Coup illégal : ' + source + ' → ' + target, 'error');
+        return 'snapback';
+      }
+      var move = game.move({ from: source, to: target, promotion: 'q' });
+      if (!move) {
+        flashIllegal(target);
+        setStatus('Coup refusé.', 'error');
+        return 'snapback';
+      }
+      lastMove = { from: source, to: target };
+      return;
+    }
+
+    function onSnapEnd() {
+      if (lessonMode) return;
+      board.position(game.fen());
+      applyLastMoveHighlight();
+      updateTurnIndicator();
+      updateHistory();
+      var hist = game.history({ verbose: true });
+      if (hist.length > 0) updateStatusAfterMove(hist[hist.length - 1]);
+    }
+
+    /* =========================================================
+       10. GESTION DES CLICS SUR LES CASES (mode identify-square)
+       ========================================================= */
+    document.getElementById('board-wrap').addEventListener('click', function (e) {
+      if (!lessonMode || !state.play || state.play.kind !== 'identify-square') return;
+      var sq = e.target.closest('[class*="square-"]');
+      if (!sq) return;
+      var cls = sq.className;
+      var match = cls.match(/square-([a-h][1-8])/);
+      if (!match) return;
+      checkIdentifySquare(match[1]);
+    }, false);
+
+    /* Support tactile du tap pour identify-square (Safari iOS) */
+    document.getElementById('board-wrap').addEventListener('touchend', function (e) {
+      if (!lessonMode || !state.play || state.play.kind !== 'identify-square') return;
+      var sq = e.target.closest('[class*="square-"]');
+      if (!sq) return;
+      var cls = sq.className;
+      var match = cls.match(/square-([a-h][1-8])/);
+      if (!match) return;
+      // Empêche le double-déclenchement avec click
+      e.preventDefault();
+      checkIdentifySquare(match[1]);
+    }, { passive: false });
+
+    /* =========================================================
+       11. DÉLÉGATION D'ÉVÉNEMENTS — PANNEAU CURRICULUM
+       ========================================================= */
     currContent.addEventListener('click', function (e) {
       var navEl = e.target.closest('[data-nav]');
       if (navEl) {
         var target = navEl.getAttribute('data-nav');
-        if (target === 'modules') { state.curriculumView = 'modules'; renderCurriculum(); }
-        else if (target === 'lessons') { state.curriculumView = 'lessons'; renderCurriculum(); }
+        if (target === 'modules') {
+          lessonMode = false; state.play = null;
+          state.curriculumView = 'modules';
+          resetBoardToStart();
+          renderCurriculum();
+        } else if (target === 'lessons') {
+          lessonMode = false; state.play = null;
+          state.curriculumView = 'lessons';
+          resetBoardToStart();
+          renderCurriculum();
+        }
         return;
       }
       var actionEl = e.target.closest('[data-action]');
@@ -1008,41 +1221,60 @@
         state.currentLessonId = actionEl.getAttribute('data-lesson');
         state.curriculumView = 'lesson';
         renderCurriculum();
+      } else if (action === 'start-lesson') {
+        startLesson();
+      } else if (action === 'skip-task') {
+        skipTask();
       }
     });
 
-    /* Crumb click delegation */
-    crumbEl.addEventListener('click', function (e) {
-      var navEl = e.target.closest('[data-nav]');
-      if (!navEl) return;
-      var target = navEl.getAttribute('data-nav');
-      if (target === 'modules') { state.curriculumView = 'modules'; renderCurriculum(); }
-      else if (target === 'lessons') { state.curriculumView = 'lessons'; renderCurriculum(); }
-    });
+    /* =========================================================
+       12. RESET ECHIQUIER POUR MODE LIBRE
+       ========================================================= */
+    function resetBoardToStart() {
+      game = new Chess();
+      lastMove = null;
+      board.position('start', false);
+      board.orientation('white');
+      clearHighlights();
+      updateTurnIndicator();
+      updateHistory();
+    }
 
     /* =========================================================
-       6. ONGLETS PRINCIPAUX
+       13. ONGLETS
        ========================================================= */
     var tabs = document.querySelectorAll('.tab');
     for (var i = 0; i < tabs.length; i++) {
       tabs[i].addEventListener('click', function () {
         var v = this.getAttribute('data-view');
         state.view = v;
-
         var all = document.querySelectorAll('.tab');
         for (var j = 0; j < all.length; j++) all[j].classList.remove('active');
         this.classList.add('active');
-
         document.getElementById('view-curriculum').classList.toggle('active', v === 'curriculum');
         document.getElementById('view-freeplay').classList.toggle('active', v === 'freeplay');
 
-        // Redimensionner l'échiquier après changement d'onglet
+        if (v === 'freeplay') {
+          // Quitte le mode leçon et restaure la position initiale
+          lessonMode = false; state.play = null;
+          resetBoardToStart();
+          setStatus('Position initiale. Aux Blancs.', 'ok');
+        } else {
+          // Retour au curriculum : si on était en pleine leçon, on revient à la liste
+          if (state.curriculumView === 'play') {
+            lessonMode = false; state.play = null;
+            state.curriculumView = 'lessons';
+            resetBoardToStart();
+            renderCurriculum();
+          }
+        }
         setTimeout(resizeBoard, 50);
       });
     }
 
     /* =========================================================
-       7. RESIZE / TOUCH / INIT
+       14. RESIZE / TOUCH / INIT
        ========================================================= */
     function resizeBoard() {
       if (board && typeof board.resize === 'function') board.resize();
@@ -1060,7 +1292,7 @@
     var lastTouchEnd = 0;
     document.addEventListener('touchend', function (e) {
       var now = Date.now();
-      if (now - lastTouchEnd <= 300) e.preventDefault();
+      if (now - lastTouchEnd <= 300 && !e.defaultPrevented) e.preventDefault();
       lastTouchEnd = now;
     }, { passive: false });
 
