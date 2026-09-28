@@ -1,1 +1,746 @@
+/* =========================================================
+   style.css — Thème Dark Mode universel #121212
+   =========================================================
+   S'applique à tous les composants de l'application.
+   Structure :
+     1. Variables CSS (thème)
+     2. Reset
+     3. En-tête + onglets
+     4. Layout principal (grid responsive)
+     5. Échiquier + surlignages
+     6. Panneau (curriculum, leçons, partie libre)
+     7. Modales
+   ========================================================= */
 
+/* ---------- 1. Variables ---------- */
+:root {
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --surface-2: #262626;
+  --surface-3: #2f2f2f;
+  --border: #2e2e2e;
+  --text: #e8e8e8;
+  --text-dim: #9a9a9a;
+  --accent: #4a9eff;
+  --danger: #ff5757;
+  --success: #4ade80;
+  --warn: #fbbf24;
+  --square-light: #6b6b6b;
+  --square-dark: #2e2e2e;
+  --highlight: rgba(74, 158, 255, 0.45);
+  --good: rgba(74, 222, 128, 0.55);
+  --bad: rgba(255, 87, 87, 0.55);
+  --target: rgba(251, 191, 36, 0.5);
+}
+
+/* ---------- 2. Reset ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* ---------- 3. En-tête ---------- */
+header {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding-top: max(14px, env(safe-area-inset-top));
+}
+
+header .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+header h1 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+header .badge {
+  font-size: 0.65rem;
+  background: var(--accent);
+  color: #fff;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 7px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+  touch-action: manipulation;
+}
+
+.tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.tab:hover:not(.active) { color: var(--text); }
+
+/* ---------- 4. Layout principal ---------- */
+main {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding: 14px;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  main {
+    grid-template-columns: minmax(340px, 560px) 1fr;
+    align-items: start;
+    gap: 28px;
+    padding: 28px;
+  }
+}
+
+/* ---------- 5. Échiquier ---------- */
+.board-wrap {
+  width: 100%;
+  max-width: min(94vw, 560px);
+  margin: 0 auto;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
+}
+
+#board {
+  width: 100%;
+  touch-action: none;
+}
+
+#board .board-b72b1 {
+  border: none !important;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.55);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#board .white-1e1d7 { background-color: var(--square-light) !important; }
+#board .black-3c85d { background-color: var(--square-dark) !important; }
+
+#board .notation-322f9 {
+  color: #c8c8c8 !important;
+  font-size: 11px !important;
+  font-weight: 700;
+}
+
+/* Surlignages */
+#board .square-55d63.hl-from,
+#board .square-55d63.hl-to {
+  box-shadow: inset 0 0 0 4px var(--highlight);
+}
+
+#board .square-55d63.hl-target {
+  box-shadow: inset 0 0 0 4px var(--target);
+}
+
+#board .square-55d63.hl-good { background-color: var(--good) !important; }
+#board .square-55d63.hl-bad  { background-color: var(--bad) !important; }
+
+#board .square-55d63.clickable { cursor: pointer; }
+
+#board .square-55d63.illegal-flash {
+  animation: illegalFlash 0.5s ease-out;
+}
+
+@keyframes illegalFlash {
+  0%   { box-shadow: inset 0 0 0 4px var(--danger); }
+  100% { box-shadow: inset 0 0 0 0 transparent; }
+}
+
+/* ---------- 6. Panneau ---------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  min-height: 300px;
+}
+
+@media (min-width: 900px) {
+  .panel { position: sticky; top: 90px; }
+}
+
+.panel h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+/* Vue : les deux onglets */
+.view { display: none; }
+.view.active { display: block; }
+
+/* Indicateur de tour */
+.turn-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.turn-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  background: #fff;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.turn-dot.black { background: #111; border-color: #444; }
+
+.turn-label { font-weight: 600; }
+.turn-label.mate { color: var(--danger); }
+.turn-label.check { color: var(--warn); }
+.turn-label.draw { color: var(--text-dim); }
+
+/* Statut */
+.status {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  color: #7dd3fc;
+  word-break: break-word;
+  min-height: 40px;
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+
+.status.error { color: var(--danger); }
+.status.warn  { color: var(--warn); }
+.status.ok    { color: var(--success); }
+
+/* Boutons */
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+button {
+  flex: 1;
+  min-width: 110px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  touch-action: manipulation;
+  font-family: inherit;
+}
+
+button:hover:not(:disabled),
+button:active:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Historique */
+.history {
+  background: #0d0d0d;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.history-empty {
+  padding: 14px;
+  color: var(--text-dim);
+  text-align: center;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-row:last-child { border-bottom: none; }
+.history-row > div { padding: 8px 10px; }
+.history-row .num { color: var(--text-dim); background: var(--surface-2); }
+.history-row .san-w { color: #e8e8e8; }
+.history-row .san-b { color: #c8c8c8; }
+
+/* ---------- Curriculum ---------- */
+.crumb {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.crumb a {
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.crumb a:hover { text-decoration: underline; }
+.crumb .sep { color: #555; }
+
+/* Carte module */
+.module-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  touch-action: manipulation;
+  position: relative;
+}
+
+.module-card:hover {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+
+.module-card.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.module-card.locked:hover {
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+
+.module-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.module-id {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.module-count {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  background: #0d0d0d;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.module-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.module-sub {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.module-lock {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 0.9rem;
+  color: var(--warn);
+}
+
+/* Ligne leçon */
+.lesson-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  touch-action: manipulation;
+}
+
+.lesson-row:hover {
+  border-color: var(--accent);
+  background: var(--surface-3);
+}
+
+.lesson-row.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.lesson-num {
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #0d0d0d;
+  color: var(--accent);
+  padding: 4px 8px;
+  border-radius: 6px;
+  min-width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.lesson-info { flex: 1; min-width: 0; }
+
+.lesson-title {
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lesson-meta {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.lesson-type {
+  text-transform: uppercase;
+  font-weight: 700;
+  font-size: 0.65rem;
+  letter-spacing: 0.5px;
+}
+
+.lesson-type.lesson       { color: var(--accent); }
+.lesson-type.exercise     { color: var(--success); }
+.lesson-type.puzzle       { color: var(--warn); }
+.lesson-type.interactive  { color: var(--success); }
+.lesson-type.puzzle-live  { color: #e879f9; }
+.lesson-type.coming       { color: #666; }
+
+/* Barres de difficulté */
+.diff-bars {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.diff-bars span {
+  display: inline-block;
+  width: 4px;
+  height: 10px;
+  background: #444;
+  border-radius: 1px;
+}
+
+.diff-bars span.on { background: var(--accent); }
+
+/* Détail de leçon */
+.lesson-detail {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.lesson-detail h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.lesson-detail .objective {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: #0d0d0d;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+}
+
+.lesson-detail .placeholder {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 24px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  font-style: italic;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  font-family: inherit;
+  touch-action: manipulation;
+  flex: 0 1 auto;
+  min-width: auto;
+}
+
+.back-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+/* ---------- Leçon en cours ---------- */
+.lesson-play {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.lesson-progress {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.lesson-progress .pip {
+  flex: 1;
+  height: 5px;
+  background: #0d0d0d;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.lesson-progress .pip.done    { background: var(--success); }
+.lesson-progress .pip.current { background: var(--accent); }
+
+.lesson-play h3 {
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+
+.lesson-play .instruction {
+  font-size: 0.92rem;
+  color: var(--text);
+  padding: 12px 14px;
+  background: #0d0d0d;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.lesson-play .feedback {
+  font-size: 0.85rem;
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+  min-height: 40px;
+  display: none;
+}
+
+.lesson-play .feedback.show { display: block; }
+
+.lesson-play .feedback.ok {
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+}
+
+.lesson-play .feedback.ko {
+  background: rgba(255, 87, 87, 0.12);
+  color: var(--danger);
+  border: 1px solid rgba(255, 87, 87, 0.35);
+}
+
+.lesson-play .feedback.hint {
+  background: rgba(251, 191, 36, 0.12);
+  color: var(--warn);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+}
+
+.lesson-play .task-counter {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  font-family: ui-monospace, monospace;
+}
+
+.lesson-play .lesson-complete {
+  text-align: center;
+  padding: 20px 12px;
+}
+
+.lesson-play .lesson-complete .icon {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.lesson-play .lesson-complete h4 {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+  color: var(--success);
+}
+
+.lesson-play .lesson-complete p {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+
+.lesson-play .lesson-complete button {
+  max-width: 240px;
+  margin: 0 auto;
+}
+
+/* Indicateur de tour dans une leçon */
+.play-turn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  background: #0d0d0d;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.play-turn .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #555;
+}
+
+.play-turn .dot.black {
+  background: #111;
+  border-color: #444;
+}
+
+/* ---------- 7. Modale ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+}
+
+.overlay.show { display: flex; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 380px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.modal h3 {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+}
+
+.modal p {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+.modal button { width: 100%; }
