@@ -3,8 +3,8 @@
    =========================================================
    Gère 3 types de tâches :
      - identify-square : cliquer une case précise
-     - move-piece      : déplacer une pièce d'une case à une autre
-     - solve-puzzle    : trouver le coup gagnant dans une position
+     - move-piece      : déplacer une pièce
+     - solve-puzzle    : trouver le coup gagnant (avec Coup d'avant)
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -12,10 +12,7 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* ---------- État global de la leçon en cours ---------- */
-  var state = {
-    play: null
-  };
+  var state = { play: null };
 
   /* ---------- Utilitaires ---------- */
   function shuffle(arr) {
@@ -32,9 +29,7 @@ window.APP = window.APP || {};
       (window.APP && window.APP.LESSON_TASKS) ? window.APP.LESSON_TASKS[lid] : null,
       (window.APP && window.APP.PUZZLE_TASKS) ? window.APP.PUZZLE_TASKS[lid] : null
     ];
-    for (var i = 0; i < banks.length; i++) {
-      if (banks[i]) return banks[i];
-    }
+    for (var i = 0; i < banks.length; i++) if (banks[i]) return banks[i];
     return null;
   }
 
@@ -45,7 +40,7 @@ window.APP = window.APP || {};
     el.textContent = msg;
   }
 
-  /* ---------- Démarrage d'une leçon ---------- */
+  /* ---------- Démarrage ---------- */
   function startLesson(lid, onRender, onFinish) {
     var def = getTaskBank(lid);
     if (!def) return;
@@ -67,7 +62,7 @@ window.APP = window.APP || {};
     applyLessonTask();
   }
 
-  /* ---------- Configuration de l'échiquier pour la tâche courante ---------- */
+  /* ---------- Configuration de l'échiquier ---------- */
   function applyLessonTask() {
     var p = state.play;
     if (!p || p.finished) return;
@@ -97,10 +92,20 @@ window.APP = window.APP || {};
       var isWhite = t.fen.indexOf(' w ') !== -1;
       B.orientation(isWhite ? 'white' : 'black');
       B.position(t.fen, false);
+
+      /* Coup d'avant : on pose la question de verbalisation */
+      if (t.preQuestion && window.APP.PreQuestion) {
+        p.locked = true;
+        setTimeout(function () {
+          window.APP.PreQuestion.handle(t, function () {
+            p.locked = false;
+          });
+        }, 150);
+      }
     }
   }
 
-  /* ---------- Validation d'un clic sur une case ---------- */
+  /* ---------- identify-square ---------- */
   function checkIdentifySquare(square) {
     var p = state.play;
     if (!p || p.locked || p.finished) return;
@@ -169,7 +174,7 @@ window.APP = window.APP || {};
     showFeedback('💡 ' + hint, 'hint');
   }
 
-  /* ---------- Handler onDrop custom ---------- */
+  /* ---------- onDrop custom ---------- */
   function handleDrop(source, target) {
     var p = state.play;
     if (!p || p.finished || p.locked) return 'snapback';
@@ -235,15 +240,15 @@ window.APP = window.APP || {};
         p.locked = true;
         B.position(game.fen(), false);
         $('#board .square-' + target).addClass('hl-good');
-        showFeedback('✅ Bravo ! ' + playedSan + ' est le coup gagnant.', 'ok');
+        var expl = pt.explanation ? ' ' + pt.explanation : '';
+        showFeedback('✅ Bravo ! ' + playedSan + ' est le coup gagnant.' + expl, 'ok');
         setTimeout(function () {
           $('#board .square-' + target).removeClass('hl-good');
           nextTask();
-        }, 1200);
+        }, 1400);
         return;
       }
 
-      /* Mauvais coup (mais légal) */
       p.errors++;
       game.undo();
       B.position(game.fen(), false);
@@ -261,7 +266,6 @@ window.APP = window.APP || {};
     startLesson: function (lid, onRender, onFinish) {
       nextTaskCallback = onFinish;
       startLesson(lid, onRender, onFinish);
-      /* Branche le handler custom */
       window.APP.Board.setOnDropHandler(handleDrop);
     },
     getState: function () { return state; },
@@ -272,6 +276,7 @@ window.APP = window.APP || {};
     reset: function () {
       state.play = null;
       nextTaskCallback = null;
+      if (window.APP.PreQuestion) window.APP.PreQuestion.reset();
     }
   };
 })();
