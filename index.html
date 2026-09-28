@@ -619,4 +619,482 @@
         lessons: [
           { id: 'M8-L1', title: 'Identifier une faiblesse', objective: 'Repérer une case ou un pion faible dans le camp adverse.', type: 'lesson', difficulty: 4 },
           { id: 'M8-L2', title: 'Jouer sur les colonnes ouvertes', objective: 'Doubler les tours sur une colonne ouverte.', type: 'lesson', difficulty: 4 },
-          { id: 'M8-L3', title: 'Le bon cavalier contre le mauvais fou', objective: 'Reconnaître les positions où un cavalier domine un fou.',
+          { id: 'M8-L3', title: 'Le bon cavalier contre le mauvais fou', objective: 'Reconnaître les positions où un cavalier domine un fou.', type: 'lesson', difficulty: 4 },
+          { id: 'M8-L4', title: 'Attaque sur l\'aile roi', objective: 'Mener une attaque coordonnée sur l\'aile roi.', type: 'lesson', difficulty: 5 },
+          { id: 'M8-L5', title: 'Le sacrifice positionnel', objective: 'Comprendre quand sacrifier du matériel pour un avantage positionnel.', type: 'lesson', difficulty: 5 },
+          { id: 'M8-L6', title: 'Passer à la finale favorable', objective: 'Simplifier vers une finale techniquement gagnante.', type: 'lesson', difficulty: 5 }
+        ]
+      },
+      {
+        id: 'M9', title: 'Stratégie avancée',
+        subtitle: 'Pour franchir un cap',
+        level: 5, unlocked: false,
+        lessons: [
+          { id: 'M9-L1', title: 'Les structures de pions', objective: 'Reconnaître les grandes structures : Carlsbad, Sicilienne, Française.', type: 'lesson', difficulty: 5 },
+          { id: 'M9-L2', title: 'Le pion isolé', objective: 'Jouer avec ou contre un pion isolé.', type: 'lesson', difficulty: 5 },
+          { id: 'M9-L3', title: 'Les pions doublés', objective: 'Exploiter ou neutraliser les pions doublés.', type: 'lesson', difficulty: 5 },
+          { id: 'M9-L4', title: 'Cases fortes et cases faibles', objective: 'Identifier et exploiter les cases fortes pour ses pièces.', type: 'lesson', difficulty: 5 },
+          { id: 'M9-L5', title: 'Le principe des deux faiblesses', objective: 'Créer une seconde faiblesse quand la première ne suffit pas.', type: 'lesson', difficulty: 5 },
+          { id: 'M9-L6', title: 'Prophylaxie', objective: 'Anticiper les plans adverses et les empêcher avant qu\'ils ne se réalisent.', type: 'lesson', difficulty: 5 }
+        ]
+      }
+    ];
+
+    /* =========================================================
+       2. ÉTAT DE L'APPLICATION
+       ========================================================= */
+    var state = {
+      view: 'curriculum',        // 'curriculum' | 'freeplay'
+      curriculumView: 'modules', // 'modules' | 'lessons' | 'lesson'
+      currentModuleId: null,
+      currentLessonId: null
+    };
+
+    /* =========================================================
+       3. DOM
+       ========================================================= */
+    var statusEl    = document.getElementById('status');
+    var historyEl   = document.getElementById('history');
+    var turnDot     = document.getElementById('turn-dot');
+    var turnLabel   = document.getElementById('turn-label');
+    var overlay     = document.getElementById('overlay');
+    var modalTitle  = document.getElementById('modal-title');
+    var modalText   = document.getElementById('modal-text');
+    var modalClose  = document.getElementById('modal-close');
+    var boardWrap   = document.getElementById('board-wrap');
+    var crumbEl     = document.getElementById('crumb');
+    var currContent = document.getElementById('curriculum-content');
+
+    // Badge en-tête : on affiche juste "ÉTAPE N"
+    document.getElementById('app-badge').textContent = 'ÉTAPE ' + APP_STEP;
+    document.getElementById('app-title').textContent = '♟ ' + APP_NAME;
+
+    /* =========================================================
+       4. ÉCHIQUIER / PARTIE LIBRE
+       ========================================================= */
+    var board = null;
+    var game  = new Chess();
+    var lastMove = null;
+
+    function setStatus(msg, kind) {
+      statusEl.textContent = msg;
+      statusEl.className = 'status' + (kind ? ' ' + kind : '');
+    }
+    function clearHighlights() {
+      $('#board .square-55d63').removeClass('hl-from hl-to');
+    }
+    function applyLastMoveHighlight() {
+      clearHighlights();
+      if (!lastMove) return;
+      $('#board .square-' + lastMove.from).addClass('hl-from');
+      $('#board .square-' + lastMove.to).addClass('hl-to');
+    }
+    function flashIllegal(square) {
+      var $sq = $('#board .square-' + square);
+      if (!$sq.length) return;
+      $sq.addClass('illegal-flash');
+      setTimeout(function () { $sq.removeClass('illegal-flash'); }, 500);
+    }
+    function updateTurnIndicator() {
+      var turn = game.turn();
+      if (game.game_over()) {
+        turnDot.classList.remove('black');
+        turnLabel.classList.remove('check','mate','draw');
+        if (game.in_checkmate()) {
+          turnLabel.classList.add('mate');
+          turnLabel.textContent = 'Échec et mat — ' + (turn === 'w' ? 'Noirs gagnent' : 'Blancs gagnent');
+        } else if (game.in_stalemate()) {
+          turnLabel.classList.add('draw');
+          turnLabel.textContent = 'Pat — Match nul';
+        } else if (game.insufficient_material()) {
+          turnLabel.classList.add('draw');
+          turnLabel.textContent = 'Nulle — Matériel insuffisant';
+        } else {
+          turnLabel.classList.add('draw');
+          turnLabel.textContent = 'Nulle';
+        }
+        return;
+      }
+      turnLabel.classList.remove('check','mate','draw');
+      if (turn === 'w') {
+        turnDot.classList.remove('black');
+        turnLabel.textContent = 'Aux Blancs de jouer';
+      } else {
+        turnDot.classList.add('black');
+        turnLabel.textContent = 'Aux Noirs de jouer';
+      }
+      if (game.in_check()) {
+        turnLabel.classList.add('check');
+        turnLabel.textContent += ' — ÉCHEC !';
+      }
+    }
+    function updateHistory() {
+      var hist = game.history();
+      if (hist.length === 0) {
+        historyEl.innerHTML = '<div class="history-empty">Aucun coup joué.</div>';
+        return;
+      }
+      var html = '';
+      for (var i = 0; i < hist.length; i += 2) {
+        var n = (i / 2) + 1;
+        var w = hist[i] || '';
+        var b = hist[i + 1] || '';
+        html += '<div class="history-row">' +
+                  '<div class="num">' + n + '.</div>' +
+                  '<div class="san-w">' + (w || '—') + '</div>' +
+                  '<div class="san-b">' + (b || '—') + '</div>' +
+                '</div>';
+      }
+      historyEl.innerHTML = html;
+      historyEl.scrollTop = historyEl.scrollHeight;
+    }
+    function updateStatusAfterMove(move) {
+      var san = move.san;
+      if (game.in_checkmate()) {
+        setStatus('Échec et mat ! ' + san, 'error');
+        showEndModal('Échec et mat', (move.color === 'w' ? 'Les Blancs gagnent.' : 'Les Noirs gagnent.'));
+      } else if (game.in_stalemate()) {
+        setStatus('Pat — match nul après ' + san, 'warn');
+        showEndModal('Pat', 'Match nul.');
+      } else if (game.insufficient_material()) {
+        setStatus('Nulle — matériel insuffisant (' + san + ')', 'warn');
+        showEndModal('Nulle', 'Matériel insuffisant pour mater.');
+      } else if (game.in_draw()) {
+        setStatus('Nulle (' + san + ')', 'warn');
+        showEndModal('Nulle', 'Position nulle.');
+      } else if (game.in_check()) {
+        setStatus('Échec au roi ' + (game.turn() === 'w' ? 'blanc' : 'noir') + ' après ' + san, 'warn');
+      } else {
+        setStatus('Coup joué : ' + san + '. ' +
+          (game.turn() === 'w' ? 'Aux Blancs.' : 'Aux Noirs.'), 'ok');
+      }
+    }
+    function showEndModal(title, text) {
+      modalTitle.textContent = title;
+      modalText.textContent = text;
+      overlay.classList.add('show');
+    }
+    function onDragStart(source, piece) {
+      if (game.game_over()) return false;
+      var turn = game.turn();
+      if (turn === 'w' && piece.search(/^b/) !== -1) return false;
+      if (turn === 'b' && piece.search(/^w/) !== -1) return false;
+      return true;
+    }
+    function onDrop(source, target) {
+      var legalMoves = game.moves({ verbose: true });
+      var found = null;
+      for (var i = 0; i < legalMoves.length; i++) {
+        if (legalMoves[i].from === source && legalMoves[i].to === target) {
+          found = legalMoves[i]; break;
+        }
+      }
+      if (!found) {
+        flashIllegal(target);
+        setStatus('Coup illégal : ' + source + ' → ' + target, 'error');
+        return 'snapback';
+      }
+      var move = game.move({ from: source, to: target, promotion: 'q' });
+      if (!move) {
+        flashIllegal(target);
+        setStatus('Coup refusé par les règles.', 'error');
+        return 'snapback';
+      }
+      lastMove = { from: source, to: target };
+      return;
+    }
+    function onSnapEnd() {
+      board.position(game.fen());
+      applyLastMoveHighlight();
+      updateTurnIndicator();
+      updateHistory();
+      var hist = game.history({ verbose: true });
+      if (hist.length > 0) updateStatusAfterMove(hist[hist.length - 1]);
+    }
+
+    document.getElementById('btn-reset').addEventListener('click', function () {
+      game = new Chess();
+      lastMove = null;
+      board.position('start', false);
+      board.orientation('white');
+      clearHighlights();
+      updateTurnIndicator();
+      updateHistory();
+      setStatus('Nouvelle partie. Position initiale. Aux Blancs.', 'ok');
+    });
+    document.getElementById('btn-flip').addEventListener('click', function () {
+      board.flip();
+    });
+    document.getElementById('btn-undo').addEventListener('click', function () {
+      var undone = game.undo();
+      if (!undone) { setStatus('Aucun coup à annuler.', 'warn'); return; }
+      lastMove = null;
+      var hist = game.history({ verbose: true });
+      if (hist.length > 0) {
+        var prev = hist[hist.length - 1];
+        lastMove = { from: prev.from, to: prev.to };
+      }
+      board.position(game.fen(), false);
+      applyLastMoveHighlight();
+      updateTurnIndicator();
+      updateHistory();
+      setStatus('Coup annulé : ' + undone.san + '.', 'warn');
+    });
+    document.getElementById('btn-copy-pgn').addEventListener('click', function () {
+      var pgn = game.pgn();
+      if (!pgn) { setStatus('Aucun coup à copier.', 'warn'); return; }
+      copyToClipboard(pgn).then(function (ok) {
+        setStatus(ok ? 'PGN copié dans le presse-papiers.' : 'Copie impossible.', ok ? 'ok' : 'warn');
+      });
+    });
+    modalClose.addEventListener('click', function () {
+      overlay.classList.remove('show');
+    });
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) overlay.classList.remove('show');
+    });
+    function copyToClipboard(text) {
+      return new Promise(function (resolve) {
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard.writeText(text).then(function () { resolve(true); }, function () { resolve(false); });
+        } else {
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+            document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+            resolve(true);
+          } catch (err) { resolve(false); }
+        }
+      });
+    }
+
+    /* =========================================================
+       5. CURRICULUM — RENDU
+       ========================================================= */
+    function diffBars(level) {
+      var s = '<span class="diff-bars">';
+      for (var i = 1; i <= 5; i++) {
+        s += '<span class="' + (i <= level ? 'on' : '') + '"></span>';
+      }
+      return s + '</span>';
+    }
+
+    function typeLabel(t) {
+      if (t === 'lesson')   return 'Leçon';
+      if (t === 'exercise') return 'Exercice';
+      if (t === 'puzzle')   return 'Puzzle';
+      return t;
+    }
+
+    function findModule(mid) {
+      for (var i = 0; i < CURRICULUM.length; i++) {
+        if (CURRICULUM[i].id === mid) return CURRICULUM[i];
+      }
+      return null;
+    }
+    function findLesson(mid, lid) {
+      var m = findModule(mid);
+      if (!m) return null;
+      for (var i = 0; i < m.lessons.length; i++) {
+        if (m.lessons[i].id === lid) return m.lessons[i];
+      }
+      return null;
+    }
+
+    function renderCrumb() {
+      if (state.curriculumView === 'modules') {
+        crumbEl.innerHTML = '<span>Parcours</span>';
+        return;
+      }
+      var m = findModule(state.currentModuleId);
+      if (state.curriculumView === 'lessons') {
+        crumbEl.innerHTML = '<a data-nav="modules">Parcours</a>' +
+                            '<span class="sep">›</span>' +
+                            '<span>' + m.id + ' — ' + m.title + '</span>';
+      } else {
+        var l = findLesson(state.currentModuleId, state.currentLessonId);
+        crumbEl.innerHTML = '<a data-nav="modules">Parcours</a>' +
+                            '<span class="sep">›</span>' +
+                            '<a data-nav="lessons">' + m.id + '</a>' +
+                            '<span class="sep">›</span>' +
+                            '<span>' + l.title + '</span>';
+      }
+    }
+
+    function renderModules() {
+      var html = '<h2>Modules du parcours</h2>';
+      for (var i = 0; i < CURRICULUM.length; i++) {
+        var m = CURRICULUM[i];
+        var lock = m.unlocked ? '' : '<span class="module-lock">🔒</span>';
+        html += '<div class="module-card' + (m.unlocked ? '' : ' locked') + '" data-action="open-module" data-module="' + m.id + '">' +
+                  lock +
+                  '<div class="module-head">' +
+                    '<span class="module-id">' + m.id + '</span>' +
+                    '<span class="module-count">' + m.lessons.length + ' leçons</span>' +
+                  '</div>' +
+                  '<div class="module-title">' + m.title + '</div>' +
+                  '<div class="module-sub">' + m.subtitle + '</div>' +
+                '</div>';
+      }
+      currContent.innerHTML = html;
+    }
+
+    function renderLessons() {
+      var m = findModule(state.currentModuleId);
+      var html = '<button class="back-btn" data-nav="modules">‹ Modules</button>';
+      html += '<h2>' + m.id + ' — ' + m.title + '</h2>';
+      for (var i = 0; i < m.lessons.length; i++) {
+        var l = m.lessons[i];
+        html += '<div class="lesson-row" data-action="open-lesson" data-module="' + m.id + '" data-lesson="' + l.id + '">' +
+                  '<span class="lesson-num">' + (i + 1) + '</span>' +
+                  '<div class="lesson-info">' +
+                    '<div class="lesson-title">' + l.title + '</div>' +
+                    '<div class="lesson-meta">' +
+                      '<span class="lesson-type ' + l.type + '">' + typeLabel(l.type) + '</span>' +
+                      diffBars(l.difficulty) +
+                    '</div>' +
+                  '</div>' +
+                '</div>';
+      }
+      currContent.innerHTML = html;
+    }
+
+    function renderLesson() {
+      var m = findModule(state.currentModuleId);
+      var l = findLesson(state.currentModuleId, state.currentLessonId);
+      var html = '<button class="back-btn" data-nav="lessons">‹ ' + m.id + '</button>';
+      html += '<div class="lesson-detail">' +
+                '<h3>' + l.title + '</h3>' +
+                '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>' +
+                '<div class="lesson-meta" style="margin-bottom:12px;">' +
+                  '<span class="lesson-type ' + l.type + '">' + typeLabel(l.type) + '</span>' +
+                  diffBars(l.difficulty) +
+                '</div>' +
+                '<div class="placeholder">L\'exercice interactif de cette leçon sera ajouté à l\'Étape 4.</div>' +
+              '</div>';
+      currContent.innerHTML = html;
+    }
+
+    function renderCurriculum() {
+      renderCrumb();
+      if (state.curriculumView === 'modules')      renderModules();
+      else if (state.curriculumView === 'lessons') renderLessons();
+      else                                         renderLesson();
+    }
+
+    /* Délégation d'événements sur le panneau curriculum */
+    currContent.addEventListener('click', function (e) {
+      var navEl = e.target.closest('[data-nav]');
+      if (navEl) {
+        var target = navEl.getAttribute('data-nav');
+        if (target === 'modules') { state.curriculumView = 'modules'; renderCurriculum(); }
+        else if (target === 'lessons') { state.curriculumView = 'lessons'; renderCurriculum(); }
+        return;
+      }
+      var actionEl = e.target.closest('[data-action]');
+      if (!actionEl) return;
+      var action = actionEl.getAttribute('data-action');
+
+      if (action === 'open-module') {
+        var mid = actionEl.getAttribute('data-module');
+        var m = findModule(mid);
+        if (!m.unlocked) return;
+        state.currentModuleId = mid;
+        state.curriculumView = 'lessons';
+        renderCurriculum();
+      } else if (action === 'open-lesson') {
+        state.currentModuleId = actionEl.getAttribute('data-module');
+        state.currentLessonId = actionEl.getAttribute('data-lesson');
+        state.curriculumView = 'lesson';
+        renderCurriculum();
+      }
+    });
+
+    /* Crumb click delegation */
+    crumbEl.addEventListener('click', function (e) {
+      var navEl = e.target.closest('[data-nav]');
+      if (!navEl) return;
+      var target = navEl.getAttribute('data-nav');
+      if (target === 'modules') { state.curriculumView = 'modules'; renderCurriculum(); }
+      else if (target === 'lessons') { state.curriculumView = 'lessons'; renderCurriculum(); }
+    });
+
+    /* =========================================================
+       6. ONGLETS PRINCIPAUX
+       ========================================================= */
+    var tabs = document.querySelectorAll('.tab');
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].addEventListener('click', function () {
+        var v = this.getAttribute('data-view');
+        state.view = v;
+
+        var all = document.querySelectorAll('.tab');
+        for (var j = 0; j < all.length; j++) all[j].classList.remove('active');
+        this.classList.add('active');
+
+        document.getElementById('view-curriculum').classList.toggle('active', v === 'curriculum');
+        document.getElementById('view-freeplay').classList.toggle('active', v === 'freeplay');
+
+        // Redimensionner l'échiquier après changement d'onglet
+        setTimeout(resizeBoard, 50);
+      });
+    }
+
+    /* =========================================================
+       7. RESIZE / TOUCH / INIT
+       ========================================================= */
+    function resizeBoard() {
+      if (board && typeof board.resize === 'function') board.resize();
+      applyLastMoveHighlight();
+    }
+    var resizeTimer = null;
+    window.addEventListener('resize', function () {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resizeBoard, 120);
+    });
+    window.addEventListener('orientationchange', function () {
+      setTimeout(resizeBoard, 250);
+    });
+
+    var lastTouchEnd = 0;
+    document.addEventListener('touchend', function (e) {
+      var now = Date.now();
+      if (now - lastTouchEnd <= 300) e.preventDefault();
+      lastTouchEnd = now;
+    }, { passive: false });
+
+    boardWrap.addEventListener('touchmove', function (e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    function initBoard() {
+      board = Chessboard('board', {
+        draggable: true,
+        position: 'start',
+        pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
+        showNotation: true,
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onSnapEnd: onSnapEnd
+      });
+      setTimeout(resizeBoard, 50);
+      updateTurnIndicator();
+      updateHistory();
+      setStatus('Position initiale. Aux Blancs.', 'ok');
+    }
+
+    function init() {
+      renderCurriculum();
+      initBoard();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>
