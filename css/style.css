@@ -9,7 +9,8 @@
      4. Layout principal (grid responsive)
      5. Échiquier + surlignages
      6. Panneau (curriculum, leçons, partie libre)
-     7. Modales
+     7. Pre-question (Coup d'avant)
+     8. Modales
    ========================================================= */
 
 /* ---------- 1. Variables ---------- */
@@ -702,7 +703,95 @@ button:disabled { opacity: 0.4; cursor: not-allowed; }
   border-color: #444;
 }
 
-/* ---------- 7. Modale ---------- */
+/* ---------- 7. Pre-question (Coup d'avant) ---------- */
+.pre-question-block {
+  background: rgba(74, 158, 255, 0.08);
+  border: 1px solid rgba(74, 158, 255, 0.3);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.pq-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  font-weight: 800;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.pq-text {
+  font-size: 0.9rem;
+  color: var(--text);
+  line-height: 1.5;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
+.pq-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pq-option {
+  text-align: left;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, border-color 0.15s;
+  touch-action: manipulation;
+  min-width: auto;
+  flex: none;
+}
+
+.pq-option:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: var(--accent);
+}
+
+.pq-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pq-option.pq-correct {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: var(--success);
+  color: var(--success);
+  opacity: 1;
+}
+
+.pq-option.pq-wrong {
+  background: rgba(255, 87, 87, 0.1);
+  border-color: var(--danger);
+  color: var(--danger);
+  opacity: 1;
+}
+
+.pq-feedback {
+  font-size: 0.82rem;
+  margin-top: 10px;
+  line-height: 1.45;
+  display: none;
+}
+
+.pq-feedback.ok,
+.pq-feedback.ko {
+  display: block;
+}
+
+.pq-feedback.ok { color: var(--success); }
+.pq-feedback.ko { color: var(--danger); }
+
+/* ---------- 8. Modale ---------- */
 .overlay {
   position: fixed;
   inset: 0;
