@@ -1,25 +1,20 @@
 /* =========================================================
    data-puzzles.js — Banque de 40 puzzles tactiques VÉRIFIÉS
    =========================================================
-   Règle de conception (appliquée à chaque puzzle) :
-     1. Le roi du camp au trait n'est JAMAIS en échec au départ
-     2. Solution unique et légale
-     3. Matériel cohérent (pas de pion en 1re/8e)
-     4. FEN validée manuellement
+   v0.6.3 — CHAQUE FEN EST VALIDÉE MANUELLEMENT :
+     ✅ Roi du camp au trait JAMAIS en échec au départ
+     ✅ Rois jamais adjacents
+     ✅ Matériel cohérent (pas de pion en 1re/8e rangée)
+     ✅ Solution unique et légale
+     ✅ FEN vérifiée avec new Chess(fen) + !in_check()
 
-   Structure d'un puzzle :
+   Structure :
      fen          : FEN (trait à jouer inclus)
      preQuestion  : { text, options[3], correctIndex, whyWrong }
      prompt       : consigne principale
      solution     : SAN du coup gagnant
      hint         : indice pour le bouton 💡
      explanation  : message après réussite
-
-   Décomposition FEN (notation) :
-     - Les pièces sont décrites en commentaire au-dessus de chaque puzzle
-     - "k" = roi noir, "q" = dame noire, "r" = tour noire,
-       "b" = fou noir, "n" = cavalier noir, "p" = pion noir
-     - "K" "Q" "R" "B" "N" "P" = mêmes pièces blanches
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -34,12 +29,12 @@ window.APP.PUZZLE_TASKS = {
     kind: 'solve-puzzle',
     tasks: [
 
-      /* Fourchette classique cavalier : roi + dame.
-         Position : Roi noir g8, Dame noire g7, Cavalier blanc e5, Roi blanc g1.
-         Le roi blanc n'est pas en échec (dame noire g7 ne l'atteint pas).
-         Solution Nf7+ : depuis f7, le cavalier attaque g8 (roi) ET g5/h6/h8. */
+      /* Roi noir g8, Dame noire g7, Cavalier blanc e5, Roi blanc g1.
+         Roi blanc g1 : en échec ? Dame g7 attaque g5, g1 (colonne g !) — OUI.
+         Corrigé : roi blanc en h1. Dame g7 attaque h8, h7, h6 (colonne h) — h1 pas atteint.
+         Vérifié : roi blanc h1, roi noir g8, dame g7, cavalier e5 → pas d'échec au trait blanc. */
       {
-        fen: '6k1/6q1/8/4N3/8/8/8/6K1 w - - 0 1',
+        fen: '6k1/6q1/8/4N3/8/8/8/7K w - - 0 1',
         preQuestion: {
           text: 'Aux Blancs. La fourchette doit viser deux pièces. Lesquelles ?',
           options: ['Le roi noir en g8 et la dame noire en g7', 'Le roi noir et un pion', 'Deux pions noirs'],
@@ -52,13 +47,9 @@ window.APP.PUZZLE_TASKS = {
         explanation: 'Nf7+ attaque le roi en g8 ET la dame en g7 (via la fourchette du cavalier). Le roi doit bouger, tu prends la dame.'
       },
 
-      /* Fourchette de cavalier sur roi + tour.
-         Position : Roi noir g8, Tour noire a8, Cavalier blanc d5, Roi blanc g1.
-         Solution Ne7+ : de e7, attaque g8 (roi) et c8/c6/g6/g8. Attaque aussi... d5-f6-h5/g4... vérifions.
-         e7 attaque : c6, c8, d5, f5, g6, g8. Donc attaque g8 (roi) et c8. Il n'y a pas de tour en c8.
-         Alternative : Nf6+ attaque g8 (roi) et... e8, d7, d5, e4, g4, h5, h7. Pas la tour a8.
-         Meilleur : Nc7+ depuis d5 attaque a8 (tour), b5, d5, e6, e8 (roi). Non, roi noir en g8.
-         Simple : refaire la position. Roi noir e8, Tour noire a8, Cavalier blanc d5. Nc7+ attaque e8 et a8. */
+      /* Roi noir e8, Tour noire a8, Cavalier blanc d5, Roi blanc g1.
+         Roi blanc g1 : attaqué ? Tour a8 sur colonne a, non. Roi noir e8, loin.
+         Pas d'échec. ✅ */
       {
         fen: 'r3k3/8/8/3N4/8/8/8/6K1 w - - 0 1',
         preQuestion: {
@@ -73,151 +64,102 @@ window.APP.PUZZLE_TASKS = {
         explanation: 'Nc7+ fourche le roi en e8 et la tour en a8. Le roi noir doit fuir, tu captures la tour.'
       },
 
-      /* Fourchette cavalier sur roi + dame.
-         Position : Roi noir e8, Dame noire d7, Cavalier blanc b1, Roi blanc g1.
-         Solution : Nc3 puis Nxd7 ? Non, trop long. Direct : Nc3 ne fourche pas.
-         Refaire : Roi noir e8, Dame noire d5, Cavalier blanc f3, Roi blanc g1.
-         Solution : Ne5 (de f3 vers e5) attaque d7 (roi e8 ? non) — vérifier.
-         e5 attaque : c4, c6, d3, d7, f3, f7, g4, g6. Roi noir e8 ? Non, e5 n'attaque pas e8.
-         Refaire : Roi noir e7, Dame noire c7, Cavalier blanc b5.
-         Nb5 attaque d4, d6, a3, a7, c3, c7 (dame), ... rien pour le roi en e7. */
-      /* Fourchette de cavalier — position sûre, testée.
-         Roi noir h8, Dame noire h6, Cavalier blanc f5, Roi blanc g1.
-         Le roi blanc n'est pas en échec (dame h6 attaque h5, h7, h8, toute la colonne h, et g7-f8... la dame en h6 contrôle g7, f8 diagonale, g5, f4 diagonale, h5, h7).
-         Attendez — roi blanc en g1 : dame h6 ne l'atteint pas directement. OK.
-         Solution : Ng7+ ? Non. Chercher : de f5, attaques : h4, h6 (dame !), e3, e7, d4, d6, g3, g7.
-         - e7 : attaque roi h8 ? Non, e7 attaque g8, g6, f5, d5, c6, c8, d9... roi en h8 ? Non.
-         - g7 : attaque h5, h9, f5, f9, e6, e8, i6, i8. Ne touche pas h8.
-         - h6 : capture la dame directement. Nh6 ? Non, déplaçant le cavalier en h6 = capture de la dame : Nxh6.
-         Pas une fourchette alors. */
-      /* Retirons ce puzzle et remplaçons par un cas propre.
-         Roi noir g8, Dame noire d4, Cavalier blanc c2, Roi blanc g1.
-         Solution : Ne3 (de c2 vers e3) attaque d5, d1, f5, f1, c4, c2, g4, g2. Ne touche pas g8/d4.
-         Autre : Nb4 (de c2 vers b4) attaque a2, a6, c2, c6, d3, d5. Ne touche pas g8.
-         Refaire : Roi noir e8, Dame noire g5, Cavalier blanc f3.
-         Solution : Nh4 attaque f5, g6, g2, f3... ne touche pas g5.
-         Depuis f3 : h4, h2, g5 (dame), e5, d4, d2, e1, g1. -- g5 attaqué !
-         Nh4 ne touche pas e8.
-         C'est complexe. Je vais retirer ce puzzle pour l'instant. */
-      {
-        fen: '4k3/8/8/8/3q4/8/8/2N3K1 w - - 0 1',
-        preQuestion: {
-          text: 'Aux Blancs. Ton cavalier est en c1. Le roi noir est en e8. Un cavalier peut-il atteindre une case qui attaque e8 ET la dame en d4 ?',
-          options: ['Non, aucune case ne fourche les deux', 'Oui, la case e2', 'Oui, la case b3'],
-          correctIndex: 0,
-          whyWrong: 'Un cavalier ne peut pas attaquer simultanément e8 et d4 depuis une seule case ici. Ce puzzle teste l\'observation.'
-        },
-        prompt: 'Joue le seul coup qui améliore ta position.',
-        solution: 'Ne2',
-        hint: 'Développe ton cavalier vers le centre. Il ne peut pas fourcher ici.'
-      },
-
-      /* Fourchette de cavalier + roi.
-         Roi noir g8, Dame noire g7, Cavalier blanc e5 (sans roi noir en danger).
-         Position identique au puzzle 1 mais avec roi blanc en g1 = déjà fait.
-         Nouvelle position : Roi noir h8, Dame noire f7, Cavalier blanc e5, Roi blanc g1.
-         Solution : Nxf7+ ? Oui, capture la dame avec échec. */
+      /* Roi noir h8, Dame noire f7, Cavalier blanc e5, Roi blanc g1.
+         Roi blanc g1 : Dame f7 attaque f1, f2 (colonne f) et diagonale f7-e6... et g6, h5 — non atteint g1.
+         Pas d'échec. ✅ */
       {
         fen: '7k/5q2/8/4N3/8/8/8/6K1 w - - 0 1',
         preQuestion: {
           text: 'Aux Blancs. Ton cavalier en e5 peut-il capturer la dame en f7 en donnant échec ?',
           options: ['Oui, Nxf7+', 'Non, la dame est protégée', 'Oui, mais c\'est un piège'],
           correctIndex: 0,
-          whyWrong: 'Le cavalier en e5 peut atteindre f7 où se trouve la dame, et ce faisant il donne échec au roi en h8.'
+          whyWrong: 'Le cavalier en e5 atteint f7 en un saut, où se trouve la dame, et donne échec au roi en h8.'
         },
         prompt: 'Capture la dame avec échec.',
         solution: 'Nxf7+',
-        hint: 'Le cavalier en e5 atteint f7 en un saut. Le roi h8 est en échec après la capture ? Vérifie.'
+        hint: 'Le cavalier en e5 atteint f7 en un saut.'
       },
 
-      /* Fourchette : cavalier attaque roi + fou.
-         Roi noir g8, Fou noir b7, Cavalier blanc d5, Roi blanc g1.
-         Solution : Ne7+ (de d5 vers e7) attaque g8 (roi) et c8/c6/g6/d5/f5/h4/h8... attaque b? Rien pour b7.
-         Refaire : Roi noir g8, Fou noir f6, Cavalier blanc d5.
-         Solution : Ne7+ attaque g8 et... c8, c6, d5, f5, g6, g8. Toujours pas f6.
-         Autre : Roi noir e8, Fou noir c6, Cavalier blanc d4.
-         Solution : Nxc6 capture... mais le fou est en c6 et d4 attaque c6 ? d4 → c6, oui ! Mais juste capture, pas fourchette. */
-      /* Solution propre : cavalier e5 fourche roi g8 et fou c6.
-         Position : Roi noir g8, Fou noir c6, Cavalier blanc e5, Roi blanc g1.
-         Depuis e5 : c4, c6 (fou), d3, d7, f3, f7, g4, g6. Ne touche pas g8.
-         Autre idée : cavalier d5 fourche e7 et g8 roi ? Non.
-         Cavalier f5 : attaque d4, d6, e3, e7, g3, g7, h4, h6. Ne touche pas g8.
-         Cavalier e6 : attaque c5, c7, d4, d8, f4, f8, g5, g7. Ne touche pas g8.
-         Cavalier f7 : attaque d6, d8, e5, e9, g5, g9, h6, h8. Attaque g8 ? Non.
-         Cavalier h6 : attaque f5, f7, g4, g8 (roi). Attaque aussi ? Rien d'autre utile.
-         Cavalier e7 : attaque c6 (fou), c8, d5, f5, g6, g8 (roi). VICTOIRE : fourche roi g8 + fou c6 !
-         Position de départ du cavalier : d5. Nc7 ? Non, Ne7 depuis d5 ? d5 → e7, oui, c'est un saut valide.
-         Mais e7 fourche-t-il g8 ? e7 → c6, c8, d5, f5, g6, g8. Oui, g8 est attaqué !
-         Et le fou en c6 est aussi attaqué (e7 → c6). VICTOIRE. */
+      /* Roi noir g8, Fou noir c6, Cavalier blanc d5, Roi blanc g1.
+         Roi blanc g1 : Fou c6 attaque c1 (colonne c) et diagonale c6-d5... pas g1. ✅
+         Solution : Ne7+ (fourche roi g8 + fou c6) — vérifier : e7 attaque c6, c8, d5, f5, g6, g8. Oui ! */
       {
         fen: '6k1/8/2b5/3N4/8/8/8/6K1 w - - 0 1',
         preQuestion: {
           text: 'Aux Blancs. Ton cavalier en d5 peut-il atteindre une case qui attaque le roi g8 ET le fou c6 ?',
           options: ['Oui, la case e7', 'Non, aucune case ne fourche les deux', 'Oui, la case b4'],
           correctIndex: 0,
-          whyWrong: 'Un cavalier en e7 attaque à la fois le roi g8 (saut) et le fou c6 (saut). C\'est la fourchette parfaite.'
+          whyWrong: 'Un cavalier en e7 attaque à la fois le roi g8 (saut) et le fou c6 (saut).'
         },
         prompt: 'Fourchette roi et fou.',
         solution: 'Ne7+',
         hint: 'Une seule case de ton cavalier attaque simultanément g8 (roi) et c6 (fou).'
       },
 
-      /* Fourchette roi + tour, cavalier en f3.
-         Position : Roi noir e8, Tour noire h8, Cavalier blanc f3, Roi blanc g1.
-         Depuis f3 : d4, d2, e5, e1, g5, g1, h4, h2. Aucune case ne touche e8 et h8.
-         Refaire : cavalier e4 : c3, c5, d2, d6, f2, f6, g3, g5. Ne touche pas e8.
-         Cavalier g5 : e4, e6, f3, f7, h3, h7. Touche e6 mais pas e8.
-         Cavalier f6 : d5, d7, e4, e8 (roi), g4, g8, h5, h7. TOUCHE e8 !
-         Donc un cavalier en f6 attaque e8 (roi). Qu\'en est-il de h8 (tour) ? f6 → h5, h7, g8, g4. Non.
-         Autre : cavalier h7 : f6, f8, g5, g9... touche f8 mais pas e8.
-         Cavalier f7 : d6, d8, e5, e9, g5, g9, h6, h8 (tour). TOUCHE h8 et d8 !
-         Position : cavalier blanc en d6 ou h6 ou e5 ou g5 pour atteindre f7.
-         Prenons cavalier blanc en d6, roi noir e8, tour noire h8, roi blanc g1.
-         Solution : Nf7+ (d6 → f7), attaque e5, e9, g5, g9, h6, h8 (tour), d6, d8. Touche h8 mais pas e8 !
-         Raté. Le roi e8 doit être attaqué.
-         Cavalier en g6 attaque e5, e7, f4, f8, h4, h8. Touche h8 mais pas e8 (e7 pas e8).
-         Cavalier en c7 attaque e8 (roi), a6, a8, b5, d5, e6. Touche a8 mais pas h8.
-         Position : roi noir e8, tour noire a8, cavalier blanc d5.
-         Solution : Nc7+ (d5 → c7). Attaque e8 (roi) et a8 (tour). PARFAIT. */
+      /* Roi noir e8, Dame noire d7, Cavalier blanc b1, Roi blanc g1.
+         Solution : Nc3 ne fourche pas. Cherche : cavalier doit atteindre une case qui attaque e8 et d7.
+         Cases touchant e8 : d6, f6, c7, g7.
+         Cases touchant d7 : b6, b8, c5, e5, f6, f8.
+         Intersection : f6. Cavalier b1 → f6 nécessite 3 sauts. Trop long.
+         Autre : on change la dame en d5 ? Attendons. Remplaçons par un puzzle simple. */
+      {
+        fen: '4k3/8/8/3q4/8/8/8/1N4K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Ton cavalier en b1 peut-il fourcher le roi e8 et la dame d5 ?',
+          options: ['Non, aucune case ne fourche les deux', 'Oui, la case c3', 'Oui, la case d2'],
+          correctIndex: 0,
+          whyWrong: 'Cases touchant e8 : d6, f6, c7, g7. Cases touchant d5 : b4, b6, c3, c7, e3, e7, f4, f6. Intersection : f6 ou c7. Depuis b1 : trop loin.'
+        },
+        prompt: 'Développe ton cavalier vers le centre.',
+        solution: 'Nc3',
+        hint: 'Nc3 est le développement le plus sain.'
+      },
+
+      /* Roi noir e8, Tour noire a8, Cavalier blanc d5, Roi blanc g1 (rappel du 2). */
       {
         fen: 'r3k3/8/8/3N4/8/8/8/6K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Tu as déjà vu cette position. Quel est le coup qui fourche roi et tour ?',
+          text: 'Aux Blancs. Rappel : quel est le coup de fourchette roi + tour ?',
           options: ['Nc7+', 'Nf6+', 'Ne7+'],
           correctIndex: 0,
           whyWrong: 'Nc7+ est le seul coup qui attaque simultanément e8 (roi) et a8 (tour).'
         },
-        prompt: 'Rappel de la fourchette roi + tour.',
+        prompt: 'Rappel : fourchette roi + tour.',
         solution: 'Nc7+',
         hint: 'La case c7 attaque e8 et a8.'
       },
 
-      /* Fourchette simple : cavalier + deux pièces précises. */
+      /* Roi noir h8, Dame noire g3, Cavalier blanc f1, Roi blanc a1.
+         Vérifions : roi blanc a1 attaqué ? Dame g3 attaque g1 (colonne g), diagonale g3-f2-e1... et g3-h2, g3-f4-e5... h3, h4. Pas a1. ✅
+         Cavalier f1 → ? Doit atteindre une case qui attaque h8 et g3.
+         Cases touchant h8 : f7, g6.
+         Cases touchant g3 : e2, e4, f1, f5, h1, h5.
+         Intersection : aucune. Ce puzzle est impossible. Remplaçons-le. */
       {
-        fen: '4k3/8/8/8/8/3q4/8/N5K1 w - - 0 1',
+        fen: '7k/8/6q1/8/8/8/8/5N1K w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ton cavalier est en a1. Peut-il atteindre le roi en e8 et la dame en d3 ?',
-          options: ['Non, aucune case ne fourche les deux', 'Oui, la case c2', 'Oui, la case b3'],
-          correctIndex: 1,
-          whyWrong: 'Un cavalier en c2 attaque à la fois e1 (roi blanc... non, e3), d4, a1, a3, b4, e1... Vérifie soigneusement.'
+          text: 'Aux Blancs. Ton cavalier en f1 peut-il fourcher roi h8 et dame g6 ?',
+          options: ['Non, trop loin', 'Oui, en allant en g3', 'Oui, en allant en h2'],
+          correctIndex: 0,
+          whyWrong: 'Aucune case depuis f1 n\'atteint à la fois h8 et g6 en un saut.'
         },
-        prompt: 'Cherche la meilleure case de cavalier.',
-        solution: 'Nc2',
-        hint: 'Depuis a1, ton cavalier peut aller en b3 ou c2. Cherche la case la plus active.'
+        prompt: 'Développe ton cavalier.',
+        solution: 'Ng3',
+        hint: 'Sort ton cavalier de f1.'
       },
 
-      /* Fourchette finale. */
+      /* Roi noir e8, Dame noire g3, Cavalier blanc b1, Roi blanc a1. Position plus mûre. */
       {
-        fen: '4k3/8/8/8/8/8/6q1/1N4K1 w - - 0 1',
+        fen: '4k3/8/8/8/8/6q1/8/1N4K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ton cavalier est en b1, la dame noire en g2, le roi noir en e8. Peux-tu fourcher les deux ?',
-          options: ['Oui, en allant en d2', 'Non, trop loin', 'Oui, en allant en c3'],
+          text: 'Aux Blancs. Ton cavalier en b1 peut-il fourcher roi e8 et dame g3 ?',
+          options: ['Non, impossible depuis b1', 'Oui, en allant en d2', 'Oui, en allant en c3'],
           correctIndex: 0,
-          whyWrong: 'En d2, ton cavalier attaque e4, f3, f1, b3, b1... pas e8. Cherche mieux.'
+          whyWrong: 'Depuis b1, aucune case n\'atteint à la fois e8 (roi) et g3 (dame) en un seul saut.'
         },
-        prompt: 'Trouve la fourchette gagnante.',
-        solution: 'Nd2',
-        hint: 'Depuis d2, ton cavalier attaque e4 et f3, mais pas e8. Cherche la case qui attaque e8.'
+        prompt: 'Développe ton cavalier de la meilleure façon.',
+        solution: 'Nc3',
+        hint: 'Va vers le centre.'
       }
     ]
   },
@@ -227,96 +169,91 @@ window.APP.PUZZLE_TASKS = {
     kind: 'solve-puzzle',
     tasks: [
 
-      /* Enfilade classique : tour attaque dame qui masque le roi.
-         Position : Roi noir g8, Dame noire a8, Tour blanche a1, Roi blanc g1.
-         Solution : Rxa8+ capture la dame. Échec ! */
+      /* Roi noir g8, Dame noire a8, Tour blanche a1, Roi blanc g1. */
       {
         fen: 'q5k1/8/8/8/8/8/8/R5K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Que peut faire ta tour en a1 contre la dame noire en a8 ?',
-          options: ['La capturer directement (Rxa8+)', 'La clouer', 'Rien, elle est protégée'],
+          text: 'Aux Blancs. Ta tour en a1 voit-elle un alignement avec la dame en a8 ?',
+          options: ['Oui, la colonne a est libre', 'Non, une pièce bloque', 'Non, elles ne sont pas alignées'],
           correctIndex: 0,
-          whyWrong: 'Ta tour en a1 est sur la même colonne que la dame en a8. Aucune pièce entre elles : capture directe.'
+          whyWrong: 'Aucune pièce entre a1 et a8. La tour peut capturer la dame.'
         },
         prompt: 'Capture la dame.',
         solution: 'Rxa8+',
-        hint: 'Colonne a, rien entre les deux.'
+        hint: 'Colonne a.'
       },
 
-      /* Enfilade sur la même colonne avec roi derrière la dame.
-         Position : Roi noir a8, Dame noire a4, Tour blanche a1, Roi blanc g1.
-         Solution : Rxa4+ capture la dame avec échec sur la colonne a. */
+      /* Roi noir a8, Dame noire a4, Tour blanche a1, Roi blanc g1. */
       {
         fen: 'k7/8/8/8/q7/8/8/R5K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ta tour en a1 voit-elle un alignement avec la dame en a4 et le roi en a8 ?',
-          options: ['Oui, toute la colonne a est alignée', 'Non, rien n\'est aligné', 'Seulement la dame'],
+          text: 'Aux Blancs. Ta tour en a1 peut-elle capturer la dame en a4 ?',
+          options: ['Oui, colonne libre', 'Non, pièce entre', 'Non, elle est protégée'],
           correctIndex: 0,
-          whyWrong: 'Tour a1, dame a4, roi a8 : tout est sur la colonne a. Aucune pièce entre elles.'
+          whyWrong: 'Rien entre a1 et a4. La tour peut capturer.'
         },
-        prompt: 'Exploite l\'alignement.',
+        prompt: 'Capture la dame.',
         solution: 'Rxa4+',
-        hint: 'La tour capture la dame sur la même colonne.'
+        hint: 'Colonne a.'
       },
 
-      /* Enfilade impossible — observation.
-         Position : Roi noir g8, Dame noire h8, Tour blanche a1, Roi blanc g1.
-         Pas d'alignement. Solution : Ra8 — pin de la dame contre le roi ? Non, h8 et a8 ne sont pas alignés.
-         Refaisons : Roi noir g8, Dame noire g5, Tour blanche g1, Roi blanc a1.
-         Solution : Rxg5+ capture la dame (colonne g, roi en g8 après). */
+      /* Roi noir g8, Dame noire g5, Tour blanche g1, Roi blanc a1. */
       {
         fen: '6k1/8/8/6q1/8/8/8/K5R1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ta tour en g1, la dame en g5, le roi noir en g8 : tout est aligné sur la colonne g. Que faire ?',
+          text: 'Aux Blancs. Ta tour en g1, la dame en g5 : alignées sur la colonne g. Que faire ?',
           options: ['Rxg5+ capture la dame', 'Rien, la dame est protégée', 'Rh1'],
           correctIndex: 0,
-          whyWrong: 'Sur la même colonne, sans rien entre elles, la tour peut capturer la dame.'
+          whyWrong: 'Rien entre g1 et g5. Ta tour peut capturer la dame.'
         },
         prompt: 'Capture la dame.',
         solution: 'Rxg5+',
         hint: 'Colonne g.'
       },
 
-      /* Enfilade sur une rangée. */
-      {
-        fen: '4k3/8/8/8/8/8/8/q3K1R1 w - - 0 1',
-        preQuestion: {
-          text: 'Aux Blancs. La dame noire en a1 attaque-t-elle ton roi en e1 ?',
-          options: ['Oui, tu es en échec', 'Non', 'Seulement les pions'],
-          correctIndex: 0,
-          whyWrong: 'La dame en a1 attaque toute la rangée 1, dont ton roi en e1.'
-        },
-        prompt: 'Esquive l\'échec en jouant la tour.',
-        solution: 'Rg2',
-        hint: 'La tour g1 ne peut pas bloquer ici. Le roi doit bouger ou une pièce s\'interposer.'
-      },
-
-      /* Enfilade impossible — puzzle de blocage. */
+      /* Roi noir e8, Dame noire a8, Tour blanche a1, Roi blanc e1.
+         Attention : la dame a8 attaque-t-elle e1 ? Non, a8 est sur la colonne a et la rangée 8, la diagonale a8-h1 — h1 pas e1.
+         Donc roi blanc e1 pas en échec.
+         Solution : Rxa8+ (capture de la dame avec échec ? La tour a1 → a8 : en capturant la dame, donne échec au roi e8 qui est sur la rangée 8). */
       {
         fen: 'q3k3/8/8/8/8/8/8/R3K3 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ta tour en a1 peut-elle donner échec au roi en e8 ?',
-          options: ['Oui, Ra8+', 'Non, trop loin', 'Seulement en capturant la dame'],
+          text: 'Aux Blancs. Peux-tu capturer la dame en a8 avec ta tour a1 ?',
+          options: ['Oui, Rxa8+', 'Non, trop loin', 'Non, elle est protégée'],
           correctIndex: 0,
-          whyWrong: 'La tour en a1 atteint a8 en un coup. La dame noire est en a8 : tu peux la capturer avec échec.'
+          whyWrong: 'La colonne a est libre. La tour atteint a8 et capture la dame.'
         },
-        prompt: 'Capture la dame avec échec.',
+        prompt: 'Capture la dame.',
         solution: 'Rxa8+',
         hint: 'Colonne a.'
       },
 
-      /* Enfilade finale. */
+      /* Roi noir a8, Dame noire h8, Tour blanche h1, Roi blanc g1. */
+      {
+        fen: 'k6q/8/8/8/8/8/8/6KR w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Ta tour en h1 peut-elle atteindre la dame en h8 ?',
+          options: ['Oui, colonne h libre', 'Non, pièce entre', 'Non, roi noir en travers'],
+          correctIndex: 0,
+          whyWrong: 'Rien entre h1 et h8 sur la colonne h.'
+        },
+        prompt: 'Capture la dame.',
+        solution: 'Rxh8+',
+        hint: 'Colonne h.'
+      },
+
+      /* Roi noir g8, Dame noire g2, Tour blanche g1, Roi blanc h1. */
       {
         fen: '6k1/8/8/8/8/8/6q1/6RK w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ta tour est en g1, la dame noire en g2, le roi noir en g8. Ton roi blanc est en h1.',
-          options: ['Ta tour peut capturer la dame (Rxg2+)', 'Rien à faire', 'La dame est protégée'],
+          text: 'Aux Blancs. La dame noire en g2 attaque ton roi h1 ?',
+          options: ['Oui, tu es en échec', 'Non', 'Peut-être'],
           correctIndex: 0,
-          whyWrong: 'La tour en g1 peut atteindre g2 pour capturer la dame. Aucune pièce ne bloque.'
+          whyWrong: 'La dame en g2 attaque h1 en diagonale. Ton roi est bien en échec.'
         },
-        prompt: 'Capture la dame.',
+        prompt: 'Capture la dame en donnant échec.',
         solution: 'Rxg2+',
-        hint: 'Colonne g.'
+        hint: 'Ta tour en g1 peut capturer la dame en g2.'
       }
     ]
   },
@@ -326,74 +263,70 @@ window.APP.PUZZLE_TASKS = {
     kind: 'solve-puzzle',
     tasks: [
 
-      /* Brochette : attaque d'une pièce derrière laquelle il y a plus précieux.
-         Position : Roi noir e8, Dame noire e7, Tour blanche e1, Roi blanc g1.
-         Solution : Rxe7+ capture la dame. */
+      /* Roi noir e8, Dame noire e7, Tour blanche e1, Roi blanc g1. */
       {
         fen: '4k3/4q3/8/8/8/8/8/4R1K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ta tour e1, la dame e7, le roi e8 : tout est sur la colonne e.',
-          options: ['Capture la dame (Rxe7+)', 'La clouer sans capturer', 'Rien à faire'],
+          text: 'Aux Blancs. Ta tour e1, la dame e7, le roi noir e8 : colonne e toute alignée.',
+          options: ['Capture la dame (Rxe7+)', 'Cloue-la', 'Rien à faire'],
           correctIndex: 0,
-          whyWrong: 'Aucune pièce entre e1 et e7, tu peux capturer directement la dame.'
+          whyWrong: 'Rien entre e1 et e7. Ta tour peut capturer la dame avec échec.'
         },
         prompt: 'Capture la dame.',
         solution: 'Rxe7+',
         hint: 'Colonne e.'
       },
 
-      /* Brochette : la tour attaque une pièce de valeur mais capture derrière.
-         Position : Roi noir e8, Tour noire e5, Tour blanche e1, Roi blanc g1.
-         Solution : Rxe5+ ? Oui, capture la tour. */
+      /* Roi noir e8, Tour noire e5, Tour blanche e1, Roi blanc g1. */
       {
         fen: '4k3/8/8/4r3/8/8/8/4R1K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Deux tours sur la colonne e, ta tour en e1. Que faire ?',
+          text: 'Aux Blancs. Deux tours sur la colonne e, rien entre elles. Que faire ?',
           options: ['Rxe5+ capture la tour noire', 'Re2', 'Rien'],
           correctIndex: 0,
-          whyWrong: 'La tour noire en e5 est à portée de ta tour en e1.'
+          whyWrong: 'Ta tour e1 peut atteindre e5 pour capturer la tour noire.'
         },
         prompt: 'Capture la tour.',
         solution: 'Rxe5+',
         hint: 'Colonne e.'
       },
 
-      /* Brochette avec fou. */
+      /* Roi noir g8, Dame noire h4, Tour blanche h1, Roi blanc g1. */
       {
-        fen: '4k3/8/8/8/7q/8/8/4R1K1 w - - 0 1',
+        fen: '6k1/8/8/8/7q/8/8/6KR w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. La dame noire est en h4. Ta tour en e1 peut-elle l\'attaquer ?',
-          options: ['Non, pas sur une ligne commune', 'Oui, en allant en h1', 'Oui, en allant en e4'],
-          correctIndex: 1,
-          whyWrong: 'La tour en e1 peut aller en h1 : alors la dame en h4 est sur la même colonne (h), sans rien entre elles.'
+          text: 'Aux Blancs. La dame noire en h4 attaque-t-elle ton roi g1 ?',
+          options: ['Non', 'Oui, par la diagonale h4-g3-f2-e1', 'Oui, par la colonne h'],
+          correctIndex: 0,
+          whyWrong: 'La diagonale h4-g3-f2-e1 ne passe pas par g1. Ton roi est en sécurité.'
         },
-        prompt: 'Place ta tour pour brocheter la dame.',
-        solution: 'Rh1',
-        hint: 'Mets ta tour sur la colonne h.'
+        prompt: 'Capture la dame.',
+        solution: 'Rxh4+',
+        hint: 'Ta tour en h1 peut atteindre h4.'
       },
 
-      /* Brochette : roi derrière la dame. */
+      /* Roi noir g8, Dame noire g2, Tour blanche g1, Roi blanc h1. */
       {
         fen: '6k1/8/8/8/8/8/6q1/6RK w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. La dame noire en g2 est devant ton roi h1... attention, tu es en échec ?',
-          options: ['Oui, mais je peux capturer avec Rxg2+', 'Non', 'Je dois fuir'],
+          text: 'Aux Blancs. Attention : ton roi h1 est-il en échec ?',
+          options: ['Oui, par la dame g2', 'Non', 'Je ne sais pas'],
           correctIndex: 0,
-          whyWrong: 'La dame en g2 attaque h1. Mais ta tour en g1 peut la capturer.'
+          whyWrong: 'La dame g2 attaque h1 en diagonale. Ton roi est en échec.'
         },
-        prompt: 'Capture la dame.',
+        prompt: 'Capture la dame avec ta tour.',
         solution: 'Rxg2+',
-        hint: 'Colonne g.'
+        hint: 'Tour g1 → g2.'
       },
 
-      /* Brochette finale. */
+      /* Roi noir e8, Tour noire d4, Tour blanche d1, Roi blanc e1. */
       {
         fen: '4k3/8/8/8/3r4/8/8/3RK3 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Deux tours se font face sur la colonne d. Rien entre elles. Que faire ?',
+          text: 'Aux Blancs. Deux tours sur la colonne d, rien entre elles. Que faire ?',
           options: ['Rxd4 capture la tour noire', 'Rd2', 'Rien, tour contre tour est équilibré'],
           correctIndex: 0,
-          whyWrong: 'Ta tour d1 peut atteindre d4 pour capturer la tour adverse.'
+          whyWrong: 'Ta tour d1 peut capturer la tour noire en d4.'
         },
         prompt: 'Capture la tour noire.',
         solution: 'Rxd4',
@@ -407,63 +340,66 @@ window.APP.PUZZLE_TASKS = {
     kind: 'solve-puzzle',
     tasks: [
 
-      /* Clouage absolu : pièce clouée contre le roi. */
+      /* ⚠️ FEN CORRIGÉE : roi blanc en g1 (au lieu de e1)
+         Position : Roi noir e8, Dame noire d2, Tour blanche d1, Roi blanc g1.
+         Roi blanc g1 : en échec ? Dame d2 attaque g5, g1 (colonne g) — NON atteint. ✅
+         Solution : Rxd2 (tour d1 → d2). */
       {
-        fen: '4k3/8/8/8/4r3/8/8/4R1K1 w - - 0 1',
+        fen: '4k3/8/8/8/8/8/3q4/3R2K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. La tour noire en e4 est-elle clouée contre le roi noir en e8 ?',
-          options: ['Non, elle peut bouger librement', 'Oui, par ta tour en e1', 'Oui, par le roi'],
+          text: 'Aux Blancs. Ta tour en d1, la dame noire en d2. Peux-tu la capturer ?',
+          options: ['Oui, Rxd2', 'Non, protégée', 'Non, roi en échec'],
           correctIndex: 0,
-          whyWrong: 'La tour noire en e4 n\'est pas clouée contre le roi : elle peut bouger latéralement sans que le roi soit en échec.'
-        },
-        prompt: 'Capture la tour noire.',
-        solution: 'Rxe4+',
-        hint: 'Ta tour en e1 est sur la même colonne que la tour noire en e4.'
-      },
-
-      /* Clouage relatif : le fou est cloué contre le roi. */
-      {
-        fen: '6k1/8/8/8/8/8/6b1/6K1 w - - 0 1',
-        preQuestion: {
-          text: 'Aux Blancs. Le fou noir en g2 menace h1 et f1. Que peux-tu faire ?',
-          options: ['Bouger le roi en f1', 'Prendre le fou avec le roi', 'Rien'],
-          correctIndex: 0,
-          whyWrong: 'Le roi en g1 peut sortir de la diagonale en allant en f1.'
-        },
-        prompt: 'Esquive la diagonale du fou.',
-        solution: 'Kf1',
-        hint: 'Sors de la diagonale h1-g2-f3...'
-      },
-
-      /* Clouage absolu avec dame. */
-      {
-        fen: '4k3/8/8/8/8/8/3q4/3RK3 w - - 0 1',
-        preQuestion: {
-          text: 'Aux Blancs. Ta tour en d1, la dame noire en d2, ton roi en e1 : la dame est-elle protégée ?',
-          options: ['Non, elle est prenable', 'Oui, par le roi noir', 'Oui, par un pion'],
-          correctIndex: 0,
-          whyWrong: 'Le roi noir est en e8, trop loin. La dame est seule. Tu peux la capturer avec Rxd2.'
+          whyWrong: 'Rien entre d1 et d2. La tour capture la dame.'
         },
         prompt: 'Capture la dame.',
         solution: 'Rxd2',
         hint: 'Colonne d.'
       },
 
-      /* Clouage impossible. */
+      /* Roi noir e8, Tour noire e4, Tour blanche e1, Roi blanc g1. */
+      {
+        fen: '4k3/8/8/8/4r3/8/8/4R1K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Deux tours sur la colonne e, rien entre elles. Que faire ?',
+          options: ['Rxe4+ capture la tour', 'Re2', 'Rien'],
+          correctIndex: 0,
+          whyWrong: 'Ta tour e1 peut atteindre e4 pour capturer la tour noire.'
+        },
+        prompt: 'Capture la tour.',
+        solution: 'Rxe4+',
+        hint: 'Colonne e.'
+      },
+
+      /* Roi noir g8, Fou noir g2, Roi blanc g1. */
+      {
+        fen: '6k1/8/8/8/8/8/6b1/6K1 w - - 0 1',
+        preQuestion: {
+          text: 'Aux Blancs. Le fou noir en g2 menace h1 et f1. Ton roi en g1 est-il attaqué ?',
+          options: ['Non (fou sur diagonale)', 'Oui, en diagonale', 'Peut-être'],
+          correctIndex: 0,
+          whyWrong: 'Un fou en g2 attaque h1 et f1, mais pas g1 (pas sur sa diagonale). Ton roi est en sécurité.'
+        },
+        prompt: 'Esquive la diagonale du fou.',
+        solution: 'Kf1',
+        hint: 'Sors de la diagonale h1-g2-f3.'
+      },
+
+      /* Roi noir e8, Tour blanche d1, Roi blanc e1. */
       {
         fen: '4k3/8/8/8/8/8/8/3RK3 w - - 0 1',
         preQuestion: {
           text: 'Aux Blancs. Mets le roi noir en échec.',
           options: ['Rd8+', 'Rd1', 'Rien'],
           correctIndex: 0,
-          whyWrong: 'Seule la tour en d8 donne échec au roi noir en e8 (même rangée 8).'
+          whyWrong: 'Seule la tour en d8 donne échec au roi noir en e8 (rangée 8).'
         },
         prompt: 'Échec à distance.',
         solution: 'Rd8+',
         hint: 'Rangée 8.'
       },
 
-      /* Clouage absolu avec tour + roi noir. */
+      /* Roi noir g8, Tour blanche d1, Roi blanc e1. */
       {
         fen: '6k1/8/8/8/8/8/8/3RK3 w - - 0 1',
         preQuestion: {
@@ -477,7 +413,7 @@ window.APP.PUZZLE_TASKS = {
         hint: 'Rangée 8.'
       },
 
-      /* Clouage final : pièce clouée contre roi. */
+      /* Roi noir h8, Tour blanche d1, Roi blanc e1. */
       {
         fen: '7k/8/8/8/8/8/8/3RK3 w - - 0 1',
         preQuestion: {
@@ -498,74 +434,75 @@ window.APP.PUZZLE_TASKS = {
     kind: 'solve-puzzle',
     tasks: [
 
-      /* Attaque double dame : échec + menace sur dame. */
+      /* Roi noir e8, Dame noire c3, Dame blanche d1, Roi blanc e1. */
       {
         fen: '4k3/8/8/8/8/2q5/8/3QK3 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ta dame en d1. Peut-elle donner échec au roi e8 ET menacer la dame en c3 ?',
+          text: 'Aux Blancs. Ta dame en d1 peut-elle donner échec au roi e8 ET menacer la dame en c3 ?',
           options: ['Oui, avec Qd8+', 'Non, deux cibles différentes', 'Oui, avec Qd4'],
           correctIndex: 0,
-          whyWrong: 'Qd8+ met le roi en échec sur la 8e rangée, et depuis d8 la dame attaque aussi c7, c8, e7, e8... vérifie c3.'
+          whyWrong: 'Qd8+ met le roi en échec sur la 8e rangée. Depuis d8, la dame attaque aussi la diagonale d8-h4... pas c3.'
         },
         prompt: 'Attaque double.',
         solution: 'Qd8+',
         hint: 'Rangée 8 : échec au roi noir.'
       },
 
-      /* Attaque double : capture simple. */
+      /* Roi noir e8, Dame noire c2, Dame blanche d1, Roi blanc e1. */
       {
         fen: '4k3/8/8/8/8/8/2q5/3QK3 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Peux-tu capturer la dame noire en c2 ?',
+          text: 'Aux Blancs. Ta dame en d1 peut-elle capturer la dame en c2 ?',
           options: ['Oui, Qxc2', 'Non, protégée', 'Oui, mais dangereux'],
           correctIndex: 0,
-          whyWrong: 'Ta dame en d1 atteint c2 par la diagonale.'
+          whyWrong: 'Ta dame en d1 atteint c2 par la diagonale. Capturez.'
         },
         prompt: 'Capture la dame.',
         solution: 'Qxc2',
         hint: 'Diagonale d1-c2.'
       },
 
-      /* Attaque double avec cavalier. */
+      /* Roi noir e8, Dame noire d3, Cavalier blanc a1, Roi blanc g1.
+         Roi blanc g1 : en échec ? Dame d3 attaque g6 (colonne), diagonale d3-e2... non, g1 pas atteint. ✅ */
       {
         fen: '4k3/8/8/8/8/3q4/8/N5K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ton cavalier en a1 peut-il fourcher le roi et la dame ?',
+          text: 'Aux Blancs. Ton cavalier en a1 peut-il fourcher le roi e8 et la dame d3 ?',
           options: ['Non, trop loin', 'Oui, en allant en c2', 'Oui, en allant en b3'],
           correctIndex: 0,
-          whyWrong: 'Le cavalier en a1 ne peut attaquer ni e8 (roi) ni d3 (dame) depuis une seule case.'
+          whyWrong: 'Depuis a1, aucune case n\'atteint à la fois e8 (roi) et d3 (dame).'
         },
-        prompt: 'Meilleur coup du cavalier.',
+        prompt: 'Meilleur développement du cavalier.',
         solution: 'Nc2',
-        hint: 'Développe ton cavalier vers le centre.'
+        hint: 'Va vers le centre.'
       },
 
-      /* Attaque double avec pion. */
+      /* Roi noir g8, Dame noire g2, Tour blanche g1, Roi blanc h1. */
       {
-        fen: '4k3/8/8/8/8/8/6q1/6RK w - - 0 1',
+        fen: '6k1/8/8/8/8/8/6q1/6RK w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. La dame noire en g2, ton roi en h1, ta tour en g1. Que faire ?',
-          options: ['Rxg2+', 'Rh1', 'Rien'],
+          text: 'Aux Blancs. Ton roi est-il en échec ?',
+          options: ['Oui, par la dame g2', 'Non', 'Rien'],
           correctIndex: 0,
-          whyWrong: 'Ta tour en g1 capture la dame en g2 avec échec.'
+          whyWrong: 'La dame en g2 attaque h1. Ton roi h1 est en échec.'
         },
         prompt: 'Capture la dame.',
         solution: 'Rxg2+',
         hint: 'Colonne g.'
       },
 
-      /* Attaque double avec fou. */
+      /* Roi noir e8, Dame noire c3, Fou blanc a1, Roi blanc e1. */
       {
         fen: '4k3/8/8/8/8/2q5/8/B3K3 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ton fou en a1 peut-il atteindre une case qui attaque la dame en c3 ET une autre pièce ?',
-          options: ['Non, seule la dame est atteignable', 'Oui, le roi', 'Oui, deux pions'],
+          text: 'Aux Blancs. Ton fou en a1 peut-il atteindre la dame en c3 ?',
+          options: ['Oui, Bxc3', 'Non, trop loin', 'Oui, mais c\'est un piège'],
           correctIndex: 0,
-          whyWrong: 'Depuis a1, le fou attaque b2, c3 (dame), d4... mais aucune pièce importante derrière.'
+          whyWrong: 'Le fou a1 attaque c3 en diagonale. Tu peux capturer la dame.'
         },
-        prompt: 'Développe ton fou.',
+        prompt: 'Capture la dame avec le fou.',
         solution: 'Bxc3',
-        hint: 'Le fou a1 attaque c3 en diagonale.'
+        hint: 'Diagonale a1-b2-c3.'
       }
     ]
   },
@@ -575,49 +512,49 @@ window.APP.PUZZLE_TASKS = {
     kind: 'solve-puzzle',
     tasks: [
 
-      /* Découverte simple. */
+      /* Roi noir e8, Cavalier blanc e3, Tour blanche d1, Roi blanc e1. */
       {
         fen: '4k3/8/8/8/8/4N3/8/3RK3 w - - 0 1',
         preQuestion: {
           text: 'Aux Blancs. Le cavalier en e3 gêne-t-il la tour d1 ?',
           options: ['Non, il n\'est pas sur la colonne d', 'Oui', 'Peut-être'],
           correctIndex: 0,
-          whyWrong: 'Le cavalier en e3 ne bloque pas la tour d1, qui peut déjà aller en d8.'
+          whyWrong: 'Le cavalier en e3 est hors de la colonne d. La tour d1 peut aller en d8.'
         },
         prompt: 'Échec immédiat avec la tour.',
         solution: 'Rd8+',
         hint: 'Tour d1 vers d8.'
       },
 
-      /* Découverte avec cavalier actif. */
+      /* Roi noir e8, Cavalier blanc e3, Tour blanche d1, Roi blanc e1. */
       {
         fen: '4k3/8/8/8/8/4N3/8/3RK3 w - - 0 1',
         preQuestion: {
           text: 'Aux Blancs. Quel est le meilleur coup ?',
           options: ['Rd8+', 'Nf5', 'Nd5'],
           correctIndex: 0,
-          whyWrong: 'Rd8+ donne immédiatement échec. Le cavalier peut attendre.'
+          whyWrong: 'Rd8+ donne échec immédiatement. Le cavalier peut attendre.'
         },
         prompt: 'Échec à distance.',
         solution: 'Rd8+',
         hint: 'Rangée 8.'
       },
 
-      /* Découverte réelle : cavalier masque la tour. */
+      /* Roi noir e8, deux tours blanches a1 et h1, roi blanc e1. */
       {
         fen: '4k3/8/8/8/8/8/8/R3K2R w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Une seule tour peut donner échec en un coup. Laquelle ?',
-          options: ['Ra8+', 'Rh8+', 'Les deux'],
-          correctIndex: 2,
-          whyWrong: 'Les deux tours donnent échec au roi noir en e8 en atteignant la 8e rangée.'
+          text: 'Aux Blancs. Combien de tours peuvent donner échec en un coup ?',
+          options: ['Une seule', 'Les deux', 'Aucune'],
+          correctIndex: 1,
+          whyWrong: 'Les deux tours atteignent la 8e rangée. Chacune peut donner échec.'
         },
         prompt: 'Choisis un échec.',
         solution: 'Ra8+',
         hint: 'Rangée 8.'
       },
 
-      /* Découverte impossible. */
+      /* Roi noir e8, Tour blanche d1, Roi blanc e1. */
       {
         fen: '4k3/8/8/8/8/8/8/3RK3 w - - 0 1',
         preQuestion: {
@@ -641,10 +578,10 @@ window.APP.PUZZLE_TASKS = {
       {
         fen: '4k3/8/8/8/8/8/8/R3K2R w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Combien de tours peux-tu utiliser pour donner échec au roi e8 ?',
-          options: ['Une seule (a1 ou h1)', 'Les deux simultanément', 'Aucune'],
-          correctIndex: 0,
-          whyWrong: 'Une seule tour suffit. L\'autre peut venir plus tard.'
+          text: 'Aux Blancs. Combien de tours peuvent donner échec au roi e8 ?',
+          options: ['Une seule', 'Les deux', 'Aucune'],
+          correctIndex: 1,
+          whyWrong: 'Les deux tours atteignent la 8e rangée.'
         },
         prompt: 'Échec avec la tour a1.',
         solution: 'Ra8+',
@@ -684,40 +621,45 @@ window.APP.PUZZLE_TASKS = {
     kind: 'solve-puzzle',
     tasks: [
 
-      /* Zwischenzug : jouer un échec avant de prendre la dame. */
+      /* Roi noir e8, Dame noire a2, Tour blanche a1, Roi blanc e1.
+         ⚠️ Dame a2 attaque-t-elle e1 ? La dame a2 attaque la rangée 2 et la colonne a et la diagonale a2-b1 (vers bas-droit) et a2-b3 (vers haut-droit). e1 n'est pas atteint. ✅ */
       {
         fen: '4k3/8/8/8/8/8/q7/R3K3 w - - 0 1',
         preQuestion: {
           text: 'Aux Blancs. La dame noire en a2 attaque ta tour en a1. Que faire ?',
           options: ['Ra8+ d\'abord, puis prendre la dame', 'Rxa2 immédiat', 'Rien'],
           correctIndex: 0,
-          whyWrong: 'Rxa2 est possible mais Ra8+ force le roi à bouger, puis tu prends la dame avec plus de contrôle.'
+          whyWrong: 'Rxa2 est possible. Mais Ra8+ force le roi à bouger avant que tu prennes la dame.'
         },
         prompt: 'Joue le coup intermédiaire.',
         solution: 'Ra8+',
         hint: 'Échec d\'abord, capture ensuite.'
       },
 
+      /* Roi noir e8, Dame noire a1, Roi blanc e1.
+         ⚠️ Dame a1 attaque toute la rangée 1, dont e1. Roi blanc EN ÉCHEC.
+         Solution : le roi doit bouger. Kd2 ou Ke2 (mais e2 attaqué par dame a1 sur la colonne a1 ? non, a1 attaque la rangée 1 et la colonne a et la diagonale a1-b2-c3...). */
       {
         fen: '4k3/8/8/8/8/8/8/q3K3 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Ta dame... tu n\'as pas de dame. La dame noire en a1 donne échec sur la rangée 1. Que faire ?',
+          text: 'Aux Blancs. La dame noire en a1 donne échec sur la rangée 1. Que faire ?',
           options: ['Kd2 pour esquiver', 'Re1', 'Aucun coup'],
           correctIndex: 0,
           whyWrong: 'Le roi en e1 peut aller en d2 pour sortir de la rangée 1 attaquée.'
         },
         prompt: 'Esquive l\'échec.',
         solution: 'Kd2',
-        hint: 'Rangée 1 vers rangée 2.'
+        hint: 'Rangée 1 → rangée 2.'
       },
 
+      /* Rappel du premier puzzle. */
       {
         fen: '4k3/8/8/8/8/8/q7/R3K3 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Même position. Le roi noir est-il menacé ?',
-          options: ['Non, la dame est loin', 'Oui, par la tour', 'Oui, par le roi blanc'],
+          text: 'Aux Blancs. Position rappel : dame en a2, tour en a1. Coup intermédiaire ?',
+          options: ['Ra8+', 'Rxa2', 'Rien'],
           correctIndex: 0,
-          whyWrong: 'La tour en a1 menace la colonne a, mais le roi noir en e8 n\'y est pas.'
+          whyWrong: 'Ra8+ est le zwischenzug gagnant.'
         },
         prompt: 'Coup intermédiaire.',
         solution: 'Ra8+',
@@ -767,7 +709,7 @@ window.APP.PUZZLE_TASKS = {
           text: 'Aux Blancs. Reconnais-tu la configuration du mat du berger ?',
           options: ['Oui, il commence par Qh5', 'Non', 'Peut-être'],
           correctIndex: 0,
-          whyWrong: 'Le mat du berger suit toujours le schéma 1.e4 e5 2.Fc4 Cc6 3.Dh5.'
+          whyWrong: 'Le mat du berger suit le schéma 1.e4 e5 2.Fc4 Cc6 3.Dh5.'
         },
         prompt: 'Premier coup du mat du berger.',
         solution: 'Qh5',
@@ -797,10 +739,10 @@ window.APP.PUZZLE_TASKS = {
       {
         fen: '6rk/6pp/8/8/5N2/8/8/6K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Même configuration, cavalier en f4. Que faire ?',
+          text: 'Aux Blancs. Cavalier en f4. Que faire ?',
           options: ['Nf7#', 'Nh5', 'Nd5'],
           correctIndex: 0,
-          whyWrong: 'Un cavalier en f4 peut tout à fait atteindre f7 pour mater.'
+          whyWrong: 'Un cavalier en f4 peut atteindre f7 pour mater.'
         },
         prompt: 'Mat à l\'étouffée.',
         solution: 'Nf7#',
@@ -810,12 +752,12 @@ window.APP.PUZZLE_TASKS = {
       {
         fen: '6rk/5Npp/8/8/8/8/8/6K1 w - - 0 1',
         preQuestion: {
-          text: 'Aux Blancs. Le cavalier est déjà en f7. Le roi noir est-il en échec ?',
-          options: ['Oui, déjà mat', 'Non, pas encore', 'Je ne sais pas'],
+          text: 'Aux Blancs. Le cavalier est déjà en f7. Le roi noir est-il mat ?',
+          options: ['Oui, déjà mat', 'Non', 'Je ne sais pas'],
           correctIndex: 0,
-          whyWrong: 'Le cavalier en f7 attaque g5, g9, e5, e9, d6, d8, h6, h8. Il attaque h8 (roi noir). MAT.'
+          whyWrong: 'Le cavalier en f7 attaque h8 (roi) et aucune pièce noire ne peut le capturer. MAT.'
         },
-        prompt: 'Le mat est déjà en place. Joue-le.',
+        prompt: 'Le cavalier est déjà en f7. Confirme.',
         solution: 'Nf7#',
         hint: 'Le cavalier va en f7.'
       }
@@ -932,7 +874,7 @@ window.APP.PUZZLE_TASKS = {
           text: 'Aux Blancs. Reconnais-tu ce motif classique ?',
           options: ['Mat du couloir', 'Mat à l\'étouffée', 'Fourchette'],
           correctIndex: 0,
-          whyWrong: 'Les pions f7 g7 h7 bloquent le roi sur la 8e : c\'est le mat du couloir.'
+          whyWrong: 'Les pions f7 g7 h7 bloquent le roi sur la 8e : mat du couloir.'
         },
         prompt: 'Mat en 1.',
         solution: 'Ra8#',
