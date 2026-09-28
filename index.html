@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#121212">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Échecs Maître — Étape 2</title>
+  <title>Chargement…</title>
 
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
 
@@ -15,10 +15,12 @@
       --bg: #121212;
       --surface: #1e1e1e;
       --surface-2: #262626;
+      --surface-3: #2f2f2f;
       --border: #2e2e2e;
       --text: #e8e8e8;
       --text-dim: #9a9a9a;
       --accent: #4a9eff;
+      --accent-dim: #2c6ab8;
       --danger: #ff5757;
       --success: #4ade80;
       --warn: #fbbf24;
@@ -26,9 +28,7 @@
       --square-dark: #2e2e2e;
       --highlight: rgba(74, 158, 255, 0.45);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     html, body {
       background: var(--bg);
       color: var(--text);
@@ -39,13 +39,12 @@
       -webkit-tap-highlight-color: transparent;
       overscroll-behavior: none;
     }
-
     header {
       padding: 14px 16px;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       gap: 10px;
       background: var(--surface);
       position: sticky;
@@ -53,11 +52,37 @@
       z-index: 10;
       padding-top: max(14px, env(safe-area-inset-top));
     }
+    header .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     header h1 { font-size: 1.05rem; font-weight: 600; letter-spacing: 0.3px; }
     header .badge {
       font-size: 0.65rem; background: var(--accent); color: #fff;
       padding: 3px 8px; border-radius: 20px; font-weight: 600; letter-spacing: 0.5px;
     }
+
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+    .tab {
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      transition: background 0.15s, color 0.15s;
+      touch-action: manipulation;
+    }
+    .tab.active { background: var(--accent); color: #fff; }
+    .tab:hover:not(.active) { color: var(--text); }
 
     main {
       display: grid;
@@ -87,7 +112,6 @@
       position: relative;
     }
     #board { width: 100%; touch-action: none; }
-
     #board .board-b72b1 {
       border: none !important;
       box-shadow: 0 6px 28px rgba(0, 0, 0, 0.55);
@@ -101,14 +125,10 @@
       font-size: 11px !important;
       font-weight: 700;
     }
-
-    /* Highlight derniers coups */
     #board .square-55d63.hl-from,
     #board .square-55d63.hl-to {
       box-shadow: inset 0 0 0 4px var(--highlight);
     }
-
-    /* Feedback coup illégal */
     #board .square-55d63.illegal-flash {
       animation: illegalFlash 0.5s ease-out;
     }
@@ -122,6 +142,7 @@
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 18px;
+      min-height: 300px;
     }
     @media (min-width: 900px) {
       .panel { position: sticky; top: 90px; }
@@ -173,7 +194,6 @@
     .status.ok    { color: var(--success); }
 
     .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-
     button {
       flex: 1; min-width: 110px;
       padding: 11px 14px;
@@ -193,32 +213,22 @@
     }
     button:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    .history-title {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 8px;
-    }
-    .history-title h2 { margin: 0; }
-
     .history {
       background: #0d0d0d;
       border: 1px solid var(--border);
       border-radius: 8px;
-      max-height: 260px;
+      max-height: 200px;
       overflow-y: auto;
       font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
       font-size: 0.82rem;
       -webkit-overflow-scrolling: touch;
     }
     .history-empty {
-      padding: 14px;
-      color: var(--text-dim);
-      text-align: center;
-      font-style: italic;
-      font-size: 0.8rem;
+      padding: 14px; color: var(--text-dim);
+      text-align: center; font-style: italic; font-size: 0.8rem;
     }
     .history-row {
-      display: grid;
-      grid-template-columns: 40px 1fr 1fr;
+      display: grid; grid-template-columns: 40px 1fr 1fr;
       border-bottom: 1px solid var(--border);
     }
     .history-row:last-child { border-bottom: none; }
@@ -226,19 +236,171 @@
     .history-row .num { color: var(--text-dim); background: var(--surface-2); }
     .history-row .san-w { color: #e8e8e8; }
     .history-row .san-b { color: #c8c8c8; }
-    .history-row .san-w.empty,
-    .history-row .san-b.empty { color: #444; }
 
-    .info-list {
-      list-style: none; font-size: 0.82rem;
-      color: var(--text-dim); line-height: 1.75; margin-top: 4px;
+    /* ---------- CURRICULUM ---------- */
+    .crumb {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
     }
-    .info-list li::before {
-      content: "▸ "; color: var(--accent);
-      margin-right: 4px; font-weight: 700;
+    .crumb a {
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .crumb a:hover { text-decoration: underline; }
+    .crumb .sep { color: #555; }
+
+    .module-card {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      touch-action: manipulation;
+      position: relative;
+    }
+    .module-card:hover { border-color: var(--accent); background: var(--surface-3); }
+    .module-card.locked { opacity: 0.55; cursor: not-allowed; }
+    .module-card.locked:hover { border-color: var(--border); background: var(--surface-2); }
+
+    .module-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 6px;
+    }
+    .module-id {
+      font-size: 0.7rem; font-weight: 800; letter-spacing: 1px;
+      color: var(--accent); text-transform: uppercase;
+    }
+    .module-count {
+      font-size: 0.72rem; color: var(--text-dim);
+      background: #0d0d0d;
+      padding: 2px 8px; border-radius: 12px;
+    }
+    .module-title {
+      font-size: 0.95rem; font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .module-sub {
+      font-size: 0.78rem; color: var(--text-dim);
+      line-height: 1.4;
+    }
+    .module-lock {
+      position: absolute; top: 12px; right: 12px;
+      font-size: 0.9rem; color: var(--warn);
     }
 
-    /* Modale de fin de partie */
+    .lesson-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      touch-action: manipulation;
+    }
+    .lesson-row:hover { border-color: var(--accent); background: var(--surface-3); }
+    .lesson-row.locked { opacity: 0.5; cursor: not-allowed; }
+    .lesson-row.locked:hover { border-color: var(--border); background: var(--surface-2); }
+
+    .lesson-num {
+      font-size: 0.7rem; font-weight: 700;
+      background: #0d0d0d;
+      color: var(--accent);
+      padding: 4px 8px; border-radius: 6px;
+      min-width: 32px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .lesson-info { flex: 1; min-width: 0; }
+    .lesson-title {
+      font-size: 0.88rem; font-weight: 600;
+      margin-bottom: 2px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .lesson-meta {
+      font-size: 0.72rem; color: var(--text-dim);
+      display: flex; gap: 8px; align-items: center;
+    }
+    .lesson-type {
+      text-transform: uppercase;
+      font-weight: 700;
+      font-size: 0.65rem;
+      letter-spacing: 0.5px;
+    }
+    .lesson-type.lesson { color: var(--accent); }
+    .lesson-type.exercise { color: var(--success); }
+    .lesson-type.puzzle { color: var(--warn); }
+
+    .diff-bars { display: inline-flex; gap: 2px; align-items: center; }
+    .diff-bars span {
+      display: inline-block; width: 4px; height: 10px;
+      background: #444; border-radius: 1px;
+    }
+    .diff-bars span.on { background: var(--accent); }
+
+    .lesson-detail {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .lesson-detail h3 {
+      font-size: 1rem; margin-bottom: 8px;
+    }
+    .lesson-detail .objective {
+      font-size: 0.85rem;
+      color: var(--text-dim);
+      line-height: 1.55;
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      background: #0d0d0d;
+      border-left: 3px solid var(--accent);
+      border-radius: 4px;
+    }
+    .lesson-detail .placeholder {
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 24px 12px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      font-style: italic;
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 12px;
+      font-family: inherit;
+      touch-action: manipulation;
+      flex: 0 1 auto;
+      min-width: auto;
+    }
+    .back-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
     .overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.7);
@@ -269,8 +431,14 @@
 </head>
 <body>
   <header>
-    <h1>♟ Échecs Maître</h1>
-    <span class="badge">ÉTAPE 2</span>
+    <div class="brand">
+      <h1 id="app-title">♟ Projet_001</h1>
+      <span class="badge" id="app-badge">ÉTAPE 3</span>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-view="curriculum" role="tab">Curriculum</button>
+      <button class="tab" data-view="freeplay" role="tab">Partie libre</button>
+    </div>
   </header>
 
   <main>
@@ -279,37 +447,37 @@
     </section>
 
     <aside class="panel">
-      <div class="turn-indicator">
-        <span class="turn-dot" id="turn-dot"></span>
-        <span class="turn-label" id="turn-label">Aux Blancs de jouer</span>
+
+      <div id="view-curriculum" class="view active">
+        <div class="crumb" id="crumb">
+          <span>Parcours</span>
+        </div>
+        <div id="curriculum-content"></div>
       </div>
 
-      <div class="status" id="status">Position initiale. Aux Blancs.</div>
+      <div id="view-freeplay" class="view">
+        <div class="turn-indicator">
+          <span class="turn-dot" id="turn-dot"></span>
+          <span class="turn-label" id="turn-label">Aux Blancs de jouer</span>
+        </div>
 
-      <div class="btn-row">
-        <button id="btn-reset" type="button">Nouvelle partie</button>
-        <button id="btn-flip" type="button">Retourner</button>
-      </div>
-      <div class="btn-row">
-        <button id="btn-undo" type="button">Annuler coup</button>
-        <button id="btn-copy-pgn" type="button">Copier PGN</button>
-      </div>
+        <div class="status" id="status">Position initiale. Aux Blancs.</div>
 
-      <div class="history-title">
+        <div class="btn-row">
+          <button id="btn-reset" type="button">Nouvelle partie</button>
+          <button id="btn-flip" type="button">Retourner</button>
+        </div>
+        <div class="btn-row">
+          <button id="btn-undo" type="button">Annuler coup</button>
+          <button id="btn-copy-pgn" type="button">Copier PGN</button>
+        </div>
+
         <h2>Historique des coups</h2>
-      </div>
-      <div class="history" id="history">
-        <div class="history-empty">Aucun coup joué.</div>
+        <div class="history" id="history">
+          <div class="history-empty">Aucun coup joué.</div>
+        </div>
       </div>
 
-      <h2 style="margin-top: 22px;">Fondations actives</h2>
-      <ul class="info-list">
-        <li>Règles légales via chess.js</li>
-        <li>Détection échec / mat / pat / nulle</li>
-        <li>Historique SAN + PGN</li>
-        <li>Highlight du dernier coup</li>
-        <li>Undo, rotation, reset</li>
-      </ul>
     </aside>
   </main>
 
@@ -325,305 +493,130 @@
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
   <script>
-    (function () {
-      'use strict';
+  (function () {
+    'use strict';
 
-      // ---------- Références DOM ----------
-      var statusEl    = document.getElementById('status');
-      var historyEl   = document.getElementById('history');
-      var turnDot     = document.getElementById('turn-dot');
-      var turnLabel   = document.getElementById('turn-label');
-      var overlay     = document.getElementById('overlay');
-      var modalTitle  = document.getElementById('modal-title');
-      var modalText   = document.getElementById('modal-text');
-      var modalClose  = document.getElementById('modal-close');
-      var boardWrap   = document.getElementById('board-wrap');
+    /* =========================================================
+       0. IDENTITÉ DE L'APPLICATION (titre dynamique)
+       =========================================================
+       Pour changer de nom ou d'étape, modifie UNIQUEMENT ici.
+       Le <title> de l'onglet et le <h1> de l'en-tête seront
+       mis à jour automatiquement.                                */
+    var APP_NAME     = 'Projet_001';
+    var APP_STEP     = 3;
+    var APP_FULLNAME = APP_NAME + ' — Étape ' + APP_STEP;
 
-      // ---------- État global ----------
-      var board = null;
-      var game  = new Chess();
-      var lastMove = null; // { from, to }
+    // Application immédiate du titre (avant même le DOM ready)
+    document.title = APP_FULLNAME;
 
-      // ---------- Utilitaires ----------
-      function setStatus(msg, kind) {
-        statusEl.textContent = msg;
-        statusEl.className = 'status' + (kind ? ' ' + kind : '');
-      }
-
-      function clearHighlights() {
-        var $b = $('#board .square-55d63');
-        $b.removeClass('hl-from hl-to');
-      }
-
-      function applyLastMoveHighlight() {
-        clearHighlights();
-        if (!lastMove) return;
-        $('#board .square-' + lastMove.from).addClass('hl-from');
-        $('#board .square-' + lastMove.to).addClass('hl-to');
-      }
-
-      function flashIllegal(square) {
-        var $sq = $('#board .square-' + square);
-        if (!$sq.length) return;
-        $sq.addClass('illegal-flash');
-        setTimeout(function () { $sq.removeClass('illegal-flash'); }, 500);
-      }
-
-      // ---------- Rendu du panneau ----------
-      function updateTurnIndicator() {
-        var turn = game.turn(); // 'w' ou 'b'
-        if (game.game_over()) {
-          turnDot.classList.remove('black');
-          turnLabel.classList.remove('check','mate','draw');
-
-          if (game.in_checkmate()) {
-            turnLabel.classList.add('mate');
-            turnLabel.textContent = 'Échec et mat — ' + (turn === 'w' ? 'Noirs gagnent' : 'Blancs gagnent');
-          } else if (game.in_stalemate()) {
-            turnLabel.classList.add('draw');
-            turnLabel.textContent = 'Pat — Match nul';
-          } else if (game.in_threefold_repetition && game.in_threefold_repetition()) {
-            turnLabel.classList.add('draw');
-            turnLabel.textContent = 'Nulle — Triple répétition';
-          } else if (game.insufficient_material()) {
-            turnLabel.classList.add('draw');
-            turnLabel.textContent = 'Nulle — Matériel insuffisant';
-          } else if (game.in_draw()) {
-            turnLabel.classList.add('draw');
-            turnLabel.textContent = 'Nulle (règle des 50 coups)';
-          } else {
-            turnLabel.textContent = 'Partie terminée';
-          }
-          return;
-        }
-
-        turnLabel.classList.remove('check','mate','draw');
-        if (turn === 'w') {
-          turnDot.classList.remove('black');
-          turnLabel.textContent = 'Aux Blancs de jouer';
-        } else {
-          turnDot.classList.add('black');
-          turnLabel.textContent = 'Aux Noirs de jouer';
-        }
-        if (game.in_check()) {
-          turnLabel.classList.add('check');
-          turnLabel.textContent += ' — ÉCHEC !';
-        }
-      }
-
-      function updateHistory() {
-        var hist = game.history(); // SAN
-        if (hist.length === 0) {
-          historyEl.innerHTML = '<div class="history-empty">Aucun coup joué.</div>';
-          return;
-        }
-        var html = '';
-        for (var i = 0; i < hist.length; i += 2) {
-          var n = (i / 2) + 1;
-          var w = hist[i] || '';
-          var b = hist[i + 1] || '';
-          html += '<div class="history-row">' +
-                    '<div class="num">' + n + '.</div>' +
-                    '<div class="san-w' + (w ? '' : ' empty') + '">' + (w || '—') + '</div>' +
-                    '<div class="san-b' + (b ? '' : ' empty') + '">' + (b || '—') + '</div>' +
-                  '</div>';
-        }
-        historyEl.innerHTML = html;
-        historyEl.scrollTop = historyEl.scrollHeight;
-      }
-
-      function updateStatusAfterMove(move) {
-        var san = move.san;
-        if (game.in_checkmate()) {
-          setStatus('Échec et mat ! ' + san, 'error');
-          showEndModal('Échec et mat', (move.color === 'w' ? 'Les Blancs gagnent.' : 'Les Noirs gagnent.'));
-        } else if (game.in_stalemate()) {
-          setStatus('Pat — match nul après ' + san, 'warn');
-          showEndModal('Pat', 'Aucun coup légal possible et le roi n\'est pas en échec. Match nul.');
-        } else if (game.insufficient_material()) {
-          setStatus('Nulle — matériel insuffisant (' + san + ')', 'warn');
-          showEndModal('Nulle', 'Matériel insuffisant pour mater.');
-        } else if (game.in_threefold_repetition && game.in_threefold_repetition()) {
-          setStatus('Nulle — triple répétition (' + san + ')', 'warn');
-          showEndModal('Nulle', 'Position répétée trois fois.');
-        } else if (game.in_draw()) {
-          setStatus('Nulle — règle des 50 coups (' + san + ')', 'warn');
-          showEndModal('Nulle', '50 coups sans capture ni poussée de pion.');
-        } else if (game.in_check()) {
-          setStatus('Échec au roi ' + (game.turn() === 'w' ? 'blanc' : 'noir') + ' après ' + san, 'warn');
-        } else {
-          setStatus('Coup joué : ' + san + '. ' +
-            (game.turn() === 'w' ? 'Aux Blancs.' : 'Aux Noirs.'), 'ok');
-        }
-      }
-
-      function showEndModal(title, text) {
-        modalTitle.textContent = title;
-        modalText.textContent = text;
-        overlay.classList.add('show');
-      }
-
-      // ---------- Chessboard.js callbacks ----------
-      function onDragStart(source, piece) {
-        // Interdit de déplacer une pièce du camp adverse ou quand la partie est finie
-        if (game.game_over()) return false;
-        var turn = game.turn();
-        if (turn === 'w' && piece.search(/^b/) !== -1) return false;
-        if (turn === 'b' && piece.search(/^w/) !== -1) return false;
-        return true;
-      }
-
-      function onDrop(source, target) {
-        // Interdit de capturer le roi (chess.js le refuse, mais on bloque visuellement)
-        var legalMoves = game.moves({ verbose: true });
-        var found = null;
-        for (var i = 0; i < legalMoves.length; i++) {
-          if (legalMoves[i].from === source && legalMoves[i].to === target) {
-            found = legalMoves[i]; break;
-          }
-        }
-        if (!found) {
-          flashIllegal(target);
-          setStatus('Coup illégal : ' + source + ' → ' + target, 'error');
-          return 'snapback';
-        }
-        // Joue le coup
-        var move = game.move({ from: source, to: target, promotion: 'q' });
-        if (!move) {
-          flashIllegal(target);
-          setStatus('Coup refusé par les règles.', 'error');
-          return 'snapback';
-        }
-        lastMove = { from: source, to: target };
-        return; // accepté
-      }
-
-      function onSnapEnd() {
-        board.position(game.fen());
-        applyLastMoveHighlight();
-        updateTurnIndicator();
-        updateHistory();
-        updateStatusAfterMove(game.history({ verbose: true }).slice(-1)[0]);
-      }
-
-      // ---------- Contrôles ----------
-      document.getElementById('btn-reset').addEventListener('click', function () {
-        game = new Chess();
-        lastMove = null;
-        board.position('start', false);
-        board.orientation('white');
-        clearHighlights();
-        updateTurnIndicator();
-        updateHistory();
-        setStatus('Nouvelle partie. Position initiale. Aux Blancs.', 'ok');
-      });
-
-      document.getElementById('btn-flip').addEventListener('click', function () {
-        board.flip();
-      });
-
-      document.getElementById('btn-undo').addEventListener('click', function () {
-        var undone = game.undo();
-        if (!undone) {
-          setStatus('Aucun coup à annuler.', 'warn');
-          return;
-        }
-        lastMove = null;
-        var hist = game.history({ verbose: true });
-        if (hist.length > 0) {
-          var prev = hist[hist.length - 1];
-          lastMove = { from: prev.from, to: prev.to };
-        }
-        board.position(game.fen(), false);
-        applyLastMoveHighlight();
-        updateTurnIndicator();
-        updateHistory();
-        setStatus('Coup annulé : ' + undone.san + '.', 'warn');
-      });
-
-      document.getElementById('btn-copy-pgn').addEventListener('click', function () {
-        var pgn = game.pgn();
-        if (!pgn) { setStatus('Aucun coup à copier.', 'warn'); return; }
-        copyToClipboard(pgn).then(function (ok) {
-          setStatus(ok ? 'PGN copié dans le presse-papiers.' : 'Copie impossible — sélectionne manuellement.', ok ? 'ok' : 'warn');
-        });
-      });
-
-      modalClose.addEventListener('click', function () {
-        overlay.classList.remove('show');
-      });
-      overlay.addEventListener('click', function (e) {
-        if (e.target === overlay) overlay.classList.remove('show');
-      });
-
-      function copyToClipboard(text) {
-        return new Promise(function (resolve) {
-          if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(text).then(function () { resolve(true); }, function () { resolve(false); });
-          } else {
-            try {
-              var ta = document.createElement('textarea');
-              ta.value = text;
-              ta.style.position = 'fixed'; ta.style.left = '-9999px';
-              document.body.appendChild(ta);
-              ta.select();
-              document.execCommand('copy');
-              document.body.removeChild(ta);
-              resolve(true);
-            } catch (err) { resolve(false); }
-          }
-        });
-      }
-
-      // ---------- Resize / orientation ----------
-      function resizeBoard() {
-        if (board && typeof board.resize === 'function') board.resize();
-        applyLastMoveHighlight();
-      }
-      var resizeTimer = null;
-      window.addEventListener('resize', function () {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(resizeBoard, 120);
-      });
-      window.addEventListener('orientationchange', function () {
-        setTimeout(resizeBoard, 250);
-      });
-
-      // ---------- Anti-zoom / anti-pull-refresh iOS ----------
-      var lastTouchEnd = 0;
-      document.addEventListener('touchend', function (e) {
-        var now = Date.now();
-        if (now - lastTouchEnd <= 300) e.preventDefault();
-        lastTouchEnd = now;
-      }, { passive: false });
-
-      boardWrap.addEventListener('touchmove', function (e) {
-        e.preventDefault();
-      }, { passive: false });
-
-      // ---------- Init ----------
-      function initBoard() {
-        board = Chessboard('board', {
-          draggable: true,
-          position: 'start',
-          pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
-          showNotation: true,
-          onDragStart: onDragStart,
-          onDrop: onDrop,
-          onSnapEnd: onSnapEnd
-        });
-        setTimeout(resizeBoard, 50);
-        updateTurnIndicator();
-        updateHistory();
-        setStatus('Position initiale. Aux Blancs.', 'ok');
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initBoard);
-      } else {
-        initBoard();
-      }
-    })();
-  </script>
-</body>
-</html>
+    /* =========================================================
+       1. DONNÉES DU CURRICULUM — 10 modules / 55 leçons
+       ========================================================= */
+    var CURRICULUM = [
+      {
+        id: 'M0', title: 'Découverte de l\'échiquier',
+        subtitle: 'Plateau, coordonnées, orientation',
+        level: 1, unlocked: true,
+        lessons: [
+          { id: 'M0-L1', title: 'Le plateau et ses coordonnées', objective: 'Identifier les 64 cases, les colonnes a-h et les rangées 1-8.', type: 'lesson', difficulty: 1 },
+          { id: 'M0-L2', title: 'Orientation et camp blanc/noir', objective: 'Savoir où se placent les Blancs et les Noirs, reconnaître un échiquier retourné.', type: 'lesson', difficulty: 1 },
+          { id: 'M0-L3', title: 'Nommer une case', objective: 'Nommer instantanément n\'importe quelle case (ex : e4, h7) sans hésitation.', type: 'exercise', difficulty: 1 },
+          { id: 'M0-L4', title: 'Le vocabulaire de base', objective: 'Comprendre rangée, colonne, diagonale, centre, aile roi, aile dame.', type: 'lesson', difficulty: 2 }
+        ]
+      },
+      {
+        id: 'M1', title: 'Le mouvement des pièces',
+        subtitle: 'Une pièce à la fois, en isolation',
+        level: 1, unlocked: false,
+        lessons: [
+          { id: 'M1-L1', title: 'Le pion : avancer, capturer', objective: 'Maîtriser les déplacements du pion, la capture en diagonale, la poussée initiale double.', type: 'exercise', difficulty: 1 },
+          { id: 'M1-L2', title: 'La tour : lignes et colonnes', objective: 'Déplacer la tour sur les lignes et colonnes, comprendre la portée infinie.', type: 'exercise', difficulty: 1 },
+          { id: 'M1-L3', title: 'Le fou : la diagonale', objective: 'Déplacer le fou uniquement en diagonale, comprendre le fou clair/foncé.', type: 'exercise', difficulty: 1 },
+          { id: 'M1-L4', title: 'La dame : la pièce la plus puissante', objective: 'Combiner lignes, colonnes et diagonales avec la dame.', type: 'exercise', difficulty: 2 },
+          { id: 'M1-L5', title: 'Le cavalier : le saut en L', objective: 'Maîtriser le saut en L et la particularité du cavalier qui change de couleur de case.', type: 'exercise', difficulty: 3 },
+          { id: 'M1-L6', title: 'Le roi : un pas à la fois', objective: 'Déplacer le roi d\'une case dans toutes les directions, comprendre son statut spécial.', type: 'exercise', difficulty: 2 }
+        ]
+      },
+      {
+        id: 'M2', title: 'Échec, mat, pat, nulle',
+        subtitle: 'Les notions vitales du jeu',
+        level: 2, unlocked: false,
+        lessons: [
+          { id: 'M2-L1', title: 'L\'échec : obligation de réagir', objective: 'Reconnaître un échec et comprendre les 3 seules réponses légales (fuir, bloquer, capturer).', type: 'lesson', difficulty: 2 },
+          { id: 'M2-L2', title: 'Sortir d\'un échec', objective: 'Trouver systématiquement la sortie d\'échec par fuite, blocage ou capture.', type: 'exercise', difficulty: 2 },
+          { id: 'M2-L3', title: 'L\'échec et mat', objective: 'Reconnaître un mat : roi en échec ET aucune échappatoire légale.', type: 'exercise', difficulty: 2 },
+          { id: 'M2-L4', title: 'Le pat : match nul involontaire', objective: 'Différencier pat et mat, éviter le pat quand on est gagnant.', type: 'lesson', difficulty: 3 },
+          { id: 'M2-L5', title: 'Les autres nulle', objective: 'Connaître les nulles : matériel insuffisant, triple répétition, règle des 50 coups.', type: 'lesson', difficulty: 3 }
+        ]
+      },
+      {
+        id: 'M3', title: 'Mats élémentaires',
+        subtitle: 'Convertir un avantage en victoire',
+        level: 2, unlocked: false,
+        lessons: [
+          { id: 'M3-L1', title: 'Mat de la dame seule', objective: 'Mater avec Dame + Roi contre Roi seul en poussant vers le bord.', type: 'exercise', difficulty: 3 },
+          { id: 'M3-L2', title: 'Mat des deux tours', objective: 'Utiliser l\'escalier des tours pour mater le roi seul.', type: 'exercise', difficulty: 3 },
+          { id: 'M3-L3', title: 'Mat de la tour seule', objective: 'Mater avec Tour + Roi contre Roi, méthode d\'opposition.', type: 'exercise', difficulty: 4 },
+          { id: 'M3-L4', title: 'Mat des deux fous', objective: 'Mater avec deux Fous + Roi contre Roi, méthode du triangle.', type: 'exercise', difficulty: 5 }
+        ]
+      },
+      {
+        id: 'M4', title: 'Motifs tactiques fondamentaux',
+        subtitle: 'Les 8 patterns qui gagnent des pièces',
+        level: 3, unlocked: false,
+        lessons: [
+          { id: 'M4-L1', title: 'La fourchette', objective: 'Repérer et exécuter une fourchette (souvent du cavalier) qui attaque deux pièces.', type: 'puzzle', difficulty: 2 },
+          { id: 'M4-L2', title: 'L\'enfilade', objective: 'Reconnaître une enfilade : attaquer une pièce derrière laquelle se trouve une pièce plus précieuse.', type: 'puzzle', difficulty: 3 },
+          { id: 'M4-L3', title: 'La brochette', objective: 'Différencier la brochette de l\'enfilade : pièce de valeur devant, pièce moins précieuse derrière.', type: 'puzzle', difficulty: 3 },
+          { id: 'M4-L4', title: 'Le clouage', objective: 'Clouer une pièce contre le roi ou une pièce plus précieuse.', type: 'puzzle', difficulty: 3 },
+          { id: 'M4-L5', title: 'L\'attaque double', objective: 'Attaquer simultanément deux pièces avec une seule pièce (dame, tour, fou).', type: 'puzzle', difficulty: 2 },
+          { id: 'M4-L6', title: 'L\'attaque à la découverte', objective: 'Découvrir une attaque en déplaçant une pièce qui masquait une autre.', type: 'puzzle', difficulty: 4 },
+          { id: 'M4-L7', title: 'L\'échec double', objective: 'Donner échec avec deux pièces simultanément (le roi doit fuir).', type: 'puzzle', difficulty: 4 },
+          { id: 'M4-L8', title: 'Le coup intermédiaire', objective: 'Placer un coup intermédiaire avant une reprise, souvent décisif.', type: 'puzzle', difficulty: 5 }
+        ]
+      },
+      {
+        id: 'M5', title: 'Combinaisons à 2-3 coups',
+        subtitle: 'Enchaîner les motifs',
+        level: 3, unlocked: false,
+        lessons: [
+          { id: 'M5-L1', title: 'Mat du berger et réfutations', objective: 'Connaître le mat du berger, savoir le jouer et le contrer.', type: 'puzzle', difficulty: 2 },
+          { id: 'M5-L2', title: 'Mat à l\'étouffée', objective: 'Reconnaître et exécuter le mat à l\'étouffée du cavalier.', type: 'puzzle', difficulty: 3 },
+          { id: 'M5-L3', title: 'Le mat du couloir', objective: 'Exploiter la 8e rangée faible avec tour ou dame.', type: 'puzzle', difficulty: 2 },
+          { id: 'M5-L4', title: 'Le mat d\'Anastasie', objective: 'Reconnaître ce mat classique : cavalier + tour contre roi coincé.', type: 'puzzle', difficulty: 3 },
+          { id: 'M5-L5', title: 'Le mat arabe', objective: 'Reconnaître le mat arabe : tour + cavalier en coordination.', type: 'puzzle', difficulty: 4 },
+          { id: 'M5-L6', title: 'Combinaisons mixtes', objective: 'Combiner plusieurs motifs dans une même combinaison de 2-3 coups.', type: 'puzzle', difficulty: 4 }
+        ]
+      },
+      {
+        id: 'M6', title: 'Finales de pions',
+        subtitle: 'La technique pure',
+        level: 3, unlocked: false,
+        lessons: [
+          { id: 'M6-L1', title: 'Le pion passé', objective: 'Reconnaître un pion passé et comprendre sa force en finale.', type: 'lesson', difficulty: 3 },
+          { id: 'M6-L2', title: 'La règle du carré', objective: 'Utiliser la règle du carré pour savoir si un roi rattrape un pion.', type: 'exercise', difficulty: 3 },
+          { id: 'M6-L3', title: 'L\'opposition', objective: 'Utiliser l\'opposition pour forcer le gain ou la nulle en finale de rois.', type: 'exercise', difficulty: 4 },
+          { id: 'M6-L4', title: 'Cases-clés et zugzwang', objective: 'Identifier les cases-clés et exploiter le zugzwang.', type: 'lesson', difficulty: 4 },
+          { id: 'M6-L5', title: 'Pions passés protégés', objective: 'Utiliser un pion passé protégé pour créer un pion passé plus loin.', type: 'lesson', difficulty: 5 }
+        ]
+      },
+      {
+        id: 'M7', title: 'Principes d\'ouverture',
+        subtitle: 'Les règles d\'or du début de partie',
+        level: 3, unlocked: false,
+        lessons: [
+          { id: 'M7-L1', title: 'Contrôler le centre', objective: 'Comprendre pourquoi le contrôle des 4 cases centrales est primordial.', type: 'lesson', difficulty: 2 },
+          { id: 'M7-L2', title: 'Développer ses pièces', objective: 'Sortir cavaliers et fous rapidement, éviter de bouger la même pièce deux fois.', type: 'lesson', difficulty: 2 },
+          { id: 'M7-L3', title: 'Roquer tôt', objective: 'Comprendre l\'importance du roque pour la sécurité du roi.', type: 'lesson', difficulty: 2 },
+          { id: 'M7-L4', title: 'Connecter ses tours', objective: 'Coordonner les tours au centre après le développement.', type: 'lesson', difficulty: 3 },
+          { id: 'M7-L5', title: 'Erreurs classiques d\'ouverture', objective: 'Éviter les pièges courants : sortie prématurée de la dame, pions affaiblis, roque tardif.', type: 'lesson', difficulty: 3 }
+        ]
+      },
+      {
+        id: 'M8', title: 'Plans de milieu de jeu',
+        subtitle: 'Structurer sa pensée stratégique',
+        level: 4, unlocked: false,
+        lessons: [
+          { id: 'M8-L1', title: 'Identifier une faiblesse', objective: 'Repérer une case ou un pion faible dans le camp adverse.', type: 'lesson', difficulty: 4 },
+          { id: 'M8-L2', title: 'Jouer sur les colonnes ouvertes', objective: 'Doubler les tours sur une colonne ouverte.', type: 'lesson', difficulty: 4 },
+          { id: 'M8-L3', title: 'Le bon cavalier contre le mauvais fou', objective: 'Reconnaître les positions où un cavalier domine un fou.',
