@@ -8,8 +8,8 @@ window.APP = window.APP || {};
 
 window.APP.CONFIG = {
   NAME: 'Projet_001',
-  STEP: 5,
-  VERSION: '0.5.0',
+  STEP: 6,
+  VERSION: '0.6.0',
   get FULLNAME() {
     return this.NAME + ' — Étape ' + this.STEP;
   }
