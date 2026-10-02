@@ -1,30 +1,9 @@
 /* =========================================================
    board-core.js — Échiquier + règles légales + validation FEN
    =========================================================
-   Rôle : encapsule l'échiquier (chessboard.js + chess.js).
-   Toute interaction avec l'échiquier passe par cette API.
-
-   API exposée via window.APP.Board :
-     init()               : crée l'échiquier
-     reset()              : position initiale + reset complet
-     flip()               : retourne l'échiquier
-     position(fen)        : affiche une FEN
-     orientation(color)   : oriente 'white' ou 'black'
-     resize()             : redimensionne
-     getGame()            : instance chess.js courante
-     setGame(g)           : remplace l'instance
-     newGame()            : nouvelle partie
-     isLessonMode()       : renvoie true/false
-     setLessonMode(b)     : active/désactive le mode leçon
-     setOnDropHandler(fn) : branche un handler custom
-     setOnSnapEndHandler(fn)
-     setLastMove(from,to) : mémorise le dernier coup
-     clearLastMove()
-     clearHighlights()
-     applyLastMoveHighlight()
-     flashIllegal(square)
-     validateFen(fen)     : { valid, error?, inCheck?, turn? }
-     getBoardInstance()
+   v1.0.3 — Correctif : en mode leçon, le handler custom prend
+   TOUT le contrôle du onDrop. board-core.js ne fait AUCUNE
+   validation interne quand un handler custom est présent.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -97,11 +76,14 @@ window.APP = window.APP || {};
   }
 
   /* =========================================================
-     CALLBACKS PAR DÉFAUT (mode libre)
+     CALLBACKS
      ========================================================= */
 
-  function defaultOnDragStart(source, piece) {
+  function onDragStart(source, piece) {
+    /* En mode leçon, on laisse TOUJOURS passer le drag.
+       C'est le handler custom (LessonEngine) qui décidera. */
     if (lessonMode) return true;
+
     if (game.game_over()) return false;
     var turn = game.turn();
     if (turn === 'w' && piece.search(/^b/) !== -1) return false;
@@ -109,11 +91,12 @@ window.APP = window.APP || {};
     return true;
   }
 
-  function defaultOnDrop(source, target) {
-    /* Handler custom prioritaire (mode leçon/puzzle) */
+  function onDrop(source, target) {
+    /* ⚠️ CORRECTIF v1.0.3 :
+       Si un handler custom est présent (mode leçon), il prend
+       TOUT le contrôle. board-core.js ne touche pas au game. */
     if (onDropHandler) {
-      var result = onDropHandler(source, target);
-      if (result !== undefined) return result;
+      return onDropHandler(source, target);
     }
 
     /* Mode libre par défaut */
@@ -138,12 +121,15 @@ window.APP = window.APP || {};
     return;
   }
 
-  function defaultOnSnapEnd() {
+  function onSnapEnd() {
+    /* En mode leçon : ne rien faire (le LessonEngine gère) */
+    if (lessonMode) return;
+
+    /* En mode libre : rafraîchir l'échiquier */
     if (onSnapEndHandler) {
       onSnapEndHandler();
       return;
     }
-    if (lessonMode) return;
     if (board) board.position(game.fen());
     applyLastMoveHighlight();
   }
@@ -154,21 +140,19 @@ window.APP = window.APP || {};
 
   var API = {
 
-    /* ---------- Init ---------- */
     init: function () {
       board = window.Chessboard('board', {
         draggable: true,
         position: 'start',
         pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png',
         showNotation: true,
-        onDragStart: defaultOnDragStart,
-        onDrop: defaultOnDrop,
-        onSnapEnd: defaultOnSnapEnd
+        onDragStart: onDragStart,
+        onDrop: onDrop,
+        onSnapEnd: onSnapEnd
       });
       this.resize();
     },
 
-    /* ---------- Reset complet ---------- */
     reset: function () {
       game = new Chess();
       lastMove = null;
@@ -182,7 +166,6 @@ window.APP = window.APP || {};
       clearHighlights();
     },
 
-    /* ---------- Manipulation échiquier ---------- */
     flip: function () {
       if (board) board.flip();
     },
@@ -199,32 +182,24 @@ window.APP = window.APP || {};
       if (board && typeof board.resize === 'function') board.resize();
     },
 
-    /* ---------- Accès au game ---------- */
     getGame: function () { return game; },
     setGame: function (g) { game = g; },
     newGame: function () { game = new Chess(); },
 
-    /* ---------- Mode leçon ---------- */
     isLessonMode: function () { return lessonMode; },
     setLessonMode: function (b) { lessonMode = !!b; },
 
-    /* ---------- Handlers custom ---------- */
     setOnDropHandler: function (fn) { onDropHandler = fn; },
     setOnSnapEndHandler: function (fn) { onSnapEndHandler = fn; },
 
-    /* ---------- Dernier coup ---------- */
     setLastMove: function (from, to) { lastMove = { from: from, to: to }; },
     clearLastMove: function () { lastMove = null; },
 
-    /* ---------- Helpers visuels ---------- */
     clearHighlights: clearHighlights,
     applyLastMoveHighlight: applyLastMoveHighlight,
     flashIllegal: flashIllegal,
-
-    /* ---------- Validation FEN ---------- */
     validateFen: validateFen,
 
-    /* ---------- Accès bas niveau ---------- */
     getBoardInstance: function () { return board; }
   };
 
