@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-catalog.js — Catalogue (v1.4.0)
-   Utilise LessonEngine.lessonType() pour classer les leçons.
+   ui-catalog.js — Catalogue (v1.5.0)
+   Ajout : légende explicative des symboles en haut du catalogue.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -106,7 +106,8 @@ window.APP = window.APP || {};
     var filtered = applyFilters(lessons);
     var grouped = groupLessons(filtered);
 
-    var html = renderFilters();
+    var html = renderLegend();
+    html += renderFilters();
     html += '<div class="catalog-count">' + filtered.length + ' leçon' +
             (filtered.length > 1 ? 's' : '') + ' affichée' +
             (filtered.length > 1 ? 's' : '') + '</div>';
@@ -127,6 +128,43 @@ window.APP = window.APP || {};
     el.innerHTML = html;
     bindListEvents();
   }
+
+  /* ================= LÉGENDE ================= */
+
+  function renderLegend() {
+    return '' +
+      '<div class="catalog-legend" id="catalog-legend">' +
+        '<button class="legend-toggle" type="button" id="legend-toggle">' +
+          'ℹ️ Légende des symboles' +
+        '</button>' +
+        '<div class="legend-content" id="legend-content">' +
+          '<div class="legend-row">' +
+            '<span class="legend-icon icon-interactive">▶</span>' +
+            '<span class="legend-text"><strong>Exercice interactif</strong> — clique ou déplace une pièce (Modules M0 et M1)</span>' +
+          '</div>' +
+          '<div class="legend-row">' +
+            '<span class="legend-icon icon-puzzle">♟</span>' +
+            '<span class="legend-text"><strong>Puzzle Lichess</strong> — résous une position tirée d\'une vraie partie (Modules M2 à M9)</span>' +
+          '</div>' +
+          '<div class="legend-row">' +
+            '<span class="legend-icon icon-none">—</span>' +
+            '<span class="legend-text"><strong>Théorie</strong> — leçon explicative, contenu à venir</span>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function bindLegendToggle() {
+    var toggle = document.getElementById('legend-toggle');
+    var content = document.getElementById('legend-content');
+    if (!toggle || !content) return;
+    toggle.addEventListener('click', function () {
+      content.classList.toggle('open');
+      toggle.classList.toggle('open');
+    });
+  }
+
+  /* ================= FILTRES ================= */
 
   function renderFilters() {
     return '' +
@@ -167,10 +205,13 @@ window.APP = window.APP || {};
     var starsStr = '';
     for (var i = 0; i < lesson.stars; i++) starsStr += '⭐';
     var badge = '';
-    if (window.APP.LessonEngine && window.APP.LessonEngine.lessonType) {
-      var t = window.APP.LessonEngine.lessonType(lesson.id);
-      if (t === 'interactive') badge = '<span class="lesson-badge-interactive" title="Exercice jouable">▶</span>';
-      else if (t === 'puzzle-live') badge = '<span class="lesson-badge-puzzle" title="Puzzle Lichess">♟</span>';
+    var lt = getLessonDisplayType(lesson);
+    if (lt === 'interactive') {
+      badge = '<span class="lesson-badge-interactive" title="Exercice interactif">▶</span>';
+    } else if (lt === 'puzzle-live') {
+      badge = '<span class="lesson-badge-puzzle" title="Puzzle Lichess">♟</span>';
+    } else {
+      badge = '<span class="lesson-badge-none" title="Théorie à venir">—</span>';
     }
 
     return '' +
@@ -239,6 +280,8 @@ window.APP = window.APP || {};
     if (selTheme) selTheme.addEventListener('change', function () { state.filterTheme = this.value; renderList(); });
     if (selStars) selStars.addEventListener('change', function () { state.filterStars = this.value; renderList(); });
     if (selSort) selSort.addEventListener('change', function () { state.sortBy = this.value; renderList(); });
+
+    bindLegendToggle();
 
     var container = contentEl();
     if (container) {
