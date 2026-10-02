@@ -1,10 +1,7 @@
 /* =========================================================
-   app-init.js — Point d'entrée (Étape 3)
+   app-init.js — Point d'entrée (Étape 5)
    =========================================================
-   Ajoute le branchement :
-     - LichessClient
-     - LichessAdapter
-     - LessonEngine
+   Ajout : Stockfish (chargement paresseux) + UIAnalysis.
    ========================================================= */
 
 (function () {
@@ -24,9 +21,12 @@
     if (!window.APP || !window.APP.LichessClient)       missing.push('lichess/lichess-client.js');
     if (!window.APP || !window.APP.LichessAdapter)      missing.push('lichess/lichess-adapter.js');
     if (!window.APP || !window.APP.LessonEngine)        missing.push('core/lesson-engine.js');
+    if (!window.APP || !window.APP.Stockfish)           missing.push('engine/stockfish-loader.js');
+    if (!window.APP || !window.APP.StockfishAnalysis)   missing.push('engine/stockfish-analysis.js');
     if (!window.APP || !window.APP.UITabs)              missing.push('ui/ui-tabs.js');
     if (!window.APP || !window.APP.UINav)               missing.push('ui/ui-nav.js');
     if (!window.APP || !window.APP.UIFreeplay)          missing.push('ui/ui-freeplay.js');
+    if (!window.APP || !window.APP.UIAnalysis)          missing.push('ui/ui-analysis.js');
 
     return missing;
   }
@@ -95,17 +95,16 @@
     }
 
     try {
-      window.APP.log('Init démarré (Étape 3).');
+      window.APP.log('Init démarré (Étape 5).');
 
       applyIdentity();
       window.APP.Board.init();
-
-      /* Branchement du moteur de leçon */
       window.APP.LessonEngine.init();
 
       /* UI */
       window.APP.UINav.init();
       window.APP.UIFreeplay.init();
+      window.APP.UIAnalysis.init();
       window.APP.UITabs.init();
 
       bindResize();
