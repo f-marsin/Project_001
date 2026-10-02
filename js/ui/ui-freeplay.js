@@ -1,9 +1,6 @@
 /* =========================================================
-   ui-freeplay.js — Mode Partie libre
-   =========================================================
-   Rôle : gérer les coups libres, l'historique, les boutons.
-   Écoute les événements de l'échiquier via window.APP.Board.
-   API : window.APP.UIFreeplay.init(), .onEnter()
+   ui-freeplay.js — Mode Partie libre (v1.0.13)
+   Ajout : reset la barre d'éval à 50/50 sur nouvelle partie.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -11,7 +8,6 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* ---------- Éléments DOM ---------- */
   function statusEl()   { return document.getElementById('status'); }
   function historyEl()  { return document.getElementById('history'); }
   function turnDot()    { return document.getElementById('turn-dot'); }
@@ -19,8 +15,6 @@ window.APP = window.APP || {};
   function overlay()    { return document.getElementById('overlay'); }
   function modalTitle() { return document.getElementById('modal-title'); }
   function modalText()  { return document.getElementById('modal-text'); }
-
-  /* ---------- Affichage ---------- */
 
   function setStatus(msg, kind) {
     var el = statusEl();
@@ -92,8 +86,6 @@ window.APP = window.APP || {};
     el.scrollTop = el.scrollHeight;
   }
 
-  /* ---------- Modale ---------- */
-
   function showModal(title, text) {
     var mt = modalTitle();
     var mText = modalText();
@@ -103,8 +95,6 @@ window.APP = window.APP || {};
     mText.textContent = text;
     ov.classList.add('show');
   }
-
-  /* ---------- Callback onSnapEnd ---------- */
 
   function onMovePlayed() {
     var game = window.APP.Board.getGame();
@@ -134,15 +124,9 @@ window.APP = window.APP || {};
     } else if (game.in_check()) {
       setStatus('Échec au roi ' + (game.turn() === 'w' ? 'blanc' : 'noir') + ' après ' + san, 'warn');
     } else {
-      setStatus(
-        'Coup joué : ' + san + '. ' +
-        (game.turn() === 'w' ? 'Aux Blancs.' : 'Aux Noirs.'),
-        'ok'
-      );
+      setStatus('Coup joué : ' + san + '. ' + (game.turn() === 'w' ? 'Aux Blancs.' : 'Aux Noirs.'), 'ok');
     }
   }
-
-  /* ---------- Boutons ---------- */
 
   function btnReset() {
     var B = window.APP.Board;
@@ -151,16 +135,13 @@ window.APP = window.APP || {};
     B.clearHighlights();
     B.position('start', false);
     B.orientation('white');
+    B.setEvaluation(null);   /* ← reset barre éval */
     updateTurnIndicator();
     updateHistory();
     setStatus('Nouvelle partie. Position initiale. Aux Blancs.', 'ok');
   }
 
-  function btnFlip() {
-    window.APP.Board.flip();
-  }
-
-  /* ---------- Init ---------- */
+  function btnFlip() { window.APP.Board.flip(); }
 
   function bindButtons() {
     var bReset = document.getElementById('btn-reset');
@@ -183,20 +164,15 @@ window.APP = window.APP || {};
     updateTurnIndicator();
     updateHistory();
     setStatus('Position initiale. Aux Blancs.', 'ok');
-
-    /* On enregistre notre callback sur le Board */
     if (window.APP.Board) {
       window.APP.Board.setOnSnapEndHandler(onMovePlayed);
     }
   }
 
   function onEnter() {
-    /* Retour à l'onglet Partie libre : refresh affichage */
     updateTurnIndicator();
     updateHistory();
   }
-
-  /* ---------- API ---------- */
 
   window.APP.UIFreeplay = {
     init: init,
