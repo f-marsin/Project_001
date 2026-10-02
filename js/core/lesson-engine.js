@@ -1,11 +1,7 @@
 /* =========================================================
-   lesson-engine.js — Moteur de leçons (puzzles Lichess)
-   =========================================================
-   v1.0.8 — Nettoyage + UX :
-     - Suppression des logs de debug et de debugSolution
-     - Ajout bouton « Voir la solution » (avec confirmation)
-     - Ajout bouton « Puzzle suivant » après réussite
-     - Message de réussite amélioré
+   lesson-engine.js — Moteur de leçons (v1.2.1)
+   Ajout : startFromCatalog() pour distinguer le contexte
+   d'où vient la leçon (Parcours ou Catalogue).
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -20,12 +16,9 @@ window.APP = window.APP || {};
     puzzle: null,
     awaiting: false,
     solved: false,
-    solvedOnce: false
+    /* Nouveauté : source de la leçon ('path' ou 'catalog') */
+    source: 'path'
   };
-
-  /* =========================================================
-     HELPERS
-     ========================================================= */
 
   function showFeedback(msg, kind) {
     var el = document.getElementById('lesson-feedback');
@@ -71,8 +64,6 @@ window.APP = window.APP || {};
     return false;
   }
 
-  /* Vérifie que le thème demandé est bien dans les 2 premiers
-     thèmes du puzzle (Lichess les trie par importance). */
   function isThemeMatch(themes, requestedTheme) {
     if (!themes || themes.length === 0) return false;
     if (!requestedTheme) return true;
@@ -80,9 +71,7 @@ window.APP = window.APP || {};
     return top.indexOf(requestedTheme) !== -1;
   }
 
-  /* =========================================================
-     DÉMARRAGE D'UNE LEÇON
-     ========================================================= */
+  /* ================= POINT D'ENTRÉE : PARCOURS ================= */
 
   function startCurrent() {
     var lesson = getLessonFromState();
@@ -91,8 +80,27 @@ window.APP = window.APP || {};
       showFeedback('Le contenu de cette leçon sera ajouté ultérieurement.', 'ko');
       return;
     }
+    state.source = 'path';
     start(lesson.id, lesson.lichessTheme);
   }
+
+  /* ================= POINT D'ENTRÉE : CATALOGUE ================= */
+
+  function startFromCatalog(moduleId, lessonId, theme) {
+    if (!lessonId || !theme) {
+      /* Fallback : utiliser les infos du catalogue */
+      var lesson = window.APP.findLesson(moduleId, lessonId);
+      if (!lesson || !lesson.lichessTheme) {
+        showFeedback('Leçon introuvable ou sans contenu.', 'ko');
+        return;
+      }
+      theme = lesson.lichessTheme;
+    }
+    state.source = 'catalog';
+    start(lessonId, theme);
+  }
+
+  /* ================= DÉMARRAGE COMMUN ================= */
 
   function start(lessonId, theme) {
     state.active = true;
@@ -115,7 +123,6 @@ window.APP = window.APP || {};
         var adapted = window.APP.LichessAdapter.adapt(result.data);
         if (adapted.error) throw new Error(adapted.error);
 
-        /* Vérification thème */
         if (!isThemeMatch(adapted.themes, theme) && attempt < MAX_ATTEMPTS) {
           setTimeout(function () { fetchAndValidate(theme, attempt + 1); }, 300);
           return;
@@ -134,14 +141,20 @@ window.APP = window.APP || {};
       });
   }
 
-  /* =========================================================
-     RENDUS
-     ========================================================= */
+  /* ================= RENDUS ================= */
+
+  /* Obtient le conteneur de rendu selon la source */
+  function getRenderContainer() {
+    if (state.source === 'catalog') {
+      return document.getElementById('catalog-content');
+    }
+    return document.getElementById('curriculum-content');
+  }
 
   function renderLoading() {
-    var content = document.getElementById('curriculum-content');
-    if (!content) return;
-    content.innerHTML =
+    var container = getRenderContainer();
+    if (!container) return;
+    container.innerHTML =
       '<div class="lesson-play">' +
         '<h3>Chargement du puzzle…</h3>' +
         '<p class="text-dim">Connexion à Lichess…</p>' +
@@ -149,27 +162,33 @@ window.APP = window.APP || {};
   }
 
   function renderError(msg) {
-    var content = document.getElementById('curriculum-content');
-    if (!content) return;
-    content.innerHTML =
-      '<button class="back-btn" data-nav="lessons">‹ Retour</button>' +
+    var container = getRenderContainer();
+    if (!container) return;
+    var backBtn = state.source === 'catalog'
+      ? '<button class="back-btn" data-catalog-nav="list">‹ Catalogue</button>'
+      : '<button class="back-btn" data-nav="lessons">‹ Retour</button>';
+    container.innerHTML =
+      backBtn +
       '<div class="lesson-play">' +
         '<h3>Erreur</h3>' +
         '<div class="feedback show ko">' + msg + '</div>' +
-        '<p class="text-dim">Vérifie ta connexion ou réessaie.</p>' +
       '</div>';
+    bindBackButtons();
   }
 
   function renderPuzzle() {
     var p = state.puzzle;
-    var content = document.getElementById('curriculum-content');
-    if (!content || !p) return;
+    var container = getRenderContainer();
+    if (!container || !p) return;
 
     var isWhiteToMove = p.fen.indexOf(' w ') !== -1;
     var rating = p.rating ? ' — Rating ' + p.rating : '';
+    var backBtn = state.source === 'catalog'
+      ? '<button class="back-btn" data-catalog-nav="list">‹ Catalogue</button>'
+      : '<button class="back-btn" data-nav="lessons">‹ Retour</button>';
 
-    content.innerHTML =
-      '<button class="back-btn" data-nav="lessons">‹ Retour</button>' +
+    container.innerHTML =
+      backBtn +
       '<div class="lesson-play">' +
         '<h3>Puzzle Lichess' + rating + '</h3>' +
         '<div class="play-turn">' +
@@ -185,21 +204,23 @@ window.APP = window.APP || {};
         '</div>' +
       '</div>';
 
-    /* Bind bouton solution */
     var bSol = document.getElementById('btn-see-solution');
     if (bSol) bSol.addEventListener('click', onSeeSolution);
+    bindBackButtons();
   }
 
   function renderSuccess() {
     var p = state.puzzle;
-    var content = document.getElementById('curriculum-content');
-    if (!content || !p) return;
+    var container = getRenderContainer();
+    if (!container || !p) return;
 
     var seq = p.playerMove;
     if (p.opponentReply) seq += ' ' + p.opponentReply;
 
-    content.innerHTML =
-      '<button class="back-btn" data-nav="lessons">‹ Retour</button>' +
+    var backLabel = state.source === 'catalog' ? '‹ Retour au catalogue' : '‹ Retour aux leçons';
+    var backAttr = state.source === 'catalog' ? 'data-catalog-nav="list"' : 'data-nav="lessons"';
+
+    container.innerHTML =
       '<div class="lesson-play">' +
         '<h3>✅ Résolu !</h3>' +
         '<div class="lesson-complete">' +
@@ -208,45 +229,68 @@ window.APP = window.APP || {};
           '<p>Solution : <strong>' + seq + '</strong></p>' +
           '<div class="btn-row" style="flex-direction:column;">' +
             '<button id="btn-next-puzzle" type="button">▶ Puzzle suivant</button>' +
-            '<button class="back-btn" data-nav="lessons" ' +
-                    'style="min-width:100%;justify-content:center;">‹ Retour aux leçons</button>' +
+            '<button class="back-btn" ' + backAttr + ' ' +
+                    'style="min-width:100%;justify-content:center;">' + backLabel + '</button>' +
           '</div>' +
         '</div>' +
       '</div>';
 
     var bNext = document.getElementById('btn-next-puzzle');
     if (bNext) bNext.addEventListener('click', onNextPuzzle);
+    bindBackButtons();
   }
 
-  /* =========================================================
-     ACTIONS
-     ========================================================= */
+  /* Lie les boutons de retour au bon module selon la source */
+  function bindBackButtons() {
+    var container = getRenderContainer();
+    if (!container) return;
+
+    var backBtns = container.querySelectorAll('[data-nav="lessons"], [data-catalog-nav="list"]');
+    for (var i = 0; i < backBtns.length; i++) {
+      (function (btn) {
+        btn.onclick = function () {
+          if (btn.getAttribute('data-catalog-nav') === 'list') {
+            returnToCatalog();
+          } else {
+            returnToPath();
+          }
+        };
+      })(backBtns[i]);
+    }
+  }
+
+  function returnToCatalog() {
+    reset();
+    if (window.APP.UICatalog) window.APP.UICatalog.returnFromLesson();
+  }
+
+  function returnToPath() {
+    reset();
+    if (window.APP.UINav) {
+      window.APP.UINav.render();
+    }
+  }
+
+  /* ================= ACTIONS ================= */
 
   function onSeeSolution() {
     var p = state.puzzle;
     if (!p) return;
-
     var seq = p.playerMove;
     if (p.opponentReply) seq += ' puis ' + p.opponentReply;
-
     showFeedback('💡 Solution : ' + seq + '. Observe bien pourquoi ce coup gagne.', 'hint');
   }
 
   function onNextPuzzle() {
     if (!state.theme) return;
-    /* Reset l'état du puzzle en gardant la leçon */
     state.solved = false;
-    state.solvedOnce = true;
     state.puzzle = null;
     state.awaiting = true;
-
     renderLoading();
     fetchAndValidate(state.theme, 0);
   }
 
-  /* =========================================================
-     VALIDATION DU COUP
-     ========================================================= */
+  /* ================= VALIDATION ================= */
 
   function onDrop(source, target) {
     if (!state.active || state.awaiting || state.solved || !state.puzzle) {
@@ -287,39 +331,28 @@ window.APP = window.APP || {};
     }
 
     if (match) {
-      /* Bonne réponse */
       state.solved = true;
       B.position(game.fen(), false);
 
-      /* Jouer la réponse adverse auto si présente */
       if (state.puzzle.opponentReply) {
         setTimeout(function () {
           var reply = game.move(state.puzzle.opponentReply);
-          if (reply) {
-            B.position(game.fen(), false);
-          }
-          setTimeout(function () {
-            renderSuccess();
-          }, 500);
+          if (reply) B.position(game.fen(), false);
+          setTimeout(renderSuccess, 500);
         }, 700);
       } else {
-        setTimeout(function () {
-          renderSuccess();
-        }, 500);
+        setTimeout(renderSuccess, 500);
       }
       return;
     }
 
-    /* Mauvais coup */
     showFeedback('❌ Ce n\'est pas le coup gagnant. Réessaie.', 'ko');
     B.flashIllegal(target);
     reloadPuzzlePosition();
     return 'snapback';
   }
 
-  /* =========================================================
-     RESET + INIT
-     ========================================================= */
+  /* ================= RESET + INIT ================= */
 
   function reset() {
     state.active = false;
@@ -328,7 +361,7 @@ window.APP = window.APP || {};
     state.puzzle = null;
     state.awaiting = false;
     state.solved = false;
-    state.solvedOnce = false;
+    state.source = 'path';
     if (window.APP.Board) {
       window.APP.Board.setLessonMode(false);
       window.APP.Board.setOnDropHandler(null);
@@ -344,7 +377,7 @@ window.APP = window.APP || {};
   window.APP.LessonEngine = {
     init: init,
     startCurrent: startCurrent,
-    start: start,
+    startFromCatalog: startFromCatalog,
     reset: reset,
     hasContent: hasContent,
     getState: function () { return state; }
