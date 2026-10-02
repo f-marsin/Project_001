@@ -6,8 +6,8 @@ window.APP = window.APP || {};
 
 window.APP.CONFIG = {
   NAME: 'Projet_001',
-  STEP: 5,
-  VERSION: '1.0.9',
+  STEP: 6,
+  VERSION: '1.0.10',
 
   LICHESS_API_BASE: 'https://lichess.org/api',
   LICHESS_PUZZLE_NEXT: '/puzzle/next',
@@ -17,6 +17,7 @@ window.APP.CONFIG = {
 
   /* Stockfish */
   STOCKFISH_DEFAULT_DEPTH: 15,
+  STOCKFISH_REVIEW_DEPTH: 12,     /* profondeur par défaut revue partie */
   STOCKFISH_MAX_DEPTH: 22,
   STOCKFISH_TIMEOUT_MS: 30000,
 
