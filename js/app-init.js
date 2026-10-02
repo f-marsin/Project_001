@@ -1,5 +1,6 @@
 /* =========================================================
-   app-init.js — Point d'entrée (Étape 6)
+   app-init.js — Point d'entrée (v1.2.0)
+   Ajout : init de UICatalog.
    ========================================================= */
 
 (function () {
@@ -24,6 +25,7 @@
     if (!window.APP || !window.APP.GameReview)          missing.push('engine/stockfish-game-review.js');
     if (!window.APP || !window.APP.UITabs)              missing.push('ui/ui-tabs.js');
     if (!window.APP || !window.APP.UINav)               missing.push('ui/ui-nav.js');
+    if (!window.APP || !window.APP.UICatalog)           missing.push('ui/ui-catalog.js');
     if (!window.APP || !window.APP.UIFreeplay)          missing.push('ui/ui-freeplay.js');
     if (!window.APP || !window.APP.UIAnalysis)          missing.push('ui/ui-analysis.js');
     if (!window.APP || !window.APP.UIGameReview)        missing.push('ui/ui-game-review.js');
@@ -34,9 +36,9 @@
   function showFatalError(missing) {
     document.body.innerHTML =
       '<div style="padding:40px;font-family:monospace;font-size:14px;' +
-                  'line-height:1.6;background:#121212;color:#e8e8e8;min-height:100vh;">' +
-        '<h2 style="color:#ff5757;margin-bottom:20px;">⚠️ Erreur de chargement</h2>' +
-        '<ul style="margin-left:20px;color:#fbbf24;">' +
+                  'line-height:1.6;background:#f5f4f1;color:#2a2a2a;min-height:100vh;">' +
+        '<h2 style="color:#d9534f;margin-bottom:20px;">⚠️ Erreur de chargement</h2>' +
+        '<ul style="margin-left:20px;color:#c46a1e;">' +
           missing.map(function (m) { return '<li>' + m + '</li>'; }).join('') +
         '</ul>' +
       '</div>';
