@@ -1,0 +1,159 @@
+/* =========================================================
+   base.css — Variables, reset, typographie
+   =========================================================
+   Rôle : fondations visuelles universelles.
+   Chargé en premier, référence par tous les autres CSS.
+   ========================================================= */
+
+/* ---------- Variables globales ---------- */
+:root {
+  /* Couleurs — Dark Mode #121212 */
+  --bg: #121212;
+  --surface: #1e1e1e;
+  --surface-2: #262626;
+  --surface-3: #2f2f2f;
+  --border: #2e2e2e;
+  --text: #e8e8e8;
+  --text-dim: #9a9a9a;
+  --text-faint: #666;
+
+  /* Couleurs sémantiques */
+  --accent: #4a9eff;
+  --accent-dim: #2c6ab8;
+  --danger: #ff5757;
+  --success: #4ade80;
+  --warn: #fbbf24;
+
+  /* Échiquier */
+  --square-light: #6b6b6b;
+  --square-dark: #2e2e2e;
+  --highlight: rgba(74, 158, 255, 0.45);
+  --target: rgba(251, 191, 36, 0.5);
+  --good: rgba(74, 222, 128, 0.55);
+  --bad: rgba(255, 87, 87, 0.55);
+
+  /* Espacements */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+
+  /* Polices */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* ---------- Reset universel ---------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.5;
+  min-height: 100vh;
+  min-height: 100dvh;
+
+  /* Anti-zoom iOS + anti-tap-highlight */
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+
+  /* Anti pull-to-refresh mobile */
+  overscroll-behavior: none;
+}
+
+/* ---------- Typographie de base ---------- */
+h1, h2, h3, h4 {
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+h1 { font-size: 1.1rem; }
+h2 { font-size: 0.95rem; }
+h3 { font-size: 1rem; }
+h4 { font-size: 0.9rem; }
+
+p {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a:hover { text-decoration: underline; }
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: #0d0d0d;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #7dd3fc;
+}
+
+/* ---------- Boutons (base neutre) ---------- */
+button {
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  touch-action: manipulation;
+}
+
+button:hover:not(:disabled),
+button:active:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Utilitaires génériques ---------- */
+.hidden { display: none !important; }
+
+.text-dim { color: var(--text-dim); }
+.text-accent { color: var(--accent); }
+.text-danger { color: var(--danger); }
+.text-success { color: var(--success); }
+.text-warn { color: var(--warn); }
+
+.mono { font-family: var(--font-mono); }
+
+/* ---------- Accessibilité ---------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Focus visible (clavier) ---------- */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
