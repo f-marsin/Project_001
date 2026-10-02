@@ -1,0 +1,88 @@
+/* =========================================================
+   board.css — Échiquier + surlignages + animations
+   =========================================================
+   Rôle : style de l'échiquier (chessboard.js) et ses états.
+   - Couleurs des cases adaptées au Dark Mode
+   - Surlignages : dernier coup, cible, bonne/mauvaise réponse
+   - Animation de refus de coup
+   ========================================================= */
+
+/* ---------- Conteneur échiquier ---------- */
+#board {
+  width: 100%;
+  touch-action: none;
+}
+
+#board .board-b72b1 {
+  border: none !important;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.55);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+/* ---------- Couleurs des cases ---------- */
+#board .white-1e1d7 {
+  background-color: var(--square-light) !important;
+}
+
+#board .black-3c85d {
+  background-color: var(--square-dark) !important;
+}
+
+/* ---------- Notation algébrique ---------- */
+#board .notation-322f9 {
+  color: #c8c8c8 !important;
+  font-size: 11px !important;
+  font-weight: 700;
+}
+
+/* ---------- Surlignages d'états ---------- */
+
+/* Dernier coup joué (origine et destination) */
+#board .square-55d63.hl-from,
+#board .square-55d63.hl-to {
+  box-shadow: inset 0 0 0 4px var(--highlight);
+}
+
+/* Case cible (pièce à déplacer) */
+#board .square-55d63.hl-target {
+  box-shadow: inset 0 0 0 4px var(--target);
+}
+
+/* Bonne réponse */
+#board .square-55d63.hl-good {
+  background-color: var(--good) !important;
+}
+
+/* Mauvaise réponse */
+#board .square-55d63.hl-bad {
+  background-color: var(--bad) !important;
+}
+
+/* Cases cliquables (mode identify-square) */
+#board .square-55d63.clickable {
+  cursor: pointer;
+}
+
+/* ---------- Animation : coup illégal ---------- */
+#board .square-55d63.illegal-flash {
+  animation: illegalFlash 0.5s ease-out;
+}
+
+@keyframes illegalFlash {
+  0%   { box-shadow: inset 0 0 0 4px var(--danger); }
+  100% { box-shadow: inset 0 0 0 0 transparent; }
+}
+
+/* ---------- États de la pièce pendant le drag ---------- */
+#board .piece-417db {
+  /* Ombre légèrement accentuée pendant le drag (par défaut chessboard.js) */
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+/* ---------- Ajustement mobile ---------- */
+@media (max-width: 480px) {
+  #board .notation-322f9 {
+    font-size: 9px !important;
+  }
+}
