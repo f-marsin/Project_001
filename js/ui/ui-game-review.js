@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-game-review.js — Vue Revue (v1.1.0)
-   Retrait de l'appel à setEvaluation.
+   ui-game-review.js — Vue Revue (v1.1.1)
+   Ajout : affichage du temps écoulé pendant l'analyse.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -14,7 +14,9 @@ window.APP = window.APP || {};
     result: null,
     currentMoveIndex: null,
     depth: 12,
-    pgn: ''
+    pgn: '',
+    startTime: null,
+    timerHandle: null
   };
 
   function contentEl() { return document.getElementById('game-review-content'); }
@@ -63,11 +65,30 @@ window.APP = window.APP || {};
       ? Math.round((state.progress.current / state.progress.total) * 100)
       : 0;
 
+    var elapsed = state.startTime
+      ? Math.round((Date.now() - state.startTime) / 1000)
+      : 0;
+
+    /* Estimation du temps restant */
+    var etaText = '';
+    if (state.progress.current > 0 && state.progress.total > 0) {
+      var avgPerMove = elapsed / state.progress.current;
+      var remaining = Math.round((state.progress.total - state.progress.current) * avgPerMove);
+      if (remaining > 0) {
+        var min = Math.floor(remaining / 60);
+        var sec = remaining % 60;
+        etaText = ' — reste ~' + (min > 0 ? min + ' min ' : '') + sec + ' s';
+      }
+    }
+
     el.innerHTML =
       '<h2>Analyse en cours…</h2>' +
       '<div class="analysis-form">' +
         '<div class="review-progress-bar"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
-        '<p class="text-dim" style="margin-top:8px;">Coup ' + state.progress.current + ' / ' + state.progress.total + ' — ' + pct + '%</p>' +
+        '<p class="text-dim" style="margin-top:8px;">' +
+          'Coup ' + state.progress.current + ' / ' + state.progress.total + ' — ' + pct + '%' +
+          '<br>Temps écoulé : ' + elapsed + ' s' + etaText +
+        '</p>' +
         '<div class="btn-row">' +
           '<button id="btn-cancel-review" type="button">⏹ Annuler</button>' +
         '</div>' +
@@ -138,6 +159,21 @@ window.APP = window.APP || {};
     if (bStart) bStart.addEventListener('click', startReview);
   }
 
+  function startTimer() {
+    stopTimer();
+    state.startTime = Date.now();
+    state.timerHandle = setInterval(function () {
+      if (state.analyzing) renderProgress();
+    }, 1000);
+  }
+
+  function stopTimer() {
+    if (state.timerHandle) {
+      clearInterval(state.timerHandle);
+      state.timerHandle = null;
+    }
+  }
+
   function startReview() {
     var pgnEl = document.getElementById('review-pgn');
     var depthEl = document.getElementById('review-depth');
@@ -157,6 +193,7 @@ window.APP = window.APP || {};
     state.result = null;
 
     render();
+    startTimer();
 
     window.APP.GameReview.analyze(pgn, { depth: depth }, function (current, total) {
       state.progress.current = current;
@@ -166,10 +203,12 @@ window.APP = window.APP || {};
       .then(function (result) {
         state.analyzing = false;
         state.result = result;
+        stopTimer();
         render();
       })
       .catch(function (err) {
         state.analyzing = false;
+        stopTimer();
         alert('Erreur d\'analyse : ' + err.message);
         render();
       });
@@ -177,13 +216,15 @@ window.APP = window.APP || {};
 
   function cancelReview() {
     state.analyzing = false;
-    window.APP.Stockfish.stop();
+    stopTimer();
+    window.APP.GameReview.cancel();
     render();
   }
 
   function resetReview() {
     state.result = null;
     state.currentMoveIndex = null;
+    stopTimer();
     window.APP.StockfishAnalysis.clearCache();
     render();
   }
@@ -222,9 +263,7 @@ window.APP = window.APP || {};
       var move = g.move(san);
       if (!move) return null;
       return { from: move.from, to: move.to };
-    } catch (err) {
-      return null;
-    }
+    } catch (err) { return null; }
   }
 
   function showMoveDetail(move) {
