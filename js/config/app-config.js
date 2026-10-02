@@ -6,8 +6,8 @@ window.APP = window.APP || {};
 
 window.APP.CONFIG = {
   NAME: 'Projet_001',
-  STEP: 4,
-  VERSION: '1.0.8',
+  STEP: 5,
+  VERSION: '1.0.9',
 
   LICHESS_API_BASE: 'https://lichess.org/api',
   LICHESS_PUZZLE_NEXT: '/puzzle/next',
@@ -15,8 +15,13 @@ window.APP.CONFIG = {
   TASKS_PER_LESSON: 5,
   PUZZLE_DIFFICULTY: 'normal',
 
+  /* Stockfish */
+  STOCKFISH_DEFAULT_DEPTH: 15,
+  STOCKFISH_MAX_DEPTH: 22,
+  STOCKFISH_TIMEOUT_MS: 30000,
+
   DEV_MODE: true,
-  DEBUG: false,   /* ← Debug désactivé (nettoyage Étape 4) */
+  DEBUG: false,
 
   get FULLNAME() {
     return this.NAME + ' — Étape ' + this.STEP;
