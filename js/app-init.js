@@ -1,18 +1,14 @@
 /* =========================================================
-   app-init.js — Point d'entrée (Étape 2)
+   app-init.js — Point d'entrée (Étape 3)
    =========================================================
-   Branche maintenant les 3 modules UI :
-     - UITabs     : gestion des onglets
-     - UINav      : navigation curriculum
-     - UIFreeplay : mode partie libre
+   Ajoute le branchement :
+     - LichessClient
+     - LichessAdapter
+     - LessonEngine
    ========================================================= */
 
 (function () {
   'use strict';
-
-  /* =========================================================
-     1. VÉRIFICATION DES DÉPENDANCES
-     ========================================================= */
 
   function checkDependencies() {
     var missing = [];
@@ -25,6 +21,9 @@
     if (!window.APP || !window.APP.CONFIG)              missing.push('config/app-config.js');
     if (!window.APP || !window.APP.CURRICULUM)          missing.push('data/curriculum.js');
     if (!window.APP || !window.APP.Board)               missing.push('core/board-core.js');
+    if (!window.APP || !window.APP.LichessClient)       missing.push('lichess/lichess-client.js');
+    if (!window.APP || !window.APP.LichessAdapter)      missing.push('lichess/lichess-adapter.js');
+    if (!window.APP || !window.APP.LessonEngine)        missing.push('core/lesson-engine.js');
     if (!window.APP || !window.APP.UITabs)              missing.push('ui/ui-tabs.js');
     if (!window.APP || !window.APP.UINav)               missing.push('ui/ui-nav.js');
     if (!window.APP || !window.APP.UIFreeplay)          missing.push('ui/ui-freeplay.js');
@@ -37,16 +36,12 @@
       '<div style="padding:40px;font-family:monospace;font-size:14px;' +
                   'line-height:1.6;background:#121212;color:#e8e8e8;min-height:100vh;">' +
         '<h2 style="color:#ff5757;margin-bottom:20px;">⚠️ Erreur de chargement</h2>' +
-        '<p style="margin-bottom:20px;">Certains modules n\'ont pas pu être chargés :</p>' +
+        '<p style="margin-bottom:20px;">Modules manquants :</p>' +
         '<ul style="margin-left:20px;color:#fbbf24;">' +
           missing.map(function (m) { return '<li>' + m + '</li>'; }).join('') +
         '</ul>' +
       '</div>';
   }
-
-  /* =========================================================
-     2. IDENTITÉ VISUELLE
-     ========================================================= */
 
   function applyIdentity() {
     var CFG = window.APP.CONFIG;
@@ -57,10 +52,6 @@
     var title = document.getElementById('app-title');
     if (title) title.textContent = '♟ ' + CFG.NAME;
   }
-
-  /* =========================================================
-     3. ÉVÉNEMENTS GLOBAUX
-     ========================================================= */
 
   function bindResize() {
     var timer = null;
@@ -96,10 +87,6 @@
     }
   }
 
-  /* =========================================================
-     4. INIT
-     ========================================================= */
-
   function init() {
     var missing = checkDependencies();
     if (missing.length > 0) {
@@ -108,19 +95,19 @@
     }
 
     try {
-      window.APP.log('Init démarré.');
+      window.APP.log('Init démarré (Étape 3).');
 
       applyIdentity();
-
-      /* Échiquier */
       window.APP.Board.init();
 
-      /* Modules UI */
+      /* Branchement du moteur de leçon */
+      window.APP.LessonEngine.init();
+
+      /* UI */
       window.APP.UINav.init();
       window.APP.UIFreeplay.init();
       window.APP.UITabs.init();
 
-      /* Événements globaux */
       bindResize();
       bindTouchHandlers();
 
@@ -130,16 +117,6 @@
 
       window.APP.log('Init terminé.');
     } catch (err) {
-      var panel = document.querySelector('.panel');
-      if (panel) {
-        var box = document.createElement('div');
-        box.style.cssText =
-          'background:#3a1010;color:#ff5757;padding:14px;' +
-          'border-radius:8px;margin-bottom:12px;' +
-          'font-family:monospace;font-size:12px;line-height:1.4;';
-        box.textContent = '⚠️ Erreur d\'initialisation : ' + err.message;
-        panel.insertBefore(box, panel.firstChild);
-      }
       if (window.console) console.error('[APP] Init error:', err);
     }
   }
