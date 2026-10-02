@@ -10,18 +10,18 @@
   <title>Chargement…</title>
 
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-  <link rel="stylesheet" href="css/base.css?v=1.0.1">
-  <link rel="stylesheet" href="css/layout.css?v=1.0.1">
-  <link rel="stylesheet" href="css/board.css?v=1.0.1">
-  <link rel="stylesheet" href="css/panel.css?v=1.0.1">
-  <link rel="stylesheet" href="css/modals.css?v=1.0.1">
+  <link rel="stylesheet" href="css/base.css?v=1.0.2">
+  <link rel="stylesheet" href="css/layout.css?v=1.0.2">
+  <link rel="stylesheet" href="css/board.css?v=1.0.2">
+  <link rel="stylesheet" href="css/panel.css?v=1.0.2">
+  <link rel="stylesheet" href="css/modals.css?v=1.0.2">
 </head>
 <body>
 
   <header>
     <div class="brand">
       <h1 id="app-title">♟ Projet_001</h1>
-      <span class="badge" id="app-badge">ÉTAPE 2</span>
+      <span class="badge" id="app-badge">ÉTAPE 3</span>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab active" data-view="curriculum" role="tab">Curriculum</button>
@@ -30,13 +30,11 @@
   </header>
 
   <main>
-
     <section class="board-wrap" id="board-wrap">
       <div id="board"></div>
     </section>
 
     <aside class="panel">
-
       <div id="view-curriculum" class="view active">
         <div class="crumb" id="crumb"><span>Parcours</span></div>
         <div id="curriculum-content"></div>
@@ -47,20 +45,16 @@
           <span class="turn-dot" id="turn-dot"></span>
           <span class="turn-label" id="turn-label">Aux Blancs de jouer</span>
         </div>
-
         <div class="status" id="status">Position initiale. Aux Blancs.</div>
-
         <div class="btn-row">
           <button id="btn-reset" type="button">Nouvelle partie</button>
           <button id="btn-flip" type="button">Retourner</button>
         </div>
-
         <h2>Historique des coups</h2>
         <div class="history" id="history">
           <div class="history-empty">Aucun coup joué.</div>
         </div>
       </div>
-
     </aside>
   </main>
 
@@ -76,13 +70,16 @@
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-  <script src="js/config/app-config.js?v=1.0.1"></script>
-  <script src="js/data/curriculum.js?v=1.0.1"></script>
-  <script src="js/core/board-core.js?v=1.0.1"></script>
-  <script src="js/ui/ui-tabs.js?v=1.0.1"></script>
-  <script src="js/ui/ui-nav.js?v=1.0.1"></script>
-  <script src="js/ui/ui-freeplay.js?v=1.0.1"></script>
-  <script src="js/app-init.js?v=1.0.1"></script>
+  <script src="js/config/app-config.js?v=1.0.2"></script>
+  <script src="js/data/curriculum.js?v=1.0.2"></script>
+  <script src="js/core/board-core.js?v=1.0.2"></script>
+  <script src="js/lichess/lichess-client.js?v=1.0.2"></script>
+  <script src="js/lichess/lichess-adapter.js?v=1.0.2"></script>
+  <script src="js/core/lesson-engine.js?v=1.0.2"></script>
+  <script src="js/ui/ui-tabs.js?v=1.0.2"></script>
+  <script src="js/ui/ui-nav.js?v=1.0.2"></script>
+  <script src="js/ui/ui-freeplay.js?v=1.0.2"></script>
+  <script src="js/app-init.js?v=1.0.2"></script>
 
 </body>
 </html>
