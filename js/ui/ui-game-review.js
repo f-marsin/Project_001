@@ -1,10 +1,6 @@
 /* =========================================================
-   ui-game-review.js — Vue Revue (v1.0.12)
-   Corrections :
-     - Affiche la position APRÈS le coup (fenAfter)
-     - Surligne les cases from/to du coup cliqué
-     - Le détail s'affiche dans un conteneur stable (plus écrasé)
-     - Le bouton "Nouvelle analyse" vide aussi le cache
+   ui-game-review.js — Vue Revue (v1.0.13)
+   Ajout : mise à jour de la barre d'éval au clic sur un coup.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -126,8 +122,6 @@ window.APP = window.APP || {};
     }
 
     html += '</div>';
-
-    /* Conteneur STABLE pour le détail (ne sera pas écrasé) */
     html += '<div id="review-detail-container"></div>';
 
     el.innerHTML = html;
@@ -154,8 +148,6 @@ window.APP = window.APP || {};
 
     var depth = depthEl ? parseInt(depthEl.value, 10) : 12;
 
-    /* ⚠️ Vidage du cache : garantit qu'une nouvelle profondeur
-       force un vrai recalcul (correction bug 3). */
     window.APP.StockfishAnalysis.clearCache();
 
     state.pgn = pgn;
@@ -190,11 +182,10 @@ window.APP = window.APP || {};
   }
 
   function resetReview() {
-    /* Retour au formulaire */
     state.result = null;
     state.currentMoveIndex = null;
-    /* On garde state.pgn pour permettre de relancer, mais on vide le cache */
     window.APP.StockfishAnalysis.clearCache();
+    window.APP.Board.setEvaluation(null);
     render();
   }
 
@@ -208,11 +199,9 @@ window.APP = window.APP || {};
 
     state.currentMoveIndex = idx;
 
-    /* Position APRÈS le coup (correction bug 1) */
     window.APP.Board.setLessonMode(true);
     window.APP.Board.position(move.fenAfter, false);
 
-    /* Highlight from/to (correction bug 2) */
     var fromTo = extractFromTo(move.fen, move.san);
     if (fromTo) {
       window.APP.Board.highlightSquares(fromTo.from, fromTo.to);
@@ -220,12 +209,13 @@ window.APP = window.APP || {};
       window.APP.Board.clearHighlights();
     }
 
-    /* Sélection visuelle dans la liste */
+    /* ⚠️ Met à jour la barre d'éval avec l'évaluation APRÈS le coup */
+    window.APP.Board.setEvaluation(move.evalAfter);
+
     var all = document.querySelectorAll('.review-move');
     for (var i = 0; i < all.length; i++) all[i].classList.remove('selected');
     el.classList.add('selected');
 
-    /* Affichage du détail dans le conteneur STABLE (correction bug 2) */
     showMoveDetail(move);
   }
 
