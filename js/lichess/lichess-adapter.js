@@ -1,24 +1,9 @@
 /* =========================================================
    lichess-adapter.js — Conversion format Lichess → format interne
    =========================================================
-   Rôle : transformer la réponse brute de l'API Lichess en
-   objet exploitable par le moteur de leçon.
-
-   Réponse Lichess (puzzle) :
-     {
-       game: { pgn, clock, ... },
-       puzzle: {
-         id, rating, plays, solution: ["SAN1", "SAN2", ...],
-         themes: ["fork", "short"],
-         initialPly: N,
-         ...
-       }
-     }
-
-   Le PGN contient la partie d'origine. Le puzzle commence au
-   coup N (initialPly). Le FEN à jouer est extrait du PGN à
-   ce coup précis. La solution est une liste de SAN alternée
-   (coup joueur, réponse adverse, coup joueur, ...).
+   v1.0.5 — CORRECTIF MAJEUR : Lichess renvoie la solution en
+   format UCI (ex: "e6a2"), PAS en SAN. On convertit maintenant
+   l'UCI en SAN via chess.js avant de la stocker.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -37,9 +22,6 @@ window.APP = window.APP || {};
       return null;
     }
 
-    /* Remonter au ply voulu :
-       chess.js 0.10.x n'a pas de méthode directe pour charger
-       un PGN jusqu'à un ply. On rejoue la partie depuis le début. */
     var history = tempGame.history({ verbose: true });
     if (!history || history.length < targetPly) {
       window.APP.log('Adaptateur : ply ' + targetPly + ' > longueur historique ' + history.length);
@@ -53,24 +35,58 @@ window.APP = window.APP || {};
     return g.fen();
   }
 
-  /* ---------- Analyse de la solution Lichess ---------- */
+  /* ---------- Conversion UCI → SAN ----------
+     Lichess renvoie la solution sous forme UCI (ex: "e6a2" ou "e7e8q").
+     On la convertit en SAN ("Fxa2", "e8=Q+", ...) pour pouvoir
+     la comparer avec le SAN joué par l'élève.
+  */
+  function uciToSan(fen, uciMove) {
+    if (!uciMove || uciMove.length < 4) return null;
 
-  /**
-   * La solution Lichess est une liste alternée :
-   *   [coup_joueur_1, reponse_adverse_1, coup_joueur_2, ...]
-   * Si la liste contient 1 élément → mat/combinaison en 1 coup
-   * Si la liste contient 2 éléments → 1 coup joueur + 1 réponse adverse
-   *                                  (l'adversaire joue "automatiquement")
-   *
-   * On veut : le premier coup joueur + les réponses adverses automatiques
-   */
-  function parseSolution(solutionArray) {
-    if (!solutionArray || solutionArray.length === 0) return null;
-    return {
-      playerMove: solutionArray[0],
-      opponentReply: solutionArray.length >= 2 ? solutionArray[1] : null,
-      fullSequence: solutionArray
+    var from = uciMove.substring(0, 2);
+    var to   = uciMove.substring(2, 4);
+    var promotion = uciMove.length > 4 ? uciMove.substring(4, 5) : 'q';
+
+    try {
+      var g = new Chess(fen);
+      var move = g.move({ from: from, to: to, promotion: promotion });
+      if (!move) return null;
+      return move.san;
+    } catch (err) {
+      window.APP.log('Adaptateur : conversion UCI→SAN échouée pour', uciMove, err.message);
+      return null;
+    }
+  }
+
+  /* ---------- Conversion d'une séquence UCI en SAN ----------
+     La solution Lichess est un tableau alterné :
+       [UCI_joueur_1, UCI_adverse_1, UCI_joueur_2, ...]
+     On rejoue la séquence depuis la FEN pour obtenir les SAN.
+  */
+  function convertSequence(fen, uciSequence) {
+    var result = {
+      playerSan: null,
+      opponentSan: null,
+      fullSan: []
     };
+    if (!uciSequence || uciSequence.length === 0) return result;
+
+    var g = new Chess(fen);
+    for (var i = 0; i < uciSequence.length; i++) {
+      var uci = uciSequence[i];
+      var from = uci.substring(0, 2);
+      var to   = uci.substring(2, 4);
+      var promotion = uci.length > 4 ? uci.substring(4, 5) : 'q';
+      var move = g.move({ from: from, to: to, promotion: promotion });
+      if (!move) {
+        window.APP.log('Adaptateur : impossible de rejouer', uci);
+        break;
+      }
+      result.fullSan.push(move.san);
+      if (i === 0) result.playerSan = move.san;
+      if (i === 1) result.opponentSan = move.san;
+    }
+    return result;
   }
 
   /* ---------- Transformation principale ---------- */
@@ -93,10 +109,14 @@ window.APP = window.APP || {};
       return { error: 'Impossible d\'extraire le FEN du PGN' };
     }
 
-    /* Solution */
-    var sol = parseSolution(p.solution);
-    if (!sol) {
+    /* Solution : liste UCI → on convertit en SAN */
+    if (!p.solution || p.solution.length === 0) {
       return { error: 'Solution Lichess vide' };
+    }
+
+    var seq = convertSequence(fen, p.solution);
+    if (!seq.playerSan) {
+      return { error: 'Impossible de convertir la solution UCI en SAN' };
     }
 
     return {
@@ -104,14 +124,18 @@ window.APP = window.APP || {};
       rating: p.rating,
       themes: p.themes || [],
       fen: fen,
-      playerMove: sol.playerMove,
-      opponentReply: sol.opponentReply,
-      fullSequence: sol.fullSequence
+      playerMove: seq.playerSan,          /* ex: "Fxa2" */
+      playerMoveUci: p.solution[0],       /* ex: "e6a2" (pour debug) */
+      opponentReply: seq.opponentSan,     /* ex: "Rb1" ou null */
+      fullSequence: seq.fullSan,
+      rawSolution: p.solution             /* UCI brut (debug) */
     };
   }
 
   window.APP.LichessAdapter = {
     adapt: adapt,
-    fenAtPly: fenAtPly
+    fenAtPly: fenAtPly,
+    uciToSan: uciToSan,
+    convertSequence: convertSequence
   };
 })();
