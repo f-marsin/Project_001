@@ -1,197 +1,83 @@
 /* =========================================================
-   layout.css — Structure générale, header, grille responsive
-   =========================================================
-   Rôle : organisation spatiale de la page.
-   - Header sticky avec logo + onglets
-   - Grille 1 colonne (mobile) → 2 colonnes (PC)
-   - Zones : échiquier à gauche, panneau à droite
+   layout.css — Structure générale (v1.0.13)
    ========================================================= */
 
-/* ---------- Header ---------- */
 header {
   padding: 14px 16px;
   padding-top: max(14px, env(safe-area-inset-top));
   background: var(--surface);
   border-bottom: 1px solid var(--border);
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; position: sticky; top: 0; z-index: 10;
 }
 
-header .brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-
-header h1 {
-  font-size: 1.05rem;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
+header .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
+header h1 { font-size: 1.05rem; font-weight: 600; letter-spacing: 0.3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 header .badge {
-  font-size: 0.65rem;
-  background: var(--accent);
-  color: #fff;
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
+  font-size: 0.65rem; background: var(--accent); color: #fff;
+  padding: 3px 8px; border-radius: 20px; font-weight: 600;
+  letter-spacing: 0.5px; white-space: nowrap;
 }
 
-/* ---------- Onglets ---------- */
-.tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 3px;
-  flex-shrink: 0;
-}
+.tabs { display: flex; gap: 4px; background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: 3px; flex-shrink: 0; }
 
 .tab {
-  padding: 7px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--text-dim);
-  background: transparent;
-  border: none;
+  padding: 7px 12px; border-radius: var(--radius-sm);
+  font-size: 0.78rem; font-weight: 600; color: var(--text-dim);
+  background: transparent; border: none;
   transition: background 0.15s, color 0.15s;
-  touch-action: manipulation;
   white-space: nowrap;
 }
+.tab.active { background: var(--accent); color: #fff; }
+.tab:hover:not(.active) { color: var(--text); }
 
-.tab.active {
-  background: var(--accent);
-  color: #fff;
-}
-
-.tab:hover:not(.active) {
-  color: var(--text);
-}
-
-/* ---------- Grille principale ---------- */
 main {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-  padding: 14px;
-  max-width: 1280px;
-  margin: 0 auto;
-  width: 100%;
+  display: grid; grid-template-columns: 1fr; gap: 14px;
+  padding: 14px; max-width: 1280px; margin: 0 auto; width: 100%;
 }
 
-/* ---------- Vue 2 colonnes (PC) ---------- */
 @media (min-width: 900px) {
   main {
-    grid-template-columns: minmax(340px, 560px) 1fr;
-    align-items: start;
-    gap: 28px;
-    padding: 28px;
+    grid-template-columns: minmax(340px, 620px) 1fr;
+    align-items: start; gap: 28px; padding: 28px;
   }
 }
 
-/* ---------- Zones principales ---------- */
-.board-wrap {
+/* Zone échiquier + barre (gérée dans board.css pour le flex) */
+.board-area {
   width: 100%;
-  max-width: min(94vw, 560px);
+  max-width: min(94vw, 620px);
   margin: 0 auto;
-
-  /* Anti-sélection + anti-zoom */
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-
-  position: relative;
 }
 
 .panel {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 18px;
-  min-height: 300px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 18px; min-height: 300px;
 }
 
-@media (min-width: 900px) {
-  .panel {
-    position: sticky;
-    top: 90px;
-  }
-}
+@media (min-width: 900px) { .panel { position: sticky; top: 90px; } }
 
-/* ---------- Vues (curriculum / partie libre / etc.) ---------- */
-.view {
-  display: none;
-}
+.view { display: none; }
+.view.active { display: block; }
 
-.view.active {
-  display: block;
-}
-
-/* ---------- Titres de section dans le panneau ---------- */
 .panel h2 {
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--text-dim);
-  margin-bottom: 12px;
-  font-weight: 700;
+  font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--text-dim); margin-bottom: 12px; font-weight: 700;
 }
 
-/* ---------- Petits écrans : ajustements ---------- */
 @media (max-width: 480px) {
-  header {
-    padding: 12px;
-  }
-
-  header h1 {
-    font-size: 0.95rem;
-  }
-
-  .tab {
-    padding: 6px 10px;
-    font-size: 0.72rem;
-  }
-
-  main {
-    padding: 10px;
-    gap: 10px;
-  }
-
-  .panel {
-    padding: 14px;
-  }
+  header { padding: 12px; }
+  header h1 { font-size: 0.95rem; }
+  .tab { padding: 6px 10px; font-size: 0.72rem; }
+  main { padding: 10px; gap: 10px; }
+  .panel { padding: 14px; }
 }
 
-/* ---------- Impression (bonus accessibilité) ---------- */
 @media print {
-  header,
-  .tabs {
-    display: none;
-  }
-
-  main {
-    display: block;
-    padding: 0;
-  }
-
-  .panel {
-    position: static;
-  }
+  header, .tabs { display: none; }
+  main { display: block; padding: 0; }
+  .panel { position: static; }
 }
