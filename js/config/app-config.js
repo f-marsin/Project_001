@@ -1,5 +1,5 @@
 /* =========================================================
-   app-config.js — Constantes globales (v1.2.0)
+   app-config.js — Constantes globales (v1.3.0)
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -7,7 +7,7 @@ window.APP = window.APP || {};
 window.APP.CONFIG = {
   NAME: 'Projet_001',
   STEP: 7,
-  VERSION: '1.2.0',
+  VERSION: '1.3.0',
 
   LICHESS_API_BASE: 'https://lichess.org/api',
   LICHESS_PUZZLE_NEXT: '/puzzle/next',
@@ -20,8 +20,11 @@ window.APP.CONFIG = {
   STOCKFISH_MAX_DEPTH: 22,
   STOCKFISH_TIMEOUT_MS: 30000,
 
-  /* Thèmes pédagogiques */
   THEMES: ['bases', 'tactics', 'endgames', 'opening', 'middlegame', 'psychology'],
+
+  /* Profil */
+  PROFILE_STORAGE_KEY: 'projet001_user_profile_v1',
+  MASTERY_THRESHOLD: 3,
 
   DEV_MODE: true,
   DEBUG: false,
@@ -39,5 +42,5 @@ window.APP.log = function () {
   if (!window.APP.CONFIG.DEBUG || !window.console) return;
   var args = Array.prototype.slice.call(arguments);
   args.unshift('[APP]');
-  console.log.apply(console, args);
+  console.log.apply(args);
 };
