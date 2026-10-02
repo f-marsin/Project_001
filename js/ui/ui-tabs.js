@@ -1,8 +1,7 @@
 /* =========================================================
-   ui-tabs.js — Gestion des onglets Curriculum / Partie libre
+   ui-tabs.js — Gestion des onglets (v1.0.9)
    =========================================================
-   Rôle : basculer entre les vues et notifier les autres modules.
-   API : window.APP.UITabs.init()
+   Ajout de l'onglet « Analyse ».
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -16,19 +15,17 @@ window.APP = window.APP || {};
     var tabs = document.querySelectorAll('.tab');
     for (var i = 0; i < tabs.length; i++) {
       var t = tabs[i];
-      if (t.getAttribute('data-view') === viewName) {
-        t.classList.add('active');
-      } else {
-        t.classList.remove('active');
-      }
+      if (t.getAttribute('data-view') === viewName) t.classList.add('active');
+      else t.classList.remove('active');
     }
   }
 
   function showView(viewName) {
-    var vc = document.getElementById('view-curriculum');
-    var vf = document.getElementById('view-freeplay');
-    if (vc) vc.classList.toggle('active', viewName === 'curriculum');
-    if (vf) vf.classList.toggle('active', viewName === 'freeplay');
+    var ids = ['view-curriculum', 'view-freeplay', 'view-analysis'];
+    for (var i = 0; i < ids.length; i++) {
+      var el = document.getElementById(ids[i]);
+      if (el) el.classList.toggle('active', ids[i] === 'view-' + viewName);
+    }
   }
 
   function onTabClick(e) {
@@ -39,14 +36,16 @@ window.APP = window.APP || {};
     setActiveTab(viewName);
     showView(viewName);
 
-    /* Notifie les autres modules */
     if (viewName === 'curriculum' && window.APP.UINav) {
       window.APP.UINav.onEnter();
     } else if (viewName === 'freeplay' && window.APP.UIFreeplay) {
       window.APP.UIFreeplay.onEnter();
+    } else if (viewName === 'analysis' && window.APP.UIAnalysis) {
+      window.APP.UIAnalysis.onEnter();
+      /* Sortir du mode leçon pour permettre l'analyse libre */
+      if (window.APP.Board) window.APP.Board.setLessonMode(false);
     }
 
-    /* Resize échiquier après changement d'onglet */
     setTimeout(function () {
       if (window.APP.Board) window.APP.Board.resize();
     }, 50);
@@ -57,17 +56,12 @@ window.APP = window.APP || {};
     for (var i = 0; i < tabs.length; i++) {
       tabs[i].addEventListener('click', onTabClick);
     }
-    /* Vue initiale */
     showView('curriculum');
     setActiveTab('curriculum');
   }
 
   window.APP.UITabs = {
     init: init,
-    getCurrentView: function () { return currentView; },
-    switchTo: function (viewName) {
-      var fakeEvent = { target: { getAttribute: function () { return viewName; } } };
-      onTabClick.call(fakeEvent.target);
-    }
+    getCurrentView: function () { return currentView; }
   };
 })();
