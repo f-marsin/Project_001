@@ -1,86 +1,7 @@
 /* =========================================================
-   board.css — Échiquier + surlignages + barre d'évaluation
-   v1.0.13
+   board.css — Échiquier (v1.1.0)
+   Retrait de la barre d'évaluation. Thème clair.
    ========================================================= */
-
-/* ---------- Zone échiquier + barre éval (côte à côte) ---------- */
-.board-area {
-  display: flex;
-  align-items: stretch;
-  gap: 12px;
-  width: 100%;
-  max-width: min(94vw, 620px);
-  margin: 0 auto;
-}
-
-/* ---------- Barre d'évaluation verticale ---------- */
-.eval-bar {
-  position: relative;
-  width: 26px;
-  min-width: 26px;
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--border);
-  background: #1a1a1a;
-  transition: opacity 0.2s;
-}
-
-/* Partie haute : avantage Blancs (blanc) */
-.eval-bar-white {
-  background: #f2f2f2;
-  height: 50%;
-  transition: height 0.35s ease-out;
-  flex-shrink: 0;
-}
-
-/* Partie basse : avantage Noirs (noir) */
-.eval-bar-black {
-  background: #0d0d0d;
-  flex: 1;
-  transition: flex 0.35s ease-out;
-}
-
-/* Étiquette numérique en haut de la barre */
-.eval-bar-label {
-  position: absolute;
-  top: 4px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.6rem;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  color: #333;
-  background: rgba(255,255,255,0.85);
-  padding: 1px 4px;
-  border-radius: 3px;
-  pointer-events: none;
-  z-index: 2;
-  white-space: nowrap;
-}
-
-/* Sur mobile : barre plus fine */
-@media (max-width: 600px) {
-  .eval-bar {
-    width: 18px;
-    min-width: 18px;
-  }
-  .eval-bar-label {
-    font-size: 0.55rem;
-    padding: 0 3px;
-  }
-}
-
-/* ---------- Échiquier ---------- */
-.board-wrap {
-  flex: 1;
-  min-width: 0;
-  touch-action: none;
-  -webkit-user-select: none;
-  user-select: none;
-  position: relative;
-}
 
 #board {
   width: 100%;
@@ -89,16 +10,18 @@
 
 #board .board-b72b1 {
   border: none !important;
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.55);
+  box-shadow: var(--shadow-lg);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
 
+/* Couleurs classiques d'échiquier (beige / brun) */
 #board .white-1e1d7 { background-color: var(--square-light) !important; }
 #board .black-3c85d { background-color: var(--square-dark) !important; }
 
+/* Notation algébrique bien lisible */
 #board .notation-322f9 {
-  color: #c8c8c8 !important;
+  color: #3a2a1e !important;
   font-size: 11px !important;
   font-weight: 700;
 }
@@ -121,7 +44,7 @@
 }
 
 #board .piece-417db {
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
 }
 
 @media (max-width: 480px) {
