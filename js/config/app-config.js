@@ -6,8 +6,8 @@ window.APP = window.APP || {};
 
 window.APP.CONFIG = {
   NAME: 'Projet_001',
-  STEP: 3,
-  VERSION: '1.0.2',
+  STEP: 4,
+  VERSION: '1.0.8',
 
   LICHESS_API_BASE: 'https://lichess.org/api',
   LICHESS_PUZZLE_NEXT: '/puzzle/next',
@@ -16,7 +16,7 @@ window.APP.CONFIG = {
   PUZZLE_DIFFICULTY: 'normal',
 
   DEV_MODE: true,
-  DEBUG: true,
+  DEBUG: false,   /* ← Debug désactivé (nettoyage Étape 4) */
 
   get FULLNAME() {
     return this.NAME + ' — Étape ' + this.STEP;
