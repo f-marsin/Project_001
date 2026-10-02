@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-freeplay.js — Mode Partie libre (v1.0.13)
-   Ajout : reset la barre d'éval à 50/50 sur nouvelle partie.
+   ui-freeplay.js — Mode Partie libre (v1.1.0)
+   Retrait de setEvaluation.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -32,31 +32,16 @@ window.APP = window.APP || {};
     if (game.game_over()) {
       dot.classList.remove('black');
       label.classList.remove('check', 'mate', 'draw');
-      if (game.in_checkmate()) {
-        label.classList.add('mate');
-        label.textContent = 'Échec et mat';
-      } else if (game.in_stalemate()) {
-        label.classList.add('draw');
-        label.textContent = 'Pat — match nul';
-      } else {
-        label.classList.add('draw');
-        label.textContent = 'Partie nulle';
-      }
+      if (game.in_checkmate()) { label.classList.add('mate'); label.textContent = 'Échec et mat'; }
+      else if (game.in_stalemate()) { label.classList.add('draw'); label.textContent = 'Pat — match nul'; }
+      else { label.classList.add('draw'); label.textContent = 'Partie nulle'; }
       return;
     }
 
     label.classList.remove('check', 'mate', 'draw');
-    if (game.turn() === 'w') {
-      dot.classList.remove('black');
-      label.textContent = 'Aux Blancs de jouer';
-    } else {
-      dot.classList.add('black');
-      label.textContent = 'Aux Noirs de jouer';
-    }
-    if (game.in_check()) {
-      label.classList.add('check');
-      label.textContent += ' — ÉCHEC !';
-    }
+    if (game.turn() === 'w') { dot.classList.remove('black'); label.textContent = 'Aux Blancs de jouer'; }
+    else { dot.classList.add('black'); label.textContent = 'Aux Noirs de jouer'; }
+    if (game.in_check()) { label.classList.add('check'); label.textContent += ' — ÉCHEC !'; }
   }
 
   function updateHistory() {
@@ -105,7 +90,6 @@ window.APP = window.APP || {};
 
     var hist = game.history({ verbose: true });
     var last = hist.length > 0 ? hist[hist.length - 1] : null;
-
     if (!last) return;
     var san = last.san;
 
@@ -135,7 +119,6 @@ window.APP = window.APP || {};
     B.clearHighlights();
     B.position('start', false);
     B.orientation('white');
-    B.setEvaluation(null);   /* ← reset barre éval */
     updateTurnIndicator();
     updateHistory();
     setStatus('Nouvelle partie. Position initiale. Aux Blancs.', 'ok');
@@ -164,19 +147,13 @@ window.APP = window.APP || {};
     updateTurnIndicator();
     updateHistory();
     setStatus('Position initiale. Aux Blancs.', 'ok');
-    if (window.APP.Board) {
-      window.APP.Board.setOnSnapEndHandler(onMovePlayed);
-    }
+    if (window.APP.Board) window.APP.Board.setOnSnapEndHandler(onMovePlayed);
   }
 
-  function onEnter() {
-    updateTurnIndicator();
-    updateHistory();
-  }
+  function onEnter() { updateTurnIndicator(); updateHistory(); }
 
   window.APP.UIFreeplay = {
-    init: init,
-    onEnter: onEnter,
+    init: init, onEnter: onEnter,
     updateTurnIndicator: updateTurnIndicator,
     updateHistory: updateHistory,
     setStatus: setStatus
