@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-analysis.js — Vue Analyse (v1.0.13)
-   Ajout : mise à jour de la barre d'évaluation après analyse.
+   ui-analysis.js — Vue Analyse (v1.1.0)
+   Retrait de l'appel à setEvaluation.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -8,11 +8,7 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  var state = {
-    analyzing: false,
-    lastResult: null,
-    currentFen: null
-  };
+  var state = { analyzing: false, lastResult: null, currentFen: null };
 
   function contentEl() { return document.getElementById('analysis-content'); }
 
@@ -47,16 +43,9 @@ window.APP = window.APP || {};
   function renderResult(result) {
     var el = document.getElementById('analysis-result');
     if (!el) return;
+    if (!result) { el.innerHTML = '<p class="text-dim">Aucun résultat.</p>'; return; }
 
-    if (!result) {
-      el.innerHTML = '<p class="text-dim">Aucun résultat.</p>';
-      return;
-    }
-
-    var pvSan = result.pvSan && result.pvSan.length > 0
-      ? result.pvSan.slice(0, 6).join(' ')
-      : '—';
-
+    var pvSan = result.pvSan && result.pvSan.length > 0 ? result.pvSan.slice(0, 6).join(' ') : '—';
     var cached = result.cached ? ' <span class="text-dim">(cache)</span>' : '';
 
     el.innerHTML =
@@ -73,19 +62,12 @@ window.APP = window.APP || {};
         '<span class="label">Ligne principale : </span>' +
         '<span class="mono">' + pvSan + '</span>' +
       '</div>';
-
-    /* ⚠️ Met à jour la barre d'évaluation */
-    window.APP.Board.setEvaluation(result.evaluation);
   }
 
   function renderLoading() {
     var el = document.getElementById('analysis-result');
     if (!el) return;
-    el.innerHTML =
-      '<div class="analysis-loading">' +
-        '<span class="spinner"></span>' +
-        ' Analyse en cours… (premier chargement : 5-10 s)' +
-      '</div>';
+    el.innerHTML = '<div class="analysis-loading"><span class="spinner"></span> Analyse en cours… (premier chargement : 5-10 s)</div>';
   }
 
   function renderInfo(msg) {
@@ -119,15 +101,11 @@ window.APP = window.APP || {};
     if (!fen) { renderError('FEN vide.'); return; }
 
     var valid = window.APP.Board.validateFen(fen);
-    if (!valid.valid) {
-      renderError('FEN invalide : ' + (valid.error || 'inconnue'));
-      return;
-    }
+    if (!valid.valid) { renderError('FEN invalide : ' + (valid.error || 'inconnue')); return; }
 
     state.currentFen = fen;
     window.APP.Board.position(fen, false);
     window.APP.Board.setLessonMode(true);
-    window.APP.Board.setEvaluation(null);
     renderInfo('Position chargée. Clique sur Analyser.');
   }
 
@@ -152,10 +130,7 @@ window.APP = window.APP || {};
     if (!fen) { renderError('Aucune position à analyser.'); return; }
 
     var valid = window.APP.Board.validateFen(fen);
-    if (!valid.valid) {
-      renderError('FEN invalide : ' + (valid.error || 'inconnue'));
-      return;
-    }
+    if (!valid.valid) { renderError('FEN invalide : ' + (valid.error || 'inconnue')); return; }
 
     state.analyzing = true;
     renderLoading();
@@ -182,8 +157,5 @@ window.APP = window.APP || {};
   function init() { render(); }
   function onEnter() {}
 
-  window.APP.UIAnalysis = {
-    init: init,
-    onEnter: onEnter
-  };
+  window.APP.UIAnalysis = { init: init, onEnter: onEnter };
 })();
