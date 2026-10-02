@@ -1,6 +1,6 @@
 /* =========================================================
-   app-init.js — Point d'entrée (v1.3.0)
-   Ajout : UserProfile + UIProfile.
+   app-init.js — Point d'entrée (v1.4.0)
+   Ajout : vérification de INTERACTIVE_LESSONS.
    ========================================================= */
 
 (function () {
@@ -16,6 +16,7 @@
     if (!window.APP)                                    missing.push('window.APP');
     if (!window.APP || !window.APP.CONFIG)              missing.push('config/app-config.js');
     if (!window.APP || !window.APP.CURRICULUM)          missing.push('data/curriculum.js');
+    if (!window.APP || !window.APP.INTERACTIVE_LESSONS) missing.push('data/lessons-interactive.js');
     if (!window.APP || !window.APP.Board)               missing.push('core/board-core.js');
     if (!window.APP || !window.APP.UserProfile)         missing.push('core/user-profile.js');
     if (!window.APP || !window.APP.LichessClient)       missing.push('lichess/lichess-client.js');
@@ -96,10 +97,7 @@
 
     try {
       applyIdentity();
-
-      /* Profil : charger ou créer avant tout le reste */
       window.APP.UserProfile.init();
-
       window.APP.Board.init();
       window.APP.LessonEngine.init();
 
