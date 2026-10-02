@@ -1,8 +1,6 @@
 /* =========================================================
-   ui-analysis.js — Vue « Analyse » (v1.0.10)
-   =========================================================
-   Corrections :
-     - Distinction entre messages d'info (neutres) et erreurs (rouges)
+   ui-analysis.js — Vue Analyse (v1.0.13)
+   Ajout : mise à jour de la barre d'évaluation après analyse.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -75,6 +73,9 @@ window.APP = window.APP || {};
         '<span class="label">Ligne principale : </span>' +
         '<span class="mono">' + pvSan + '</span>' +
       '</div>';
+
+    /* ⚠️ Met à jour la barre d'évaluation */
+    window.APP.Board.setEvaluation(result.evaluation);
   }
 
   function renderLoading() {
@@ -87,14 +88,12 @@ window.APP = window.APP || {};
       '</div>';
   }
 
-  /* Affiche un message d'info (neutre) */
   function renderInfo(msg) {
     var el = document.getElementById('analysis-result');
     if (!el) return;
     el.innerHTML = '<div class="feedback show hint">' + msg + '</div>';
   }
 
-  /* Affiche un message d'erreur (rouge) */
   function renderError(msg) {
     var el = document.getElementById('analysis-result');
     if (!el) return;
@@ -128,6 +127,7 @@ window.APP = window.APP || {};
     state.currentFen = fen;
     window.APP.Board.position(fen, false);
     window.APP.Board.setLessonMode(true);
+    window.APP.Board.setEvaluation(null);
     renderInfo('Position chargée. Clique sur Analyser.');
   }
 
