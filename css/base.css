@@ -1,42 +1,58 @@
 /* =========================================================
    base.css — Variables, reset, typographie
-   =========================================================
-   Rôle : fondations visuelles universelles.
-   Chargé en premier, référence par tous les autres CSS.
+   v1.1.0 — Nouveau thème « Soft Light »
    ========================================================= */
 
 /* ---------- Variables globales ---------- */
 :root {
-  /* Couleurs — Dark Mode #121212 */
-  --bg: #121212;
-  --surface: #1e1e1e;
-  --surface-2: #262626;
-  --surface-3: #2f2f2f;
-  --border: #2e2e2e;
-  --text: #e8e8e8;
-  --text-dim: #9a9a9a;
-  --text-faint: #666;
+  /* Couleurs de fond — thème clair chaud */
+  --bg: #f5f4f1;              /* fond général gris chaud */
+  --surface: #ffffff;         /* cartes, panneau, header */
+  --surface-2: #faf9f6;       /* zones secondaires */
+  --surface-3: #f0eee8;       /* hover subtil */
 
-  /* Couleurs sémantiques */
-  --accent: #4a9eff;
-  --accent-dim: #2c6ab8;
-  --danger: #ff5757;
-  --success: #4ade80;
-  --warn: #fbbf24;
+  /* Bordures */
+  --border: #e5e3de;
+  --border-strong: #d4d0c8;
 
-  /* Échiquier */
-  --square-light: #6b6b6b;
-  --square-dark: #2e2e2e;
-  --highlight: rgba(74, 158, 255, 0.45);
-  --target: rgba(251, 191, 36, 0.5);
-  --good: rgba(74, 222, 128, 0.55);
-  --bad: rgba(255, 87, 87, 0.55);
+  /* Textes */
+  --text: #2a2a2a;            /* texte principal */
+  --text-dim: #6b6b6b;        /* texte atténué */
+  --text-faint: #a8a5a0;      /* texte très discret */
+
+  /* Accent (bleu doux) */
+  --accent: #5b8def;
+  --accent-dim: #4a7ad9;
+  --accent-soft: #e8f0fe;     /* fond bleu pastel */
+
+  /* Sémantiques */
+  --danger: #d9534f;
+  --danger-soft: #fdecea;
+  --success: #3fa66b;
+  --success-soft: #e8f5ee;
+  --warn: #d4a24a;
+  --warn-soft: #fdf5e6;
+
+  /* Échiquier — tons beige/brun classiques */
+  --square-light: #f0d9b5;
+  --square-dark: #b58863;
+
+  /* Highlights (transparences douces) */
+  --highlight: rgba(91, 141, 239, 0.55);   /* dernier coup */
+  --target: rgba(212, 162, 74, 0.55);      /* case cible */
+  --good: rgba(63, 166, 107, 0.45);        /* bonne réponse */
+  --bad: rgba(217, 83, 79, 0.40);          /* mauvaise réponse */
 
   /* Espacements */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 14px;
+
+  /* Ombres légères */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
 
   /* Polices */
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -59,15 +75,17 @@ html, body {
   min-height: 100vh;
   min-height: 100dvh;
 
-  /* Anti-zoom iOS + anti-tap-highlight */
-  -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
-
-  /* Anti pull-to-refresh mobile */
   overscroll-behavior: none;
 }
 
-/* ---------- Typographie de base ---------- */
+@supports (-webkit-touch-callout: none) {
+  html, body {
+    -webkit-text-size-adjust: 100%;
+  }
+}
+
+/* ---------- Typographie ---------- */
 h1, h2, h3, h4 {
   font-weight: 600;
   line-height: 1.25;
@@ -96,10 +114,10 @@ a:hover { text-decoration: underline; }
 code {
   font-family: var(--font-mono);
   font-size: 0.85em;
-  background: #0d0d0d;
+  background: var(--surface-3);
   padding: 2px 6px;
   border-radius: 3px;
-  color: #7dd3fc;
+  color: var(--accent-dim);
 }
 
 /* ---------- Boutons (base neutre) ---------- */
@@ -109,12 +127,13 @@ button {
   font-weight: 500;
   cursor: pointer;
   border: 1px solid var(--border);
-  background: var(--surface-2);
+  background: var(--surface);
   color: var(--text);
   padding: 11px 14px;
   border-radius: var(--radius-md);
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s;
   touch-action: manipulation;
+  box-shadow: var(--shadow-sm);
 }
 
 button:hover:not(:disabled),
@@ -122,14 +141,16 @@ button:active:not(:disabled) {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+  box-shadow: var(--shadow-md);
 }
 
 button:disabled {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
-/* ---------- Utilitaires génériques ---------- */
+/* ---------- Utilitaires ---------- */
 .hidden { display: none !important; }
 
 .text-dim { color: var(--text-dim); }
@@ -140,7 +161,6 @@ button:disabled {
 
 .mono { font-family: var(--font-mono); }
 
-/* ---------- Accessibilité ---------- */
 .visually-hidden {
   position: absolute;
   width: 1px; height: 1px;
@@ -151,7 +171,6 @@ button:disabled {
   border: 0;
 }
 
-/* ---------- Focus visible (clavier) ---------- */
 button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--accent);
