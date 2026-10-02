@@ -1,11 +1,6 @@
 /* =========================================================
-   ui-nav.js — Navigation du curriculum
-   =========================================================
-   Rôle : afficher les modules, leurs leçons, le détail d'une leçon.
-   États internes :
-     - curriculumView : 'modules' | 'lessons' | 'lesson'
-     - currentModuleId, currentLessonId
-   API : window.APP.UINav.init(), .onEnter(), .render()
+   ui-nav.js — Navigation (Parcours + sous-nav) (v1.2.0)
+   Ajout : bascule entre Parcours et Catalogue.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -14,12 +9,11 @@ window.APP = window.APP || {};
   'use strict';
 
   var state = {
-    curriculumView: 'modules',
+    subview: 'path',           /* 'path' | 'catalog' */
+    curriculumView: 'modules', /* 'modules' | 'lessons' | 'lesson' */
     currentModuleId: null,
     currentLessonId: null
   };
-
-  /* ---------- Utilitaires ---------- */
 
   function crumbEl() { return document.getElementById('crumb'); }
   function contentEl() { return document.getElementById('curriculum-content'); }
@@ -34,10 +28,7 @@ window.APP = window.APP || {};
     return t;
   }
 
-  /* Détermine le type affiché d'une leçon */
   function lessonDisplayType(lesson) {
-    /* À l'Étape 2, aucune leçon n'est encore jouable.
-       À l'Étape 3, on branchera : si leçon a un contenu Lichess → 'puzzle-live' */
     if (window.APP.LessonEngine && window.APP.LessonEngine.hasContent
         && window.APP.LessonEngine.hasContent(lesson.id)) {
       return 'puzzle-live';
@@ -53,7 +44,45 @@ window.APP = window.APP || {};
     return s + '</span>';
   }
 
-  /* ---------- Rendu du fil d'Ariane ---------- */
+  /* ================= SOUS-NAVIGATION ================= */
+
+  function setSubnavActive(subview) {
+    var tabs = document.querySelectorAll('#learning-subnav .subnav-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      var t = tabs[i];
+      if (t.getAttribute('data-subview') === subview) t.classList.add('active');
+      else t.classList.remove('active');
+    }
+    var pathEl = document.getElementById('learning-path');
+    var catalogEl = document.getElementById('learning-catalog');
+    if (pathEl) pathEl.classList.toggle('active', subview === 'path');
+    if (catalogEl) catalogEl.classList.toggle('active', subview === 'catalog');
+  }
+
+  function switchSubview(subview) {
+    state.subview = subview;
+    setSubnavActive(subview);
+    if (subview === 'catalog' && window.APP.UICatalog) {
+      window.APP.UICatalog.render();
+    } else if (subview === 'path') {
+      render();
+    }
+    setTimeout(function () {
+      if (window.APP.Board) window.APP.Board.resize();
+    }, 50);
+  }
+
+  function bindSubnav() {
+    var tabs = document.querySelectorAll('#learning-subnav .subnav-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].addEventListener('click', function () {
+        var sub = this.getAttribute('data-subview');
+        switchSubview(sub);
+      });
+    }
+  }
+
+  /* ================= RENDU DU PARCOURS ================= */
 
   function renderCrumb() {
     var el = crumbEl();
@@ -83,8 +112,6 @@ window.APP = window.APP || {};
     }
   }
 
-  /* ---------- Rendu : liste des modules ---------- */
-
   function renderModules() {
     var arr = window.APP.CURRICULUM || [];
     var html = '<h2>Modules du parcours</h2>';
@@ -108,8 +135,6 @@ window.APP = window.APP || {};
     }
     contentEl().innerHTML = html;
   }
-
-  /* ---------- Rendu : liste des leçons d'un module ---------- */
 
   function renderLessons() {
     var m = window.APP.findModule(state.currentModuleId);
@@ -141,17 +166,16 @@ window.APP = window.APP || {};
     contentEl().innerHTML = html;
   }
 
-  /* ---------- Rendu : détail d'une leçon ---------- */
-
   function renderLesson() {
     var m = window.APP.findModule(state.currentModuleId);
     var l = window.APP.findLesson(state.currentModuleId, state.currentLessonId);
     if (!m || !l) return;
 
     var lt = lessonDisplayType(l);
+    var backLabel = state.subview === 'catalog' ? '‹ Catalogue' : '‹ ' + m.id;
 
     var html =
-      '<button class="back-btn" data-nav="lessons">‹ ' + m.id + '</button>' +
+      '<button class="back-btn" data-nav="' + (state.subview === 'catalog' ? 'catalog' : 'lessons') + '">' + backLabel + '</button>' +
       '<div class="lesson-detail">' +
         '<h3>' + l.title + '</h3>' +
         '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>';
@@ -175,16 +199,15 @@ window.APP = window.APP || {};
     contentEl().innerHTML = html;
   }
 
-  /* ---------- Rendu global ---------- */
-
   function render() {
+    if (state.subview !== 'path') return;
     renderCrumb();
     if (state.curriculumView === 'modules')       renderModules();
     else if (state.curriculumView === 'lessons')  renderLessons();
     else if (state.curriculumView === 'lesson')   renderLesson();
   }
 
-  /* ---------- Navigation ---------- */
+  /* ================= NAVIGATION ================= */
 
   function goToModules() {
     state.curriculumView = 'modules';
@@ -199,18 +222,19 @@ window.APP = window.APP || {};
     render();
   }
 
-  /* ---------- Clics délégués ---------- */
+  function goToCatalog() {
+    switchSubview('catalog');
+  }
 
   function handleClick(e) {
-    /* Navigation (fil d'Ariane, bouton retour) */
     var navEl = e.target.closest('[data-nav]');
     if (navEl) {
       var target = navEl.getAttribute('data-nav');
       if (target === 'modules') { goToModules(); return; }
       if (target === 'lessons') { goToLessons(); return; }
+      if (target === 'catalog') { goToCatalog(); return; }
     }
 
-    /* Actions */
     var actionEl = e.target.closest('[data-action]');
     if (!actionEl) return;
     var action = actionEl.getAttribute('data-action');
@@ -228,32 +252,43 @@ window.APP = window.APP || {};
       state.curriculumView = 'lesson';
       render();
     } else if (action === 'start-lesson') {
-      /* À l'Étape 3, ce bouton lancera le moteur de leçon */
-      if (window.APP.LessonEngine) {
-        window.APP.LessonEngine.startCurrent();
-      }
+      if (window.APP.LessonEngine) window.APP.LessonEngine.startCurrent();
     }
   }
 
-  /* ---------- Init / onEnter ---------- */
+  /* ================= API PUBLIQUE ================= */
 
   function init() {
     var el = contentEl();
     if (el) el.addEventListener('click', handleClick);
+    bindSubnav();
     render();
   }
 
   function onEnter() {
-    /* Appelé quand on revient à l'onglet Curriculum */
-    render();
+    if (state.subview === 'catalog') {
+      if (window.APP.UICatalog) window.APP.UICatalog.render();
+    } else {
+      render();
+    }
   }
 
-  /* ---------- API publique ---------- */
+  /* Ouvre une leçon depuis le catalogue (utilisé par ui-catalog.js) */
+  function openLessonFromCatalog(moduleId, lessonId) {
+    state.currentModuleId = moduleId;
+    state.currentLessonId = lessonId;
+    state.curriculumView = 'lesson';
+    state.subview = 'path';
+    setSubnavActive('path');
+    render();
+  }
 
   window.APP.UINav = {
     init: init,
     onEnter: onEnter,
     render: render,
+    switchSubview: switchSubview,
+    openLessonFromCatalog: openLessonFromCatalog,
     getState: function () { return state; },
     goToModules: goToModules,
     goToLessons: goToLessons
