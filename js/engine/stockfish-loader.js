@@ -1,10 +1,6 @@
 /* =========================================================
-   stockfish-loader.js — Chargement Stockfish (v1.0.10)
-   =========================================================
-   Corrections :
-     - URL vers stockfish.js stable
-     - Création d'un Blob Worker pour Firefox (cross-origin)
-     - Logs détaillés
+   stockfish-loader.js — Chargement Stockfish (v1.1.1)
+   Ajout : timeout paramétrable par appel à analyze().
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -12,8 +8,10 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* URL testée de stockfish.js (version stable) */
   var ENGINE_URL = 'https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js';
+
+  /* Timeout par défaut (ms) si non spécifié */
+  var DEFAULT_ANALYSIS_TIMEOUT = 15000;
 
   var worker = null;
   var loaded = false;
@@ -34,24 +32,18 @@ window.APP = window.APP || {};
     if (window.console) console.error.apply(console, args);
   }
 
-  /* ---------- Réception des messages ---------- */
-
   function handleMessage(e) {
     var line = (typeof e === 'string') ? e : (e.data || '');
     if (!line) return;
 
     if (line.indexOf('uciok') !== -1) {
-      log('uciok reçu, envoi isready');
       sendCommand('isready');
       return;
     }
     if (line.indexOf('readyok') !== -1) {
-      log('readyok reçu, moteur prêt');
       loaded = true;
       loading = false;
-      for (var i = 0; i < readyResolvers.length; i++) {
-        readyResolvers[i]();
-      }
+      for (var i = 0; i < readyResolvers.length; i++) readyResolvers[i]();
       readyResolvers = [];
       return;
     }
@@ -64,7 +56,10 @@ window.APP = window.APP || {};
     if (currentAnalysis && line.indexOf('bestmove') === 0) {
       var parts = line.split(' ');
       var bestMove = parts[1] || null;
-      log('bestmove reçu :', bestMove);
+
+      /* Annule le timeout propre à cette analyse */
+      if (currentAnalysis.timer) clearTimeout(currentAnalysis.timer);
+
       currentAnalysis.resolve({
         bestMove: bestMove,
         evaluation: currentAnalysis.evaluation,
@@ -80,20 +75,9 @@ window.APP = window.APP || {};
     logError('Erreur Worker :', msg);
     loading = false;
 
-    /* Si on utilisait BlobWorker et que ça échoue, on tente l'autre méthode */
     if (usingBlobWorker) {
-      log('Re-essai avec Worker direct…');
       usingBlobWorker = false;
-      createWorker(function (err) {
-        if (err) {
-          /* Échec total */
-          var resolvers = readyResolvers;
-          readyResolvers = [];
-          for (var i = 0; i < resolvers.length; i++) {
-            /* On ne peut pas reject via le resolver (c'est un resolve), donc on rejette via une promesse wrapper */
-          }
-        }
-      });
+      createWorkerDirect(function () {});
     }
   }
 
@@ -104,18 +88,13 @@ window.APP = window.APP || {};
     if (dMatch) currentAnalysis.depth = parseInt(dMatch[1], 10);
 
     var cpMatch = line.match(/ score cp (-?\d+)/);
-    if (cpMatch) {
-      currentAnalysis.evaluation = { type: 'cp', value: parseInt(cpMatch[1], 10) };
-    }
+    if (cpMatch) currentAnalysis.evaluation = { type: 'cp', value: parseInt(cpMatch[1], 10) };
+
     var mateMatch = line.match(/ score mate (-?\d+)/);
-    if (mateMatch) {
-      currentAnalysis.evaluation = { type: 'mate', value: parseInt(mateMatch[1], 10) };
-    }
+    if (mateMatch) currentAnalysis.evaluation = { type: 'mate', value: parseInt(mateMatch[1], 10) };
 
     var pvMatch = line.match(/ pv (.+)$/);
-    if (pvMatch) {
-      currentAnalysis.pv = pvMatch[1].split(' ');
-    }
+    if (pvMatch) currentAnalysis.pv = pvMatch[1].split(' ');
   }
 
   function sendCommand(cmd) {
@@ -123,19 +102,13 @@ window.APP = window.APP || {};
     worker.postMessage(cmd);
   }
 
-  /* ---------- Création du Worker ---------- */
-
   function createWorkerBlob(callback) {
-    /* Récupère le script via fetch puis crée un Blob Worker
-       (contourne les restrictions cross-origin Firefox) */
-    log('Chargement du script via fetch…');
     fetch(ENGINE_URL)
       .then(function (response) {
         if (!response.ok) throw new Error('HTTP ' + response.status);
         return response.text();
       })
       .then(function (code) {
-        log('Script récupéré (' + code.length + ' octets), création du Blob Worker…');
         var blob = new Blob([code], { type: 'application/javascript' });
         var blobUrl = URL.createObjectURL(blob);
         try {
@@ -143,17 +116,10 @@ window.APP = window.APP || {};
           worker.onmessage = handleMessage;
           worker.onerror = handleError;
           usingBlobWorker = true;
-          log('Blob Worker créé avec succès');
           callback(null);
-        } catch (err) {
-          logError('Impossible de créer le Blob Worker :', err.message);
-          callback(err);
-        }
+        } catch (err) { callback(err); }
       })
-      .catch(function (err) {
-        logError('Fetch échoué :', err.message);
-        callback(err);
-      });
+      .catch(function (err) { callback(err); });
   }
 
   function createWorkerDirect(callback) {
@@ -162,34 +128,22 @@ window.APP = window.APP || {};
       worker.onmessage = handleMessage;
       worker.onerror = handleError;
       usingBlobWorker = false;
-      log('Worker direct créé');
       callback(null);
-    } catch (err) {
-      logError('Impossible de créer le Worker direct :', err.message);
-      callback(err);
-    }
+    } catch (err) { callback(err); }
   }
 
   function createWorker(callback) {
-    /* Essayer le Blob Worker d'abord (plus compatible) */
     createWorkerBlob(function (err) {
-      if (err) {
-        log('Blob Worker échoué, tentative Worker direct…');
-        createWorkerDirect(callback);
-      } else {
-        callback(null);
-      }
+      if (err) createWorkerDirect(callback);
+      else callback(null);
     });
   }
-
-  /* ---------- Chargement ---------- */
 
   function load() {
     if (loaded) return Promise.resolve();
     if (loading) {
       return new Promise(function (resolve, reject) {
         readyResolvers.push(resolve);
-        /* Timeout global */
         setTimeout(function () {
           if (!loaded) reject(new Error('Timeout de chargement du moteur (30s)'));
         }, 30000);
@@ -197,47 +151,38 @@ window.APP = window.APP || {};
     }
 
     loading = true;
-    log('Démarrage du chargement Stockfish…');
 
     return new Promise(function (resolve, reject) {
       var resolved = false;
       var timer = setTimeout(function () {
-        if (!resolved) {
-          resolved = true;
-          loading = false;
-          reject(new Error('Timeout : le moteur n\'a pas répondu (30s)'));
-        }
+        if (!resolved) { resolved = true; loading = false; reject(new Error('Timeout : le moteur n\'a pas répondu (30s)')); }
       }, 30000);
 
       readyResolvers.push(function () {
-        if (!resolved) {
-          resolved = true;
-          clearTimeout(timer);
-          resolve();
-        }
+        if (!resolved) { resolved = true; clearTimeout(timer); resolve(); }
       });
 
       createWorker(function (err) {
         if (err) {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timer);
-            loading = false;
-            reject(new Error('Création Worker impossible : ' + err.message));
-          }
+          if (!resolved) { resolved = true; clearTimeout(timer); loading = false; reject(new Error('Création Worker impossible : ' + err.message)); }
           return;
         }
-        log('Envoi de "uci" au moteur…');
         sendCommand('uci');
       });
     });
   }
 
-  /* ---------- Analyse ---------- */
-
+  /**
+   * Analyse une position FEN.
+   * @param {string} fen
+   * @param {object} opts
+   *   - depth   : profondeur (défaut 15)
+   *   - timeout : timeout en ms (défaut 15000)
+   */
   function analyze(fen, opts) {
     opts = opts || {};
     var depth = opts.depth || 15;
+    var timeoutMs = opts.timeout || DEFAULT_ANALYSIS_TIMEOUT;
 
     return load().then(function () {
       return new Promise(function (resolve, reject) {
@@ -251,26 +196,28 @@ window.APP = window.APP || {};
           reject: reject,
           evaluation: null,
           pv: null,
-          depth: 0
+          depth: 0,
+          timer: null
         };
 
-        log('Analyse FEN :', fen, '| profondeur :', depth);
         sendCommand('position fen ' + fen);
         sendCommand('go depth ' + depth);
 
-        setTimeout(function () {
+        /* Timer propre à cette analyse */
+        currentAnalysis.timer = setTimeout(function () {
           if (currentAnalysis) {
-            currentAnalysis.reject(new Error('Analyse trop longue (timeout 30s).'));
+            currentAnalysis.reject(new Error('Analyse trop longue (timeout ' + Math.round(timeoutMs / 1000) + 's).'));
             currentAnalysis = null;
             sendCommand('stop');
           }
-        }, 30000);
+        }, timeoutMs);
       });
     });
   }
 
   function stop() {
     if (currentAnalysis) {
+      if (currentAnalysis.timer) clearTimeout(currentAnalysis.timer);
       currentAnalysis.reject(new Error('Analyse annulée.'));
       currentAnalysis = null;
       sendCommand('stop');
