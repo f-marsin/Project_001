@@ -10,21 +10,21 @@
   <title>Chargement…</title>
 
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-  <link rel="stylesheet" href="css/base.css?v=1.1.0">
-  <link rel="stylesheet" href="css/layout.css?v=1.1.0">
-  <link rel="stylesheet" href="css/board.css?v=1.1.0">
-  <link rel="stylesheet" href="css/panel.css?v=1.1.0">
-  <link rel="stylesheet" href="css/modals.css?v=1.1.0">
+  <link rel="stylesheet" href="css/base.css?v=1.2.0">
+  <link rel="stylesheet" href="css/layout.css?v=1.2.0">
+  <link rel="stylesheet" href="css/board.css?v=1.2.0">
+  <link rel="stylesheet" href="css/panel.css?v=1.2.0">
+  <link rel="stylesheet" href="css/modals.css?v=1.2.0">
 </head>
 <body>
 
   <header>
     <div class="brand">
       <h1 id="app-title">♟ Projet_001</h1>
-      <span class="badge" id="app-badge">ÉTAPE 6</span>
+      <span class="badge" id="app-badge">ÉTAPE 7</span>
     </div>
     <div class="tabs" role="tablist">
-      <button class="tab active" data-view="curriculum" role="tab">Curriculum</button>
+      <button class="tab active" data-view="learning" role="tab">Apprentissage</button>
       <button class="tab" data-view="freeplay" role="tab">Partie libre</button>
       <button class="tab" data-view="analysis" role="tab">Analyse</button>
       <button class="tab" data-view="review" role="tab">Revue</button>
@@ -38,11 +38,29 @@
 
     <aside class="panel">
 
-      <div id="view-curriculum" class="view active">
-        <div class="crumb" id="crumb"><span>Parcours</span></div>
-        <div id="curriculum-content"></div>
+      <!-- ==================== VUE APPRENTISSAGE ==================== -->
+      <div id="view-learning" class="view active">
+
+        <!-- Sous-navigation interne -->
+        <nav class="subnav" id="learning-subnav">
+          <button class="subnav-tab active" data-subview="path" type="button">Parcours</button>
+          <button class="subnav-tab" data-subview="catalog" type="button">Catalogue</button>
+        </nav>
+
+        <!-- Sous-vue Parcours -->
+        <div id="learning-path" class="subview active">
+          <div class="crumb" id="crumb"><span>Parcours</span></div>
+          <div id="curriculum-content"></div>
+        </div>
+
+        <!-- Sous-vue Catalogue -->
+        <div id="learning-catalog" class="subview">
+          <div id="catalog-content"></div>
+        </div>
+
       </div>
 
+      <!-- ==================== VUE PARTIE LIBRE ==================== -->
       <div id="view-freeplay" class="view">
         <div class="turn-indicator">
           <span class="turn-dot" id="turn-dot"></span>
@@ -59,10 +77,12 @@
         </div>
       </div>
 
+      <!-- ==================== VUE ANALYSE ==================== -->
       <div id="view-analysis" class="view">
         <div id="analysis-content"></div>
       </div>
 
+      <!-- ==================== VUE REVUE ==================== -->
       <div id="view-review" class="view">
         <div id="game-review-content"></div>
       </div>
@@ -82,21 +102,22 @@
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-  <script src="js/config/app-config.js?v=1.1.0"></script>
-  <script src="js/data/curriculum.js?v=1.1.0"></script>
-  <script src="js/core/board-core.js?v=1.1.0"></script>
-  <script src="js/lichess/lichess-client.js?v=1.1.0"></script>
-  <script src="js/lichess/lichess-adapter.js?v=1.1.0"></script>
-  <script src="js/core/lesson-engine.js?v=1.1.0"></script>
-  <script src="js/engine/stockfish-loader.js?v=1.1.0"></script>
-  <script src="js/engine/stockfish-analysis.js?v=1.1.0"></script>
-  <script src="js/engine/stockfish-game-review.js?v=1.1.0"></script>
-  <script src="js/ui/ui-tabs.js?v=1.1.0"></script>
-  <script src="js/ui/ui-nav.js?v=1.1.0"></script>
-  <script src="js/ui/ui-freeplay.js?v=1.1.0"></script>
-  <script src="js/ui/ui-analysis.js?v=1.1.0"></script>
-  <script src="js/ui/ui-game-review.js?v=1.1.0"></script>
-  <script src="js/app-init.js?v=1.1.0"></script>
+  <script src="js/config/app-config.js?v=1.2.0"></script>
+  <script src="js/data/curriculum.js?v=1.2.0"></script>
+  <script src="js/core/board-core.js?v=1.2.0"></script>
+  <script src="js/lichess/lichess-client.js?v=1.2.0"></script>
+  <script src="js/lichess/lichess-adapter.js?v=1.2.0"></script>
+  <script src="js/core/lesson-engine.js?v=1.2.0"></script>
+  <script src="js/engine/stockfish-loader.js?v=1.2.0"></script>
+  <script src="js/engine/stockfish-analysis.js?v=1.2.0"></script>
+  <script src="js/engine/stockfish-game-review.js?v=1.2.0"></script>
+  <script src="js/ui/ui-tabs.js?v=1.2.0"></script>
+  <script src="js/ui/ui-nav.js?v=1.2.0"></script>
+  <script src="js/ui/ui-catalog.js?v=1.2.0"></script>
+  <script src="js/ui/ui-freeplay.js?v=1.2.0"></script>
+  <script src="js/ui/ui-analysis.js?v=1.2.0"></script>
+  <script src="js/ui/ui-game-review.js?v=1.2.0"></script>
+  <script src="js/app-init.js?v=1.2.0"></script>
 
 </body>
 </html>
