@@ -1,14 +1,10 @@
 /* =========================================================
    lesson-engine.js — Moteur de leçons (puzzles Lichess)
    =========================================================
-   Rôle : charger un puzzle Lichess, l'afficher, valider la
-   solution jouée par l'élève.
-
-   API : window.APP.LessonEngine
-     startCurrent()   : lance la leçon en cours (via UINav)
-     start(lessonId)  : lance une leçon par ID
-     hasContent(id)   : vérifie si une leçon a du contenu jouable
-     reset()          : réinitialise l'état
+   v1.0.3 — Correctif : après un mauvais coup, on recharge
+   TOUJOURS la position de départ du puzzle (via une nouvelle
+   instance chess.js à partir de la FEN), au lieu de se fier
+   à game.undo() qui pouvait être désynchronisé.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -16,13 +12,12 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* État interne */
   var state = {
     active: false,
     lessonId: null,
     theme: null,
-    puzzle: null,       /* { fen, playerMove, opponentReply, ... } */
-    awaiting: false,    /* true pendant une animation */
+    puzzle: null,
+    awaiting: false,
     solved: false
   };
 
@@ -35,7 +30,6 @@ window.APP = window.APP || {};
     el.textContent = msg;
   }
 
-  /* Normalisation SAN (retire +, #, !, ?, espaces) */
   function normSan(s) {
     if (!s) return '';
     return String(s)
@@ -44,6 +38,18 @@ window.APP = window.APP || {};
       .replace(/=Q$/i, '')
       .replace(/0-0-0/g, 'O-O-O')
       .replace(/0-0/g, 'O-O');
+  }
+
+  /* ⚠️ CORRECTIF v1.0.3 : recharge la position du puzzle
+     de manière fiable, en créant une nouvelle instance game. */
+  function reloadPuzzlePosition() {
+    if (!state.puzzle) return;
+    var B = window.APP.Board;
+    var freshGame = new Chess(state.puzzle.fen);
+    B.setGame(freshGame);
+    B.position(freshGame.fen(), false);
+    B.clearHighlights();
+    window.APP.log('Position du puzzle rechargée :', state.puzzle.fen);
   }
 
   /* ---------- Chargement d'une leçon ---------- */
@@ -55,20 +61,15 @@ window.APP = window.APP || {};
   }
 
   function hasContent(lessonId) {
-    var lesson = window.APP.findLesson(null, lessonId);
-    if (!lesson) {
-      /* Fallback : chercher dans tous les modules */
-      var arr = window.APP.CURRICULUM;
-      for (var i = 0; i < arr.length; i++) {
-        for (var j = 0; j < arr[i].lessons.length; j++) {
-          if (arr[i].lessons[j].id === lessonId) {
-            lesson = arr[i].lessons[j];
-            break;
-          }
+    var arr = window.APP.CURRICULUM || [];
+    for (var i = 0; i < arr.length; i++) {
+      for (var j = 0; j < arr[i].lessons.length; j++) {
+        if (arr[i].lessons[j].id === lessonId) {
+          return !!arr[i].lessons[j].lichessTheme;
         }
       }
     }
-    return !!(lesson && lesson.lichessTheme);
+    return false;
   }
 
   function startCurrent() {
@@ -94,10 +95,8 @@ window.APP = window.APP || {};
     window.APP.Board.setLessonMode(true);
     window.APP.Board.clearHighlights();
 
-    /* Afficher un message de chargement dans le panneau */
     renderLoading();
 
-    /* Charger le puzzle */
     window.APP.LichessClient.fetchPuzzle(theme)
       .then(function (result) {
         var adapted = window.APP.LichessAdapter.adapt(result.data);
@@ -107,7 +106,7 @@ window.APP = window.APP || {};
         state.puzzle = adapted;
         state.awaiting = false;
         renderPuzzle();
-        window.APP.Board.position(adapted.fen, false);
+        reloadPuzzlePosition();
         window.APP.log('Puzzle chargé :', adapted.lichessId, 'rating', adapted.rating);
       })
       .catch(function (err) {
@@ -118,7 +117,7 @@ window.APP = window.APP || {};
       });
   }
 
-  /* ---------- Rendu du panneau pendant la leçon ---------- */
+  /* ---------- Rendu ---------- */
 
   function renderLoading() {
     var content = document.getElementById('curriculum-content');
@@ -175,7 +174,7 @@ window.APP = window.APP || {};
     var B = window.APP.Board;
     var game = B.getGame();
 
-    /* Vérifier que le coup est légal */
+    /* 1. Vérifier que le coup est légal dans la position ACTUELLE */
     var legalMoves = game.moves({ verbose: true });
     var found = null;
     for (var i = 0; i < legalMoves.length; i++) {
@@ -186,26 +185,30 @@ window.APP = window.APP || {};
     }
     if (!found) {
       B.flashIllegal(target);
+      /* ⚠️ On recharge la position pour être sûr */
+      reloadPuzzlePosition();
       return 'snapback';
     }
 
-    /* Jouer le coup pour obtenir le SAN */
+    /* 2. Jouer le coup sur le game */
     var played = game.move({ from: source, to: target, promotion: 'q' });
     if (!played) {
       B.flashIllegal(target);
+      reloadPuzzlePosition();
       return 'snapback';
     }
     var playedSan = played.san;
 
-    /* Comparer avec la solution attendue */
+    /* 3. Comparer avec la solution */
     var expected = state.puzzle.playerMove;
+
     if (normSan(playedSan) === normSan(expected)) {
-      /* Bonne réponse ! */
+      /* --- BON COUP --- */
       state.solved = true;
       B.position(game.fen(), false);
       showFeedback('✅ Bravo ! ' + playedSan + ' est le coup gagnant.', 'ok');
 
-      /* Jouer la réponse adverse automatiquement si présente */
+      /* Jouer la réponse adverse automatiquement */
       if (state.puzzle.opponentReply) {
         setTimeout(function () {
           var reply = game.move(state.puzzle.opponentReply);
@@ -213,16 +216,17 @@ window.APP = window.APP || {};
             B.position(game.fen(), false);
             showFeedback('✅ Bravo ! Solution : ' + playedSan + ' puis ' + reply.san, 'ok');
           }
-        }, 600);
+        }, 700);
       }
       return;
     }
 
-    /* Mauvais coup */
-    game.undo();
-    B.position(game.fen(), false);
-    B.flashIllegal(target);
+    /* --- MAUVAIS COUP --- */
     showFeedback('❌ Ce n\'est pas le coup gagnant. Réessaie.', 'ko');
+    B.flashIllegal(target);
+
+    /* ⚠️ CORRECTIF : on recharge entièrement la position du puzzle */
+    reloadPuzzlePosition();
     return 'snapback';
   }
 
@@ -241,10 +245,7 @@ window.APP = window.APP || {};
     }
   }
 
-  /* ---------- Initialisation du branchement ---------- */
-
   function init() {
-    /* On enregistre le handler onDrop pour le mode leçon */
     if (window.APP.Board) {
       window.APP.Board.setOnDropHandler(onDrop);
     }
