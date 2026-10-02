@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-game-review.js — Vue Revue (v1.0.13)
-   Ajout : mise à jour de la barre d'éval au clic sur un coup.
+   ui-game-review.js — Vue Revue (v1.1.0)
+   Retrait de l'appel à setEvaluation.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -185,7 +185,6 @@ window.APP = window.APP || {};
     state.result = null;
     state.currentMoveIndex = null;
     window.APP.StockfishAnalysis.clearCache();
-    window.APP.Board.setEvaluation(null);
     render();
   }
 
@@ -208,9 +207,6 @@ window.APP = window.APP || {};
     } else {
       window.APP.Board.clearHighlights();
     }
-
-    /* ⚠️ Met à jour la barre d'éval avec l'évaluation APRÈS le coup */
-    window.APP.Board.setEvaluation(move.evalAfter);
 
     var all = document.querySelectorAll('.review-move');
     for (var i = 0; i < all.length; i++) all[i].classList.remove('selected');
@@ -253,8 +249,5 @@ window.APP = window.APP || {};
   function init() { render(); }
   function onEnter() {}
 
-  window.APP.UIGameReview = {
-    init: init,
-    onEnter: onEnter
-  };
+  window.APP.UIGameReview = { init: init, onEnter: onEnter };
 })();
