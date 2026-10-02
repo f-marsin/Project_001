@@ -1,9 +1,6 @@
 /* =========================================================
-   board-core.js — Échiquier + règles légales + validation FEN
-   =========================================================
-   v1.0.3 — Correctif : en mode leçon, le handler custom prend
-   TOUT le contrôle du onDrop. board-core.js ne fait AUCUNE
-   validation interne quand un handler custom est présent.
+   board-core.js — Échiquier (v1.0.12)
+   Ajout : highlightSquares(from, to) — surlignage manuel
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -11,17 +8,12 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* ---------- État interne ---------- */
   var board = null;
   var game = new Chess();
   var lastMove = null;
   var lessonMode = false;
   var onDropHandler = null;
   var onSnapEndHandler = null;
-
-  /* =========================================================
-     HELPERS VISUELS
-     ========================================================= */
 
   function clearHighlights() {
     if (!window.jQuery) return;
@@ -37,19 +29,20 @@ window.APP = window.APP || {};
     window.jQuery('#board .square-' + lastMove.to).addClass('hl-to');
   }
 
+  function highlightSquares(from, to) {
+    if (!window.jQuery) return;
+    clearHighlights();
+    if (from) window.jQuery('#board .square-' + from).addClass('hl-from');
+    if (to)   window.jQuery('#board .square-' + to).addClass('hl-to');
+  }
+
   function flashIllegal(square) {
     if (!window.jQuery) return;
     var $sq = window.jQuery('#board .square-' + square);
     if (!$sq.length) return;
     $sq.addClass('illegal-flash');
-    setTimeout(function () {
-      $sq.removeClass('illegal-flash');
-    }, 500);
+    setTimeout(function () { $sq.removeClass('illegal-flash'); }, 500);
   }
-
-  /* =========================================================
-     VALIDATION FEN
-     ========================================================= */
 
   function validateFen(fen) {
     if (!fen || typeof fen !== 'string') {
@@ -57,33 +50,17 @@ window.APP = window.APP || {};
     }
     try {
       var testGame = new Chess(fen);
-      if (!testGame) {
-        return { valid: false, error: 'Échec de création de la partie' };
-      }
+      if (!testGame) return { valid: false, error: 'Échec de création' };
       var turn = testGame.turn();
-      if (testGame.in_check()) {
-        return {
-          valid: true,
-          inCheck: true,
-          turn: turn,
-          warning: 'Le camp au trait (' + (turn === 'w' ? 'Blancs' : 'Noirs') + ') est en échec.'
-        };
-      }
+      if (testGame.in_check()) return { valid: true, inCheck: true, turn: turn };
       return { valid: true, inCheck: false, turn: turn };
     } catch (err) {
       return { valid: false, error: err.message || 'Erreur inconnue' };
     }
   }
 
-  /* =========================================================
-     CALLBACKS
-     ========================================================= */
-
   function onDragStart(source, piece) {
-    /* En mode leçon, on laisse TOUJOURS passer le drag.
-       C'est le handler custom (LessonEngine) qui décidera. */
     if (lessonMode) return true;
-
     if (game.game_over()) return false;
     var turn = game.turn();
     if (turn === 'w' && piece.search(/^b/) !== -1) return false;
@@ -92,14 +69,8 @@ window.APP = window.APP || {};
   }
 
   function onDrop(source, target) {
-    /* ⚠️ CORRECTIF v1.0.3 :
-       Si un handler custom est présent (mode leçon), il prend
-       TOUT le contrôle. board-core.js ne touche pas au game. */
-    if (onDropHandler) {
-      return onDropHandler(source, target);
-    }
+    if (onDropHandler) return onDropHandler(source, target);
 
-    /* Mode libre par défaut */
     var legalMoves = game.moves({ verbose: true });
     var found = null;
     for (var i = 0; i < legalMoves.length; i++) {
@@ -108,38 +79,21 @@ window.APP = window.APP || {};
         break;
       }
     }
-    if (!found) {
-      flashIllegal(target);
-      return 'snapback';
-    }
+    if (!found) { flashIllegal(target); return 'snapback'; }
     var move = game.move({ from: source, to: target, promotion: 'q' });
-    if (!move) {
-      flashIllegal(target);
-      return 'snapback';
-    }
+    if (!move) { flashIllegal(target); return 'snapback'; }
     lastMove = { from: source, to: target };
     return;
   }
 
   function onSnapEnd() {
-    /* En mode leçon : ne rien faire (le LessonEngine gère) */
     if (lessonMode) return;
-
-    /* En mode libre : rafraîchir l'échiquier */
-    if (onSnapEndHandler) {
-      onSnapEndHandler();
-      return;
-    }
+    if (onSnapEndHandler) { onSnapEndHandler(); return; }
     if (board) board.position(game.fen());
     applyLastMoveHighlight();
   }
 
-  /* =========================================================
-     API PUBLIQUE
-     ========================================================= */
-
   var API = {
-
     init: function () {
       board = window.Chessboard('board', {
         draggable: true,
@@ -166,21 +120,10 @@ window.APP = window.APP || {};
       clearHighlights();
     },
 
-    flip: function () {
-      if (board) board.flip();
-    },
-
-    position: function (fen, animate) {
-      if (board) board.position(fen, animate !== false);
-    },
-
-    orientation: function (color) {
-      if (board) board.orientation(color);
-    },
-
-    resize: function () {
-      if (board && typeof board.resize === 'function') board.resize();
-    },
+    flip: function () { if (board) board.flip(); },
+    position: function (fen, animate) { if (board) board.position(fen, animate !== false); },
+    orientation: function (color) { if (board) board.orientation(color); },
+    resize: function () { if (board && typeof board.resize === 'function') board.resize(); },
 
     getGame: function () { return game; },
     setGame: function (g) { game = g; },
@@ -197,6 +140,7 @@ window.APP = window.APP || {};
 
     clearHighlights: clearHighlights,
     applyLastMoveHighlight: applyLastMoveHighlight,
+    highlightSquares: highlightSquares,
     flashIllegal: flashIllegal,
     validateFen: validateFen,
 
