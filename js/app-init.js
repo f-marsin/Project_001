@@ -1,7 +1,5 @@
 /* =========================================================
-   app-init.js — Point d'entrée (Étape 5)
-   =========================================================
-   Ajout : Stockfish (chargement paresseux) + UIAnalysis.
+   app-init.js — Point d'entrée (Étape 6)
    ========================================================= */
 
 (function () {
@@ -23,10 +21,12 @@
     if (!window.APP || !window.APP.LessonEngine)        missing.push('core/lesson-engine.js');
     if (!window.APP || !window.APP.Stockfish)           missing.push('engine/stockfish-loader.js');
     if (!window.APP || !window.APP.StockfishAnalysis)   missing.push('engine/stockfish-analysis.js');
+    if (!window.APP || !window.APP.GameReview)          missing.push('engine/stockfish-game-review.js');
     if (!window.APP || !window.APP.UITabs)              missing.push('ui/ui-tabs.js');
     if (!window.APP || !window.APP.UINav)               missing.push('ui/ui-nav.js');
     if (!window.APP || !window.APP.UIFreeplay)          missing.push('ui/ui-freeplay.js');
     if (!window.APP || !window.APP.UIAnalysis)          missing.push('ui/ui-analysis.js');
+    if (!window.APP || !window.APP.UIGameReview)        missing.push('ui/ui-game-review.js');
 
     return missing;
   }
@@ -36,7 +36,6 @@
       '<div style="padding:40px;font-family:monospace;font-size:14px;' +
                   'line-height:1.6;background:#121212;color:#e8e8e8;min-height:100vh;">' +
         '<h2 style="color:#ff5757;margin-bottom:20px;">⚠️ Erreur de chargement</h2>' +
-        '<p style="margin-bottom:20px;">Modules manquants :</p>' +
         '<ul style="margin-left:20px;color:#fbbf24;">' +
           missing.map(function (m) { return '<li>' + m + '</li>'; }).join('') +
         '</ul>' +
@@ -89,32 +88,23 @@
 
   function init() {
     var missing = checkDependencies();
-    if (missing.length > 0) {
-      showFatalError(missing);
-      return;
-    }
+    if (missing.length > 0) { showFatalError(missing); return; }
 
     try {
-      window.APP.log('Init démarré (Étape 5).');
-
       applyIdentity();
       window.APP.Board.init();
       window.APP.LessonEngine.init();
 
-      /* UI */
       window.APP.UINav.init();
       window.APP.UIFreeplay.init();
       window.APP.UIAnalysis.init();
+      window.APP.UIGameReview.init();
       window.APP.UITabs.init();
 
       bindResize();
       bindTouchHandlers();
 
-      setTimeout(function () {
-        window.APP.Board.resize();
-      }, 100);
-
-      window.APP.log('Init terminé.');
+      setTimeout(function () { window.APP.Board.resize(); }, 100);
     } catch (err) {
       if (window.console) console.error('[APP] Init error:', err);
     }
