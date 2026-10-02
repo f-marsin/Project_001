@@ -1,8 +1,8 @@
 /* =========================================================
    lesson-engine.js — Moteur de leçons (puzzles Lichess)
    =========================================================
-   v1.0.4 — Ajout de logs de debug pour visualiser la solution
-   attendue (temporaire, retiré à l'Étape 3.5).
+   v1.0.5 — Affichage debug complet (SAN + UCI) pour faciliter
+   le diagnostic en cas de mismatch.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -18,8 +18,6 @@ window.APP = window.APP || {};
     awaiting: false,
     solved: false
   };
-
-  /* ---------- Utilitaires ---------- */
 
   function showFeedback(msg, kind) {
     var el = document.getElementById('lesson-feedback');
@@ -45,24 +43,26 @@ window.APP = window.APP || {};
     B.setGame(freshGame);
     B.position(freshGame.fen(), false);
     B.clearHighlights();
-    window.APP.log('Position du puzzle rechargée.');
   }
 
-  /* ---------- Debug : afficher la solution dans la console ---------- */
+  /* ---------- Debug : afficher la solution ---------- */
 
   function debugSolution() {
-    if (!state.puzzle) return;
-    console.log('%c[DEBUG] 🧩 Solution du puzzle', 'color:#4ade80;font-weight:bold;font-size:14px;');
-    console.log('  FEN     :', state.puzzle.fen);
-    console.log('  Coup    :', state.puzzle.playerMove);
-    if (state.puzzle.opponentReply) {
-      console.log('  Réponse :', state.puzzle.opponentReply);
+    if (!state.puzzle) {
+      console.log('[DEBUG] Pas de puzzle chargé.');
+      return;
     }
-    console.log('  Rating  :', state.puzzle.rating);
-    console.log('  Thèmes  :', state.puzzle.themes.join(', '));
+    console.log('%c[DEBUG] 🧩 Solution du puzzle', 'color:#4ade80;font-weight:bold;font-size:14px;');
+    console.log('  FEN         :', state.puzzle.fen);
+    console.log('  Trait       :', state.puzzle.fen.indexOf(' w ') !== -1 ? 'Blancs' : 'Noirs');
+    console.log('  SAN attendu :', state.puzzle.playerMove);
+    console.log('  UCI attendu :', state.puzzle.playerMoveUci);
+    console.log('  Réponse     :', state.puzzle.opponentReply || '—');
+    console.log('  Rating      :', state.puzzle.rating);
+    console.log('  Thèmes      :', state.puzzle.themes.join(', '));
+    console.log('  Séquence SAN complète :', state.puzzle.fullSequence);
+    console.log('  Solution UCI brute    :', state.puzzle.rawSolution);
   }
-
-  /* ---------- Chargement d'une leçon ---------- */
 
   function getLessonFromState() {
     var navState = window.APP.UINav.getState();
@@ -84,10 +84,7 @@ window.APP = window.APP || {};
 
   function startCurrent() {
     var lesson = getLessonFromState();
-    if (!lesson) {
-      showFeedback('Leçon introuvable.', 'ko');
-      return;
-    }
+    if (!lesson) { showFeedback('Leçon introuvable.', 'ko'); return; }
     if (!lesson.lichessTheme) {
       showFeedback('Le contenu de cette leçon sera ajouté ultérieurement.', 'ko');
       return;
@@ -107,17 +104,16 @@ window.APP = window.APP || {};
 
     renderLoading();
 
+    console.log('[DEBUG] Chargement puzzle thème :', theme);
+
     window.APP.LichessClient.fetchPuzzle(theme)
       .then(function (result) {
         var adapted = window.APP.LichessAdapter.adapt(result.data);
-        if (adapted.error) {
-          throw new Error(adapted.error);
-        }
+        if (adapted.error) throw new Error(adapted.error);
         state.puzzle = adapted;
         state.awaiting = false;
         renderPuzzle();
         reloadPuzzlePosition();
-        window.APP.log('Puzzle chargé :', adapted.lichessId);
         debugSolution();
       })
       .catch(function (err) {
@@ -127,8 +123,6 @@ window.APP = window.APP || {};
         renderError('Impossible de charger le puzzle : ' + err.message);
       });
   }
-
-  /* ---------- Rendu ---------- */
 
   function renderLoading() {
     var content = document.getElementById('curriculum-content');
@@ -168,17 +162,15 @@ window.APP = window.APP || {};
           '<span class="dot' + (isWhiteToMove ? '' : ' black') + '"></span>' +
           '<span>' + (isWhiteToMove ? 'Aux Blancs de jouer' : 'Aux Noirs de jouer') + '</span>' +
         '</div>' +
-        '<div class="instruction" id="lesson-instruction">' +
+        '<div class="instruction">' +
           'Trouve la solution. Joue le coup gagnant sur l\'échiquier.' +
         '</div>' +
         '<div class="feedback" id="lesson-feedback"></div>' +
         '<p class="text-dim" style="font-size:0.75rem;margin-top:12px;">' +
-          '💡 <em>Solution visible dans la console (F12) pour tester.</em>' +
+          '💡 <em>Solution dans la console (F12 → onglet Console).</em>' +
         '</p>' +
       '</div>';
   }
-
-  /* ---------- Validation de la solution ---------- */
 
   function onDrop(source, target) {
     if (!state.active || state.awaiting || state.solved || !state.puzzle) {
@@ -188,7 +180,6 @@ window.APP = window.APP || {};
     var B = window.APP.Board;
     var game = B.getGame();
 
-    /* 1. Vérifier que le coup est légal */
     var legalMoves = game.moves({ verbose: true });
     var found = null;
     for (var i = 0; i < legalMoves.length; i++) {
@@ -198,13 +189,12 @@ window.APP = window.APP || {};
       }
     }
     if (!found) {
-      console.log('[DEBUG] Coup illégal tenté :', source, '→', target);
+      console.log('[DEBUG] Coup illégal :', source, '→', target);
       B.flashIllegal(target);
       reloadPuzzlePosition();
       return 'snapback';
     }
 
-    /* 2. Jouer le coup */
     var played = game.move({ from: source, to: target, promotion: 'q' });
     if (!played) {
       B.flashIllegal(target);
@@ -213,17 +203,15 @@ window.APP = window.APP || {};
     }
     var playedSan = played.san;
 
-    /* 3. Comparer */
     var expected = state.puzzle.playerMove;
     var match = normSan(playedSan) === normSan(expected);
 
     console.log('%c[DEBUG] 🎯 Tentative', 'color:#fbbf24;font-weight:bold;');
-    console.log('  Joué    :', playedSan);
-    console.log('  Attendu :', expected);
-    console.log('  Match   :', match ? '✅ OUI' : '❌ NON');
+    console.log('  Joué (SAN)    :', playedSan);
+    console.log('  Attendu (SAN) :', expected);
+    console.log('  Match         :', match ? '✅ OUI' : '❌ NON');
 
     if (match) {
-      /* --- BON COUP --- */
       state.solved = true;
       B.position(game.fen(), false);
       showFeedback('✅ Bravo ! ' + playedSan + ' est le coup gagnant.', 'ok');
@@ -240,14 +228,11 @@ window.APP = window.APP || {};
       return;
     }
 
-    /* --- MAUVAIS COUP --- */
     showFeedback('❌ Ce n\'est pas le coup gagnant. Réessaie.', 'ko');
     B.flashIllegal(target);
     reloadPuzzlePosition();
     return 'snapback';
   }
-
-  /* ---------- Reset ---------- */
 
   function reset() {
     state.active = false;
@@ -267,8 +252,6 @@ window.APP = window.APP || {};
       window.APP.Board.setOnDropHandler(onDrop);
     }
   }
-
-  /* ---------- API ---------- */
 
   window.APP.LessonEngine = {
     init: init,
