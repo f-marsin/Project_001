@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-nav.js — Navigation (Parcours + sous-nav) (v1.2.0)
-   Ajout : bascule entre Parcours et Catalogue.
+   ui-nav.js — Navigation du Parcours + sous-nav (v1.2.1)
+   Le catalogue est désormais 100% autonome.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -9,8 +9,8 @@ window.APP = window.APP || {};
   'use strict';
 
   var state = {
-    subview: 'path',           /* 'path' | 'catalog' */
-    curriculumView: 'modules', /* 'modules' | 'lessons' | 'lesson' */
+    subview: 'path',
+    curriculumView: 'modules',
     currentModuleId: null,
     currentLessonId: null
   };
@@ -172,10 +172,9 @@ window.APP = window.APP || {};
     if (!m || !l) return;
 
     var lt = lessonDisplayType(l);
-    var backLabel = state.subview === 'catalog' ? '‹ Catalogue' : '‹ ' + m.id;
 
     var html =
-      '<button class="back-btn" data-nav="' + (state.subview === 'catalog' ? 'catalog' : 'lessons') + '">' + backLabel + '</button>' +
+      '<button class="back-btn" data-nav="lessons">‹ ' + m.id + '</button>' +
       '<div class="lesson-detail">' +
         '<h3>' + l.title + '</h3>' +
         '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>';
@@ -222,17 +221,12 @@ window.APP = window.APP || {};
     render();
   }
 
-  function goToCatalog() {
-    switchSubview('catalog');
-  }
-
   function handleClick(e) {
     var navEl = e.target.closest('[data-nav]');
     if (navEl) {
       var target = navEl.getAttribute('data-nav');
       if (target === 'modules') { goToModules(); return; }
       if (target === 'lessons') { goToLessons(); return; }
-      if (target === 'catalog') { goToCatalog(); return; }
     }
 
     var actionEl = e.target.closest('[data-action]');
@@ -266,21 +260,11 @@ window.APP = window.APP || {};
   }
 
   function onEnter() {
-    if (state.subview === 'catalog') {
-      if (window.APP.UICatalog) window.APP.UICatalog.render();
+    if (state.subview === 'catalog' && window.APP.UICatalog) {
+      window.APP.UICatalog.render();
     } else {
       render();
     }
-  }
-
-  /* Ouvre une leçon depuis le catalogue (utilisé par ui-catalog.js) */
-  function openLessonFromCatalog(moduleId, lessonId) {
-    state.currentModuleId = moduleId;
-    state.currentLessonId = lessonId;
-    state.curriculumView = 'lesson';
-    state.subview = 'path';
-    setSubnavActive('path');
-    render();
   }
 
   window.APP.UINav = {
@@ -288,7 +272,6 @@ window.APP = window.APP || {};
     onEnter: onEnter,
     render: render,
     switchSubview: switchSubview,
-    openLessonFromCatalog: openLessonFromCatalog,
     getState: function () { return state; },
     goToModules: goToModules,
     goToLessons: goToLessons
