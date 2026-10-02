@@ -1,11 +1,10 @@
 /* =========================================================
-   ui-catalog.js — Catalogue des leçons (NOUVEAU v1.2.0)
+   ui-catalog.js — Catalogue des leçons (v1.2.1)
    =========================================================
-   Rôle : afficher toutes les leçons du curriculum avec :
-     - Filtre par thème
-     - Filtre par difficulté
-     - Tri par thème ou par difficulté
-   Chaque leçon est cliquable et ouvre la vue détail.
+   Nouveauté :
+     - Vue détail interne au catalogue (reste dans le Catalogue)
+     - État de navigation indépendant du Parcours
+     - Retour au catalogue après consultation
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -13,7 +12,6 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* Libellés des thèmes */
   var THEME_LABELS = {
     'bases': 'Bases',
     'tactics': 'Tactique',
@@ -26,14 +24,120 @@ window.APP = window.APP || {};
   var state = {
     filterTheme: 'all',
     filterStars: 'all',
-    sortBy: 'theme'
+    sortBy: 'theme',
+    /* Nouveauté : vue interne du catalogue */
+    catalogView: 'list',       /* 'list' | 'lesson' */
+    currentLesson: null        /* { moduleId, lessonId } */
   };
 
   function contentEl() { return document.getElementById('catalog-content'); }
 
-  /* ================= RENDU ================= */
+  /* ================= RENDU GLOBAL ================= */
 
   function render() {
+    if (state.catalogView === 'lesson') {
+      renderLessonDetail();
+    } else {
+      renderList();
+    }
+  }
+
+  /* ================= VUE DÉTAIL (dans le catalogue) ================= */
+
+  function renderLessonDetail() {
+    var el = contentEl();
+    if (!el || !state.currentLesson) return;
+
+    var m = window.APP.findModule(state.currentLesson.moduleId);
+    var l = window.APP.findLesson(state.currentLesson.moduleId, state.currentLesson.id);
+    if (!m || !l) { state.catalogView = 'list'; renderList(); return; }
+
+    var lt = getLessonDisplayType(l);
+
+    /* Fil d'Ariane interne au catalogue */
+    var crumbHtml =
+      '<div class="crumb">' +
+        '<a data-catalog-nav="list">Catalogue</a>' +
+        '<span class="sep">›</span>' +
+        '<span>' + m.id + ' — ' + l.title + '</span>' +
+      '</div>';
+
+    var backHtml =
+      '<button class="back-btn" data-catalog-nav="list" type="button">‹ Catalogue</button>';
+
+    var html = crumbHtml + backHtml;
+    html += '<div class="lesson-detail">';
+    html += '<h3>' + l.title + '</h3>';
+    html += '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>';
+
+    if (lt === 'interactive' || lt === 'puzzle-live') {
+      html +=
+        '<button data-action="catalog-start-lesson" type="button" ' +
+                'class="back-btn" ' +
+                'style="background:var(--accent);color:#fff;border-color:var(--accent);' +
+                       'min-width:100%;justify-content:center;padding:12px;">' +
+          '▶ Démarrer la leçon' +
+        '</button>';
+    } else {
+      html +=
+        '<div class="placeholder">' +
+          'Le contenu de cette leçon sera ajouté dans une étape ultérieure.' +
+        '</div>';
+    }
+    html += '</div>';
+
+    el.innerHTML = html;
+    bindDetailEvents();
+  }
+
+  function bindDetailEvents() {
+    var el = contentEl();
+    if (!el) return;
+
+    el.addEventListener('click', function (e) {
+      /* Navigation interne au catalogue */
+      var navEl = e.target.closest('[data-catalog-nav]');
+      if (navEl) {
+        var action = navEl.getAttribute('data-catalog-nav');
+        if (action === 'list') {
+          goToList();
+          return;
+        }
+      }
+
+      /* Démarrer la leçon */
+      var actionEl = e.target.closest('[data-action="catalog-start-lesson"]');
+      if (actionEl) {
+        startCurrentLesson();
+        return;
+      }
+    });
+  }
+
+  function goToList() {
+    state.catalogView = 'list';
+    state.currentLesson = null;
+    render();
+  }
+
+  function startCurrentLesson() {
+    if (!state.currentLesson) return;
+    var l = window.APP.findLesson(state.currentLesson.moduleId, state.currentLesson.id);
+    if (!l || !l.lichessTheme) return;
+
+    /* On informe le moteur de leçon qu'on vient du catalogue */
+    if (window.APP.LessonEngine) {
+      window.APP.LessonEngine.startFromCatalog(
+        state.currentLesson.moduleId,
+        state.currentLesson.id,
+        l.lichessTheme
+      );
+    }
+  }
+
+  /* ================= VUE LISTE ================= */
+
+  function renderList() {
     var el = contentEl();
     if (!el) return;
 
@@ -43,15 +147,12 @@ window.APP = window.APP || {};
 
     var html = '';
 
-    /* Filtres */
     html += renderFilters();
 
-    /* Compteur */
     html += '<div class="catalog-count">' + filtered.length + ' leçon' +
             (filtered.length > 1 ? 's' : '') + ' affichée' +
             (filtered.length > 1 ? 's' : '') + '</div>';
 
-    /* Liste groupée */
     if (filtered.length === 0) {
       html += '<div class="catalog-empty">Aucune leçon ne correspond à ces filtres.</div>';
     } else {
@@ -67,7 +168,7 @@ window.APP = window.APP || {};
     }
 
     el.innerHTML = html;
-    bindEvents();
+    bindListEvents();
   }
 
   function renderFilters() {
@@ -167,27 +268,36 @@ window.APP = window.APP || {};
     }
   }
 
+  /* ================= UTILITAIRES ================= */
+
+  function getLessonDisplayType(lesson) {
+    if (window.APP.LessonEngine && window.APP.LessonEngine.hasContent
+        && window.APP.LessonEngine.hasContent(lesson.id)) {
+      return 'puzzle-live';
+    }
+    return 'coming';
+  }
+
   /* ================= ÉVÉNEMENTS ================= */
 
-  function bindEvents() {
+  function bindListEvents() {
     var selTheme = document.getElementById('filter-theme');
     var selStars = document.getElementById('filter-stars');
     var selSort = document.getElementById('filter-sort');
 
     if (selTheme) selTheme.addEventListener('change', function () {
       state.filterTheme = this.value;
-      render();
+      renderList();
     });
     if (selStars) selStars.addEventListener('change', function () {
       state.filterStars = this.value;
-      render();
+      renderList();
     });
     if (selSort) selSort.addEventListener('change', function () {
       state.sortBy = this.value;
-      render();
+      renderList();
     });
 
-    /* Clic sur une leçon */
     var container = contentEl();
     if (container) {
       container.addEventListener('click', function (e) {
@@ -195,17 +305,40 @@ window.APP = window.APP || {};
         if (!el) return;
         var moduleId = el.getAttribute('data-module');
         var lessonId = el.getAttribute('data-lesson');
-        if (window.APP.UINav) {
-          window.APP.UINav.openLessonFromCatalog(moduleId, lessonId);
-        }
+        openLessonDetail(moduleId, lessonId);
       });
     }
   }
 
-  /* ================= API ================= */
+  function openLessonDetail(moduleId, lessonId) {
+    state.currentLesson = { moduleId: moduleId, id: lessonId };
+    state.catalogView = 'lesson';
+    renderLessonDetail();
+  }
+
+  /* ================= API PUBLIQUE ================= */
+
+  /* Appelé par le moteur après un exercice : revient au catalogue */
+  function returnFromLesson() {
+    state.catalogView = 'list';
+    state.currentLesson = null;
+    renderList();
+  }
+
+  /* Vérifie si on est actuellement dans le catalogue */
+  function isActive() {
+    var el = document.getElementById('learning-catalog');
+    return el && el.classList.contains('active');
+  }
 
   window.APP.UICatalog = {
     render: render,
+    renderList: renderList,
+    renderLessonDetail: renderLessonDetail,
+    returnFromLesson: returnFromLesson,
+    isActive: isActive,
+    openLessonDetail: openLessonDetail,
+    goToList: goToList,
     getState: function () { return state; }
   };
 })();
