@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-catalog.js — Catalogue (v1.5.0)
-   Ajout : légende explicative des symboles en haut du catalogue.
+   ui-catalog.js — Catalogue (v1.5.1)
+   Légende simplifiée : ligne inline compacte.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -129,39 +129,20 @@ window.APP = window.APP || {};
     bindListEvents();
   }
 
-  /* ================= LÉGENDE ================= */
+  /* ================= LÉGENDE SIMPLIFIÉE ================= */
 
   function renderLegend() {
     return '' +
-      '<div class="catalog-legend" id="catalog-legend">' +
-        '<button class="legend-toggle" type="button" id="legend-toggle">' +
-          'ℹ️ Légende des symboles' +
-        '</button>' +
-        '<div class="legend-content" id="legend-content">' +
-          '<div class="legend-row">' +
-            '<span class="legend-icon icon-interactive">▶</span>' +
-            '<span class="legend-text"><strong>Exercice interactif</strong> — clique ou déplace une pièce (Modules M0 et M1)</span>' +
-          '</div>' +
-          '<div class="legend-row">' +
-            '<span class="legend-icon icon-puzzle">♟</span>' +
-            '<span class="legend-text"><strong>Puzzle Lichess</strong> — résous une position tirée d\'une vraie partie (Modules M2 à M9)</span>' +
-          '</div>' +
-          '<div class="legend-row">' +
-            '<span class="legend-icon icon-none">—</span>' +
-            '<span class="legend-text"><strong>Théorie</strong> — leçon explicative, contenu à venir</span>' +
-          '</div>' +
-        '</div>' +
+      '<div class="catalog-legend-inline">' +
+        '<span class="legend-item">' +
+          '<span class="legend-icon icon-interactive">▶</span>' +
+          '<span class="legend-label">Exercice interactif</span>' +
+        '</span>' +
+        '<span class="legend-item">' +
+          '<span class="legend-icon icon-puzzle">♟</span>' +
+          '<span class="legend-label">Puzzle Lichess</span>' +
+        '</span>' +
       '</div>';
-  }
-
-  function bindLegendToggle() {
-    var toggle = document.getElementById('legend-toggle');
-    var content = document.getElementById('legend-content');
-    if (!toggle || !content) return;
-    toggle.addEventListener('click', function () {
-      content.classList.toggle('open');
-      toggle.classList.toggle('open');
-    });
   }
 
   /* ================= FILTRES ================= */
@@ -280,8 +261,6 @@ window.APP = window.APP || {};
     if (selTheme) selTheme.addEventListener('change', function () { state.filterTheme = this.value; renderList(); });
     if (selStars) selStars.addEventListener('change', function () { state.filterStars = this.value; renderList(); });
     if (selSort) selSort.addEventListener('change', function () { state.sortBy = this.value; renderList(); });
-
-    bindLegendToggle();
 
     var container = contentEl();
     if (container) {
