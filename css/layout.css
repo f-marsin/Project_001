@@ -1,5 +1,7 @@
 /* =========================================================
-   layout.css — Structure générale (v1.1.0)
+   layout.css — Structure générale (v1.3.0)
+   Ajout : séparation visuelle entre onglets fonctionnalités
+   et onglet Profil.
    ========================================================= */
 
 header {
@@ -22,19 +24,77 @@ header .badge {
   letter-spacing: 0.5px; white-space: nowrap;
 }
 
-.tabs { display: flex; gap: 4px; background: var(--surface-2);
-  border: 1px solid var(--border); border-radius: var(--radius-md);
-  padding: 3px; flex-shrink: 0; }
+/* Conteneur des onglets : fonctionnalités à gauche, profil à droite */
+header .nav-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Onglets fonctionnalités */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+}
 
 .tab {
-  padding: 7px 12px; border-radius: var(--radius-sm);
-  font-size: 0.78rem; font-weight: 600; color: var(--text-dim);
-  background: transparent; border: none;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   transition: background 0.15s, color 0.15s;
   white-space: nowrap;
 }
 .tab.active { background: var(--accent); color: #fff; }
 .tab:hover:not(.active) { color: var(--text); background: var(--surface-3); }
+
+/* Séparateur vertical + zone profil */
+.nav-separator {
+  width: 1px;
+  height: 26px;
+  background: var(--border-strong);
+  flex-shrink: 0;
+}
+
+.profile-tab {
+  padding: 7px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  box-shadow: none;
+}
+
+.profile-tab:hover:not(.active) {
+  color: var(--text);
+  background: var(--surface-3);
+  border-color: var(--border-strong);
+}
+
+.profile-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+/* ================= LAYOUT PRINCIPAL ================= */
 
 main {
   display: grid; grid-template-columns: 1fr; gap: 14px;
@@ -74,10 +134,50 @@ main {
   color: var(--text-dim); margin-bottom: 12px; font-weight: 700;
 }
 
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 700px) {
+  header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  header .brand {
+    justify-content: space-between;
+  }
+
+  header .nav-container {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tabs {
+    flex: 1;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+
+  .tab {
+    padding: 6px 10px;
+    font-size: 0.72rem;
+  }
+
+  .nav-separator {
+    display: none;
+  }
+
+  .profile-tab {
+    padding: 6px 12px;
+    font-size: 0.72rem;
+  }
+}
+
 @media (max-width: 480px) {
-  header { padding: 12px; }
+  header { padding: 10px; }
   header h1 { font-size: 0.95rem; }
-  .tab { padding: 6px 10px; font-size: 0.72rem; }
   main { padding: 10px; gap: 10px; }
   .panel { padding: 14px; }
 }
