@@ -1,18 +1,7 @@
 /* =========================================================
-   stockfish-game-review.js — Analyse d'une partie complète
-   =========================================================
-   Rôle : prendre un PGN, rejouer chaque coup, analyser chaque
-   position avec Stockfish, et détecter les erreurs / imprécisions.
-
-   Classification (inspirée Lichess) :
-     - 🌟 Brillant  : coup meilleur que le 1er choix Stockfish (rare)
-     - ✅ Bon       : perte ≤ 0.5 pion
-     - ⚠️ Imprécision: perte entre 0.5 et 1.0
-     - ❌ Erreur    : perte entre 1.0 et 3.0
-     - ❌❌ Blunder  : perte > 3.0
-
-   API : window.APP.GameReview
-     analyze(pgn, opts, onProgress) → Promise<{ moves, summary, errors }>
+   stockfish-game-review.js — Analyse d'une partie (v1.1.1)
+   Ajout : gestion de timeout global dynamique + annulation
+   propre de l'analyse en cours.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -20,47 +9,33 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* ---------- Utilitaires ---------- */
+  var MAX_GLOBAL_TIMEOUT_MS = 30 * 60 * 1000; /* plafond : 30 minutes */
+  var cancelled = false;
 
-  /* Convertit une évaluation (cp ou mate) en centipions signés.
-     Pour comparaison on veut un nombre : +X = avantage Blancs. */
   function evalToCp(evaluation) {
     if (!evaluation) return 0;
     if (evaluation.type === 'cp') return evaluation.value;
     if (evaluation.type === 'mate') {
-      /* Mat : on retourne une valeur extrême, signée par le camp */
       var sign = evaluation.value > 0 ? 1 : -1;
       return sign * 100000;
     }
     return 0;
   }
 
-  /* Perte entre deux évaluations (en centipions).
-     Les évaluations sont toujours du point de vue des Blancs.
-     On regarde la perte du point de vue du camp qui a joué. */
   function calculateLoss(evalBefore, evalAfter, turn) {
     var cpBefore = evalToCp(evalBefore);
     var cpAfter = evalToCp(evalAfter);
-
-    /* Si c'est aux Blancs de jouer : on veut que cpAfter ≥ cpBefore.
-       Si c'est aux Noirs : on veut que cpAfter ≤ cpBefore. */
-    var loss;
-    if (turn === 'w') {
-      loss = cpBefore - cpAfter; /* positif = perte */
-    } else {
-      loss = cpAfter - cpBefore; /* positif = perte */
-    }
-    return loss;
+    if (turn === 'w') return cpBefore - cpAfter;
+    return cpAfter - cpBefore;
   }
 
-  /* Classifie un coup selon la perte (en centipions) */
-  function classifyMove(lossCp, isBestMove) {
-    if (isBestMove) return 'best';
-    if (lossCp <= 0) return 'best';        /* gain ou neutre */
-    if (lossCp < 50) return 'good';         /* < 0.5 pion */
-    if (lossCp < 100) return 'inaccuracy';  /* 0.5 à 1.0 */
-    if (lossCp < 300) return 'mistake';     /* 1.0 à 3.0 */
-    return 'blunder';                        /* > 3.0 */
+  function classifyMove(lossCp, isBest) {
+    if (isBest) return 'best';
+    if (lossCp <= 0) return 'best';
+    if (lossCp < 50) return 'good';
+    if (lossCp < 100) return 'inaccuracy';
+    if (lossCp < 300) return 'mistake';
+    return 'blunder';
   }
 
   function classificationLabel(cls) {
@@ -81,20 +56,19 @@ window.APP = window.APP || {};
     return '';
   }
 
-  /* ---------- Analyse complète ---------- */
-
   /**
    * Analyse une partie PGN.
-   * @param {string} pgn - Le PGN de la partie
-   * @param {object} opts - { depth: 12 }
+   * @param {string} pgn
+   * @param {object} opts - { depth }
    * @param {function} onProgress - callback(current, total, info)
-   * @returns {Promise<{summary, moves, errors}>}
    */
   function analyze(pgn, opts, onProgress) {
     opts = opts || {};
     var depth = opts.depth || 12;
+    var timeoutPerPosition = window.APP.StockfishAnalysis.timeoutForDepth(depth);
 
-    /* Charge le PGN dans une partie temporaire */
+    cancelled = false;
+
     var tempGame = new Chess();
     try {
       tempGame.load_pgn(pgn);
@@ -107,54 +81,67 @@ window.APP = window.APP || {};
       return Promise.reject(new Error('Aucun coup trouvé dans le PGN.'));
     }
 
-    /* On rejoue la partie depuis le début en gardant les FEN avant chaque coup */
+    var totalMoves = history.length;
+
+    /* Timeout global = nb coups × 2 positions × timeoutPos × marge 1.5
+       plafonné à MAX_GLOBAL_TIMEOUT_MS */
+    var globalTimeout = Math.min(
+      totalMoves * 2 * timeoutPerPosition * 1.5,
+      MAX_GLOBAL_TIMEOUT_MS
+    );
+
+    window.APP.log('Revue : ' + totalMoves + ' coups à analyser.');
+    window.APP.log('Revue : timeout par position = ' + Math.round(timeoutPerPosition / 1000) + 's.');
+    window.APP.log('Revue : timeout global = ' + Math.round(globalTimeout / 1000) + 's.');
+
+    /* Positions successives */
     var positions = [];
     var g = new Chess();
-    positions.push({ fen: g.fen(), turn: g.turn(), moveIndex: -1, san: null });
+    positions.push({ fen: g.fen(), turn: g.turn() });
     for (var i = 0; i < history.length; i++) {
       var m = g.move(history[i].san);
-      if (!m) {
-        return Promise.reject(new Error('Impossible de rejouer le coup ' + history[i].san));
-      }
-      positions.push({
-        fen: g.fen(),
-        turn: g.turn(),       /* camp qui doit jouer APRÈS ce coup */
-        moveIndex: i,
-        san: m.san,
-        color: m.color
-      });
+      if (!m) return Promise.reject(new Error('Impossible de rejouer ' + history[i].san));
+      positions.push({ fen: g.fen(), turn: g.turn() });
     }
 
-    var totalMoves = history.length;
     var moves = [];
+    var startTime = Date.now();
 
-    /* Analyse séquentielle : on lance les analyses une par une */
     function analyzeNext(i) {
-      if (i >= totalMoves) {
-        /* Terminé : on construit le résumé */
-        return Promise.resolve(buildResult(moves, history, depth));
+      /* Vérifie l'annulation */
+      if (cancelled) {
+        return Promise.reject(new Error('Analyse annulée.'));
       }
 
-      var before = positions[i];         /* position AVANT le coup i */
-      var after = positions[i + 1];      /* position APRÈS le coup i */
-      var moveColor = history[i].color;  /* 'w' ou 'b' */
+      /* Vérifie le timeout global */
+      var elapsed = Date.now() - startTime;
+      if (elapsed > globalTimeout) {
+        return Promise.reject(new Error(
+          'Timeout global atteint (' + Math.round(globalTimeout / 1000) + 's). ' +
+          'Réduis la profondeur ou analyse une partie plus courte.'
+        ));
+      }
+
+      if (i >= totalMoves) {
+        return Promise.resolve(buildResult(moves, depth));
+      }
+
+      var before = positions[i];
+      var after = positions[i + 1];
+      var moveColor = history[i].color;
 
       if (onProgress) onProgress(i + 1, totalMoves, before.san || '');
 
-      /* Analyse AVANT (ce que le joueur avait à disposition) */
       return window.APP.StockfishAnalysis.analyze(before.fen, { depth: depth })
         .then(function (analysisBefore) {
-          /* Analyse APRÈS (ce que le joueur a obtenu) */
           return window.APP.StockfishAnalysis.analyze(after.fen, { depth: depth })
             .then(function (analysisAfter) {
-              /* Perte */
               var lossCp = calculateLoss(
                 analysisBefore.evaluation,
                 analysisAfter.evaluation,
                 moveColor
               );
 
-              /* Le coup joué est-il le meilleur ? */
               var playedSan = history[i].san;
               var bestSan = analysisBefore.bestMoveSan;
               var isBest = false;
@@ -195,9 +182,7 @@ window.APP = window.APP || {};
     return analyzeNext(0);
   }
 
-  /* ---------- Construction du résumé ---------- */
-
-  function buildResult(moves, history, depth) {
+  function buildResult(moves, depth) {
     var summary = {
       totalMoves: moves.length,
       best: 0,
@@ -217,20 +202,21 @@ window.APP = window.APP || {};
       else if (cls === 'blunder') summary.blunder++;
     }
 
-    /* Erreurs graves uniquement (pour navigation rapide) */
     var errors = moves.filter(function (m) {
       return m.classification === 'mistake' || m.classification === 'blunder';
     });
 
-    return {
-      summary: summary,
-      moves: moves,
-      errors: errors
-    };
+    return { summary: summary, moves: moves, errors: errors };
+  }
+
+  function cancel() {
+    cancelled = true;
+    if (window.APP.Stockfish) window.APP.Stockfish.stop();
   }
 
   window.APP.GameReview = {
     analyze: analyze,
+    cancel: cancel,
     classificationLabel: classificationLabel,
     classificationEmoji: classificationEmoji
   };
