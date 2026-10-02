@@ -1,10 +1,6 @@
 /* =========================================================
-   stockfish-analysis.js — API d'analyse haut niveau + cache
-   =========================================================
-   Rôle : envelopper window.APP.Stockfish avec :
-     - Mise en forme de l'évaluation (+1.5, mat en 5…)
-     - Cache des positions déjà analysées
-     - Conversion UCI → SAN pour la ligne principale
+   stockfish-analysis.js — Analyse + cache (v1.0.12)
+   Correction : le cache inclut la profondeur dans sa clé.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -12,27 +8,15 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* Cache : { fen: { bestMove, evaluation, pv, depth } } */
+  /* Cache : { "fen|depth": { bestMove, evaluation, pv, depth } } */
   var cache = {};
 
-  /* ---------- Formatage de l'évaluation ---------- */
+  function cacheKey(fen, depth) {
+    return fen + '|' + depth;
+  }
 
-  /**
-   * Convertit une évaluation brute en texte lisible.
-   * Ex : { type: 'cp', value: 150 } → "+1.50"
-   *      { type: 'mate', value: 3 } → "#3"
-   *      { type: 'mate', value: -2 } → "#-2"
-   */
   function formatEvaluation(evaluation, turn) {
     if (!evaluation) return '—';
-
-    var prefix = '';
-    if (turn === 'b') {
-      /* Stockfish évalue toujours du point de vue des Blancs.
-         On inverse si c'est aux Noirs de jouer pour afficher
-         du point de vue du camp au trait. */
-      prefix = '';
-    }
 
     if (evaluation.type === 'mate') {
       var v = evaluation.value;
@@ -49,8 +33,6 @@ window.APP = window.APP || {};
 
     return '—';
   }
-
-  /* ---------- Conversion UCI → SAN pour une ligne ---------- */
 
   function uciPvToSan(fen, uciPv) {
     if (!uciPv || uciPv.length === 0) return [];
@@ -72,35 +54,26 @@ window.APP = window.APP || {};
     }
   }
 
-  /* ---------- Analyse avec cache ---------- */
-
-  /**
-   * Analyse une position FEN (avec cache).
-   * @param {string} fen
-   * @param {object} opts - { depth: 15, useCache: true }
-   * @returns {Promise<{bestMove, bestMoveSan, evaluation, evaluationText, pv, pvSan, depth, cached}>}
-   */
   function analyze(fen, opts) {
     opts = opts || {};
     var useCache = opts.useCache !== false;
     var depth = opts.depth || 15;
 
-    if (useCache && cache[fen]) {
-      return Promise.resolve(Object.assign({}, cache[fen], { cached: true }));
+    var key = cacheKey(fen, depth);
+    if (useCache && cache[key]) {
+      return Promise.resolve(Object.assign({}, cache[key], { cached: true }));
     }
 
     return window.APP.Stockfish.analyze(fen, { depth: depth })
       .then(function (raw) {
         var turn = fen.indexOf(' b ') !== -1 ? 'b' : 'w';
 
-        /* Conversion bestMove UCI → SAN */
         var bestMoveSan = null;
         if (raw.bestMove && raw.bestMove.length >= 4) {
           var bestSan = uciPvToSan(fen, [raw.bestMove]);
           bestMoveSan = bestSan.length > 0 ? bestSan[0] : raw.bestMove;
         }
 
-        /* Conversion PV */
         var pvSan = uciPvToSan(fen, raw.pv || []);
 
         var result = {
@@ -111,11 +84,11 @@ window.APP = window.APP || {};
           evaluationText: formatEvaluation(raw.evaluation, turn),
           pv: raw.pv || [],
           pvSan: pvSan,
-          depth: raw.depth,
+          depth: raw.depth || depth,
           cached: false
         };
 
-        if (useCache) cache[fen] = result;
+        if (useCache) cache[key] = result;
         return result;
       });
   }
