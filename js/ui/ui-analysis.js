@@ -1,10 +1,8 @@
 /* =========================================================
-   ui-analysis.js — Vue « Analyse »
+   ui-analysis.js — Vue « Analyse » (v1.0.10)
    =========================================================
-   Rôle : charger une position, lancer une analyse Stockfish,
-   afficher l'évaluation et la ligne principale.
-
-   API : window.APP.UIAnalysis.init(), .onEnter()
+   Corrections :
+     - Distinction entre messages d'info (neutres) et erreurs (rouges)
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -13,23 +11,18 @@ window.APP = window.APP || {};
   'use strict';
 
   var state = {
-    loaded: false,
     analyzing: false,
     lastResult: null,
     currentFen: null
   };
 
-  /* ---------- DOM ---------- */
-
   function contentEl() { return document.getElementById('analysis-content'); }
-
-  /* ---------- Rendu ---------- */
 
   function render() {
     var el = contentEl();
     if (!el) return;
 
-    var html =
+    el.innerHTML =
       '<h2>Analyse de position</h2>' +
       '<div class="analysis-form">' +
         '<label for="analysis-fen">Position FEN</label>' +
@@ -50,7 +43,6 @@ window.APP = window.APP || {};
         '<p class="text-dim">Charge une position puis lance l\'analyse.</p>' +
       '</div>';
 
-    el.innerHTML = html;
     bindActions();
   }
 
@@ -74,9 +66,7 @@ window.APP = window.APP || {};
         '<span class="eval-label">Évaluation</span>' +
         '<span class="eval-value">' + result.evaluationText + '</span>' +
       '</div>' +
-      '<div class="analysis-meta">' +
-        'Profondeur ' + result.depth + cached +
-      '</div>' +
+      '<div class="analysis-meta">Profondeur ' + result.depth + cached + '</div>' +
       '<div class="analysis-bestmove">' +
         '<span class="label">Meilleur coup : </span>' +
         '<span class="move">' + (result.bestMoveSan || result.bestMove || '—') + '</span>' +
@@ -93,17 +83,23 @@ window.APP = window.APP || {};
     el.innerHTML =
       '<div class="analysis-loading">' +
         '<span class="spinner"></span>' +
-        ' Analyse en cours…' +
+        ' Analyse en cours… (premier chargement : 5-10 s)' +
       '</div>';
   }
 
+  /* Affiche un message d'info (neutre) */
+  function renderInfo(msg) {
+    var el = document.getElementById('analysis-result');
+    if (!el) return;
+    el.innerHTML = '<div class="feedback show hint">' + msg + '</div>';
+  }
+
+  /* Affiche un message d'erreur (rouge) */
   function renderError(msg) {
     var el = document.getElementById('analysis-result');
     if (!el) return;
     el.innerHTML = '<div class="feedback show ko">' + msg + '</div>';
   }
-
-  /* ---------- Actions ---------- */
 
   function bindActions() {
     var bLoadFen = document.getElementById('btn-load-fen');
@@ -132,7 +128,7 @@ window.APP = window.APP || {};
     state.currentFen = fen;
     window.APP.Board.position(fen, false);
     window.APP.Board.setLessonMode(true);
-    renderError('Position chargée. Clique sur Analyser.');
+    renderInfo('Position chargée. Clique sur Analyser.');
   }
 
   function loadCurrentBoard() {
@@ -141,7 +137,7 @@ window.APP = window.APP || {};
     state.currentFen = fen;
     var el = document.getElementById('analysis-fen');
     if (el) el.value = fen;
-    renderError('Position actuelle chargée.');
+    renderInfo('Position actuelle chargée.');
   }
 
   function runAnalysis() {
@@ -180,18 +176,11 @@ window.APP = window.APP || {};
     if (!state.analyzing) return;
     window.APP.Stockfish.stop();
     state.analyzing = false;
-    renderError('Analyse arrêtée.');
+    renderInfo('Analyse arrêtée.');
   }
 
-  /* ---------- Cycle de vie ---------- */
-
-  function init() {
-    render();
-  }
-
-  function onEnter() {
-    /* Rien de spécial pour l'instant */
-  }
+  function init() { render(); }
+  function onEnter() {}
 
   window.APP.UIAnalysis = {
     init: init,
