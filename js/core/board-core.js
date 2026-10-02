@@ -1,6 +1,6 @@
 /* =========================================================
-   board-core.js — Échiquier (v1.0.13)
-   Ajout : setEvaluation(evaluation) — met à jour la barre d'éval.
+   board-core.js — Échiquier (v1.1.0)
+   Retrait de la barre d'évaluation. Retour à l'API simple.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -14,8 +14,6 @@ window.APP = window.APP || {};
   var lessonMode = false;
   var onDropHandler = null;
   var onSnapEndHandler = null;
-
-  /* ---------- Helpers visuels ---------- */
 
   function clearHighlights() {
     if (!window.jQuery) return;
@@ -46,53 +44,6 @@ window.APP = window.APP || {};
     setTimeout(function () { $sq.removeClass('illegal-flash'); }, 500);
   }
 
-  /* ---------- Barre d'évaluation ---------- */
-
-  /* Convertit un cp en probabilité de victoire (0..1) */
-  function cpToWinProbability(cp) {
-    return 1 / (1 + Math.pow(10, -cp / 400));
-  }
-
-  /**
-   * Met à jour la barre d'évaluation.
-   * @param {object|number|null} evaluation
-   *   - null : réinitialise à 50/50
-   *   - number : centipions (ex: 150 = +1.50)
-   *   - { type:'cp', value } ou { type:'mate', value }
-   */
-  function setEvaluation(evaluation) {
-    var elWhite = document.getElementById('eval-bar-white');
-    var elBlack = document.getElementById('eval-bar-black');
-    var elLabel = document.getElementById('eval-bar-label');
-    if (!elWhite || !elBlack) return;
-
-    var proba = 0.5;   /* probabilité de victoire des Blancs */
-    var label = '0.0';
-
-    if (evaluation == null) {
-      proba = 0.5;
-      label = '0.0';
-    } else if (typeof evaluation === 'number') {
-      proba = cpToWinProbability(evaluation);
-      label = (evaluation >= 0 ? '+' : '') + (evaluation / 100).toFixed(1);
-    } else if (evaluation.type === 'cp') {
-      var cp = evaluation.value;
-      proba = cpToWinProbability(cp);
-      label = (cp >= 0 ? '+' : '') + (cp / 100).toFixed(1);
-    } else if (evaluation.type === 'mate') {
-      var mateIn = evaluation.value;
-      proba = mateIn > 0 ? 1 : 0;
-      label = '#' + Math.abs(mateIn);
-    }
-
-    var whitePct = Math.round(proba * 100);
-    elWhite.style.height = whitePct + '%';
-    elBlack.style.height = (100 - whitePct) + '%';
-    if (elLabel) elLabel.textContent = label;
-  }
-
-  /* ---------- Validation FEN ---------- */
-
   function validateFen(fen) {
     if (!fen || typeof fen !== 'string') {
       return { valid: false, error: 'FEN vide ou non-chaîne' };
@@ -107,8 +58,6 @@ window.APP = window.APP || {};
       return { valid: false, error: err.message || 'Erreur inconnue' };
     }
   }
-
-  /* ---------- Callbacks ---------- */
 
   function onDragStart(source, piece) {
     if (lessonMode) return true;
@@ -144,8 +93,6 @@ window.APP = window.APP || {};
     applyLastMoveHighlight();
   }
 
-  /* ---------- API ---------- */
-
   var API = {
     init: function () {
       board = window.Chessboard('board', {
@@ -158,8 +105,6 @@ window.APP = window.APP || {};
         onSnapEnd: onSnapEnd
       });
       this.resize();
-      /* Barre à 50/50 par défaut */
-      setEvaluation(null);
     },
 
     reset: function () {
@@ -173,7 +118,6 @@ window.APP = window.APP || {};
         board.orientation('white');
       }
       clearHighlights();
-      setEvaluation(null);
     },
 
     flip: function () { if (board) board.flip(); },
@@ -199,9 +143,6 @@ window.APP = window.APP || {};
     highlightSquares: highlightSquares,
     flashIllegal: flashIllegal,
     validateFen: validateFen,
-
-    /* Barre d'évaluation */
-    setEvaluation: setEvaluation,
 
     getBoardInstance: function () { return board; }
   };
