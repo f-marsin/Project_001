@@ -9,23 +9,19 @@
 
   <title>Chargement…</title>
 
-  <!-- ============ CSS externes (CDN) ============ -->
   <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-
-  <!-- ============ CSS internes (ordre important) ============ -->
-  <link rel="stylesheet" href="css/base.css?v=1.0.0">
-  <link rel="stylesheet" href="css/layout.css?v=1.0.0">
-  <link rel="stylesheet" href="css/board.css?v=1.0.0">
-  <link rel="stylesheet" href="css/panel.css?v=1.0.0">
-  <link rel="stylesheet" href="css/modals.css?v=1.0.0">
+  <link rel="stylesheet" href="css/base.css?v=1.0.1">
+  <link rel="stylesheet" href="css/layout.css?v=1.0.1">
+  <link rel="stylesheet" href="css/board.css?v=1.0.1">
+  <link rel="stylesheet" href="css/panel.css?v=1.0.1">
+  <link rel="stylesheet" href="css/modals.css?v=1.0.1">
 </head>
 <body>
 
-  <!-- ==================== HEADER ==================== -->
   <header>
     <div class="brand">
       <h1 id="app-title">♟ Projet_001</h1>
-      <span class="badge" id="app-badge">ÉTAPE 1</span>
+      <span class="badge" id="app-badge">ÉTAPE 2</span>
     </div>
     <div class="tabs" role="tablist">
       <button class="tab active" data-view="curriculum" role="tab">Curriculum</button>
@@ -33,30 +29,19 @@
     </div>
   </header>
 
-  <!-- ==================== MAIN ==================== -->
   <main>
 
-    <!-- Colonne échiquier -->
     <section class="board-wrap" id="board-wrap">
       <div id="board"></div>
     </section>
 
-    <!-- Colonne panneau -->
     <aside class="panel">
 
-      <!-- Vue Curriculum -->
       <div id="view-curriculum" class="view active">
-        <div class="crumb" id="crumb">
-          <span>Parcours</span>
-        </div>
-        <div id="curriculum-content">
-          <p style="font-size:0.85rem;line-height:1.55;">
-            Le contenu du curriculum sera branché à l'Étape 2.
-          </p>
-        </div>
+        <div class="crumb" id="crumb"><span>Parcours</span></div>
+        <div id="curriculum-content"></div>
       </div>
 
-      <!-- Vue Partie libre -->
       <div id="view-freeplay" class="view">
         <div class="turn-indicator">
           <span class="turn-dot" id="turn-dot"></span>
@@ -79,7 +64,6 @@
     </aside>
   </main>
 
-  <!-- ==================== MODALE ==================== -->
   <div class="overlay" id="overlay">
     <div class="modal">
       <h3 id="modal-title">Information</h3>
@@ -88,16 +72,17 @@
     </div>
   </div>
 
-  <!-- ==================== SCRIPTS EXTERNES (CDN) ==================== -->
   <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
   <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
 
-  <!-- ==================== SCRIPTS INTERNES (ordre important) ==================== -->
-  <script src="js/config/app-config.js?v=1.0.0"></script>
-  <script src="js/data/curriculum.js?v=1.0.0"></script>
-  <script src="js/core/board-core.js?v=1.0.0"></script>
-  <script src="js/app-init.js?v=1.0.0"></script>
+  <script src="js/config/app-config.js?v=1.0.1"></script>
+  <script src="js/data/curriculum.js?v=1.0.1"></script>
+  <script src="js/core/board-core.js?v=1.0.1"></script>
+  <script src="js/ui/ui-tabs.js?v=1.0.1"></script>
+  <script src="js/ui/ui-nav.js?v=1.0.1"></script>
+  <script src="js/ui/ui-freeplay.js?v=1.0.1"></script>
+  <script src="js/app-init.js?v=1.0.1"></script>
 
 </body>
 </html>
