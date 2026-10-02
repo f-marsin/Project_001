@@ -6,8 +6,8 @@ window.APP = window.APP || {};
 
 window.APP.CONFIG = {
   NAME: 'Projet_001',
-  STEP: 2,
-  VERSION: '1.0.1',
+  STEP: 3,
+  VERSION: '1.0.2',
 
   LICHESS_API_BASE: 'https://lichess.org/api',
   LICHESS_PUZZLE_NEXT: '/puzzle/next',
