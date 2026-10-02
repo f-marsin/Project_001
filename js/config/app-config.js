@@ -1,5 +1,5 @@
 /* =========================================================
-   app-config.js — Constantes globales (v1.4.0)
+   app-config.js — Constantes globales (v1.5.0)
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -7,7 +7,7 @@ window.APP = window.APP || {};
 window.APP.CONFIG = {
   NAME: 'Projet_001',
   STEP: 7,
-  VERSION: '1.4.0',
+  VERSION: '1.5.0',
 
   LICHESS_API_BASE: 'https://lichess.org/api',
   LICHESS_PUZZLE_NEXT: '/puzzle/next',
