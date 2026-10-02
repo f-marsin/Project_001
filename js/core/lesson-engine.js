@@ -1,10 +1,8 @@
 /* =========================================================
    lesson-engine.js — Moteur de leçons (puzzles Lichess)
    =========================================================
-   v1.0.3 — Correctif : après un mauvais coup, on recharge
-   TOUJOURS la position de départ du puzzle (via une nouvelle
-   instance chess.js à partir de la FEN), au lieu de se fier
-   à game.undo() qui pouvait être désynchronisé.
+   v1.0.4 — Ajout de logs de debug pour visualiser la solution
+   attendue (temporaire, retiré à l'Étape 3.5).
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -40,8 +38,6 @@ window.APP = window.APP || {};
       .replace(/0-0/g, 'O-O');
   }
 
-  /* ⚠️ CORRECTIF v1.0.3 : recharge la position du puzzle
-     de manière fiable, en créant une nouvelle instance game. */
   function reloadPuzzlePosition() {
     if (!state.puzzle) return;
     var B = window.APP.Board;
@@ -49,7 +45,21 @@ window.APP = window.APP || {};
     B.setGame(freshGame);
     B.position(freshGame.fen(), false);
     B.clearHighlights();
-    window.APP.log('Position du puzzle rechargée :', state.puzzle.fen);
+    window.APP.log('Position du puzzle rechargée.');
+  }
+
+  /* ---------- Debug : afficher la solution dans la console ---------- */
+
+  function debugSolution() {
+    if (!state.puzzle) return;
+    console.log('%c[DEBUG] 🧩 Solution du puzzle', 'color:#4ade80;font-weight:bold;font-size:14px;');
+    console.log('  FEN     :', state.puzzle.fen);
+    console.log('  Coup    :', state.puzzle.playerMove);
+    if (state.puzzle.opponentReply) {
+      console.log('  Réponse :', state.puzzle.opponentReply);
+    }
+    console.log('  Rating  :', state.puzzle.rating);
+    console.log('  Thèmes  :', state.puzzle.themes.join(', '));
   }
 
   /* ---------- Chargement d'une leçon ---------- */
@@ -107,7 +117,8 @@ window.APP = window.APP || {};
         state.awaiting = false;
         renderPuzzle();
         reloadPuzzlePosition();
-        window.APP.log('Puzzle chargé :', adapted.lichessId, 'rating', adapted.rating);
+        window.APP.log('Puzzle chargé :', adapted.lichessId);
+        debugSolution();
       })
       .catch(function (err) {
         state.awaiting = false;
@@ -161,6 +172,9 @@ window.APP = window.APP || {};
           'Trouve la solution. Joue le coup gagnant sur l\'échiquier.' +
         '</div>' +
         '<div class="feedback" id="lesson-feedback"></div>' +
+        '<p class="text-dim" style="font-size:0.75rem;margin-top:12px;">' +
+          '💡 <em>Solution visible dans la console (F12) pour tester.</em>' +
+        '</p>' +
       '</div>';
   }
 
@@ -174,7 +188,7 @@ window.APP = window.APP || {};
     var B = window.APP.Board;
     var game = B.getGame();
 
-    /* 1. Vérifier que le coup est légal dans la position ACTUELLE */
+    /* 1. Vérifier que le coup est légal */
     var legalMoves = game.moves({ verbose: true });
     var found = null;
     for (var i = 0; i < legalMoves.length; i++) {
@@ -184,13 +198,13 @@ window.APP = window.APP || {};
       }
     }
     if (!found) {
+      console.log('[DEBUG] Coup illégal tenté :', source, '→', target);
       B.flashIllegal(target);
-      /* ⚠️ On recharge la position pour être sûr */
       reloadPuzzlePosition();
       return 'snapback';
     }
 
-    /* 2. Jouer le coup sur le game */
+    /* 2. Jouer le coup */
     var played = game.move({ from: source, to: target, promotion: 'q' });
     if (!played) {
       B.flashIllegal(target);
@@ -199,16 +213,21 @@ window.APP = window.APP || {};
     }
     var playedSan = played.san;
 
-    /* 3. Comparer avec la solution */
+    /* 3. Comparer */
     var expected = state.puzzle.playerMove;
+    var match = normSan(playedSan) === normSan(expected);
 
-    if (normSan(playedSan) === normSan(expected)) {
+    console.log('%c[DEBUG] 🎯 Tentative', 'color:#fbbf24;font-weight:bold;');
+    console.log('  Joué    :', playedSan);
+    console.log('  Attendu :', expected);
+    console.log('  Match   :', match ? '✅ OUI' : '❌ NON');
+
+    if (match) {
       /* --- BON COUP --- */
       state.solved = true;
       B.position(game.fen(), false);
       showFeedback('✅ Bravo ! ' + playedSan + ' est le coup gagnant.', 'ok');
 
-      /* Jouer la réponse adverse automatiquement */
       if (state.puzzle.opponentReply) {
         setTimeout(function () {
           var reply = game.move(state.puzzle.opponentReply);
@@ -224,8 +243,6 @@ window.APP = window.APP || {};
     /* --- MAUVAIS COUP --- */
     showFeedback('❌ Ce n\'est pas le coup gagnant. Réessaie.', 'ko');
     B.flashIllegal(target);
-
-    /* ⚠️ CORRECTIF : on recharge entièrement la position du puzzle */
     reloadPuzzlePosition();
     return 'snapback';
   }
@@ -259,6 +276,7 @@ window.APP = window.APP || {};
     start: start,
     reset: reset,
     hasContent: hasContent,
-    getState: function () { return state; }
+    getState: function () { return state; },
+    debugSolution: debugSolution
   };
 })();
