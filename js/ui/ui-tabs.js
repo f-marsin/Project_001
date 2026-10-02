@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-tabs.js — Gestion des onglets (v1.0.10)
-   Ajout onglet « Revue ».
+   ui-tabs.js — Gestion des onglets (v1.2.0)
+   Ajout : onglet « Apprentissage » (renommé depuis Curriculum).
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -8,7 +8,7 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  var currentView = 'curriculum';
+  var currentView = 'learning';
 
   function setActiveTab(viewName) {
     var tabs = document.querySelectorAll('.tab');
@@ -20,7 +20,7 @@ window.APP = window.APP || {};
   }
 
   function showView(viewName) {
-    var ids = ['view-curriculum', 'view-freeplay', 'view-analysis', 'view-review'];
+    var ids = ['view-learning', 'view-freeplay', 'view-analysis', 'view-review'];
     for (var i = 0; i < ids.length; i++) {
       var el = document.getElementById(ids[i]);
       if (el) el.classList.toggle('active', ids[i] === 'view-' + viewName);
@@ -35,7 +35,7 @@ window.APP = window.APP || {};
     setActiveTab(viewName);
     showView(viewName);
 
-    if (viewName === 'curriculum' && window.APP.UINav) {
+    if (viewName === 'learning' && window.APP.UINav) {
       window.APP.UINav.onEnter();
     } else if (viewName === 'freeplay' && window.APP.UIFreeplay) {
       window.APP.UIFreeplay.onEnter();
@@ -57,8 +57,8 @@ window.APP = window.APP || {};
     for (var i = 0; i < tabs.length; i++) {
       tabs[i].addEventListener('click', onTabClick);
     }
-    showView('curriculum');
-    setActiveTab('curriculum');
+    showView('learning');
+    setActiveTab('learning');
   }
 
   window.APP.UITabs = {
