@@ -1,7 +1,6 @@
 /* =========================================================
-   ui-tabs.js — Gestion des onglets (v1.0.9)
-   =========================================================
-   Ajout de l'onglet « Analyse ».
+   ui-tabs.js — Gestion des onglets (v1.0.10)
+   Ajout onglet « Revue ».
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -21,7 +20,7 @@ window.APP = window.APP || {};
   }
 
   function showView(viewName) {
-    var ids = ['view-curriculum', 'view-freeplay', 'view-analysis'];
+    var ids = ['view-curriculum', 'view-freeplay', 'view-analysis', 'view-review'];
     for (var i = 0; i < ids.length; i++) {
       var el = document.getElementById(ids[i]);
       if (el) el.classList.toggle('active', ids[i] === 'view-' + viewName);
@@ -42,7 +41,9 @@ window.APP = window.APP || {};
       window.APP.UIFreeplay.onEnter();
     } else if (viewName === 'analysis' && window.APP.UIAnalysis) {
       window.APP.UIAnalysis.onEnter();
-      /* Sortir du mode leçon pour permettre l'analyse libre */
+      if (window.APP.Board) window.APP.Board.setLessonMode(false);
+    } else if (viewName === 'review' && window.APP.UIGameReview) {
+      window.APP.UIGameReview.onEnter();
       if (window.APP.Board) window.APP.Board.setLessonMode(false);
     }
 
