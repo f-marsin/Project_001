@@ -1,6 +1,6 @@
 /* =========================================================
-   app-init.js — Point d'entrée (v1.2.0)
-   Ajout : init de UICatalog.
+   app-init.js — Point d'entrée (v1.3.0)
+   Ajout : UserProfile + UIProfile.
    ========================================================= */
 
 (function () {
@@ -17,6 +17,7 @@
     if (!window.APP || !window.APP.CONFIG)              missing.push('config/app-config.js');
     if (!window.APP || !window.APP.CURRICULUM)          missing.push('data/curriculum.js');
     if (!window.APP || !window.APP.Board)               missing.push('core/board-core.js');
+    if (!window.APP || !window.APP.UserProfile)         missing.push('core/user-profile.js');
     if (!window.APP || !window.APP.LichessClient)       missing.push('lichess/lichess-client.js');
     if (!window.APP || !window.APP.LichessAdapter)      missing.push('lichess/lichess-adapter.js');
     if (!window.APP || !window.APP.LessonEngine)        missing.push('core/lesson-engine.js');
@@ -26,6 +27,7 @@
     if (!window.APP || !window.APP.UITabs)              missing.push('ui/ui-tabs.js');
     if (!window.APP || !window.APP.UINav)               missing.push('ui/ui-nav.js');
     if (!window.APP || !window.APP.UICatalog)           missing.push('ui/ui-catalog.js');
+    if (!window.APP || !window.APP.UIProfile)           missing.push('ui/ui-profile.js');
     if (!window.APP || !window.APP.UIFreeplay)          missing.push('ui/ui-freeplay.js');
     if (!window.APP || !window.APP.UIAnalysis)          missing.push('ui/ui-analysis.js');
     if (!window.APP || !window.APP.UIGameReview)        missing.push('ui/ui-game-review.js');
@@ -94,6 +96,10 @@
 
     try {
       applyIdentity();
+
+      /* Profil : charger ou créer avant tout le reste */
+      window.APP.UserProfile.init();
+
       window.APP.Board.init();
       window.APP.LessonEngine.init();
 
@@ -101,6 +107,7 @@
       window.APP.UIFreeplay.init();
       window.APP.UIAnalysis.init();
       window.APP.UIGameReview.init();
+      window.APP.UIProfile.init();
       window.APP.UITabs.init();
 
       bindResize();
