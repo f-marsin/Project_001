@@ -1,6 +1,46 @@
 /* =========================================================
-   panel.css — Panneau (v1.1.0) — thème clair
+   panel.css — Panneau (v1.2.0)
+   Ajout : sous-navigation + catalogue.
    ========================================================= */
+
+/* ================= SOUS-NAVIGATION INTERNE ================= */
+.subnav {
+  display: flex;
+  gap: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 3px;
+  margin-bottom: 14px;
+}
+
+.subnav-tab {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  transition: background 0.15s, color 0.15s;
+  text-align: center;
+}
+
+.subnav-tab:hover:not(.active) {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.subnav-tab.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.subview { display: none; }
+.subview.active { display: block; }
 
 /* ================= FIL D'ARIANE ================= */
 .crumb {
@@ -71,6 +111,117 @@
 .diff-bars { display: inline-flex; gap: 2px; align-items: center; }
 .diff-bars span { display: inline-block; width: 4px; height: 10px; background: var(--border-strong); border-radius: 1px; }
 .diff-bars span.on { background: var(--accent); }
+
+/* ================= CATALOGUE ================= */
+.catalog-filters {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.catalog-filters .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.catalog-filters .filter-group:last-child { margin-bottom: 0; }
+
+.catalog-filters label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  font-weight: 700;
+}
+
+.catalog-filters select {
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.catalog-filters select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.catalog-count {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+  font-style: italic;
+}
+
+.catalog-theme-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent-dim);
+  font-weight: 800;
+  margin: 16px 0 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.catalog-theme-title:first-of-type { margin-top: 0; }
+
+.catalog-lesson {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.catalog-lesson:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.catalog-lesson .lesson-module-badge {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: var(--accent-dim);
+  background: var(--accent-soft);
+  padding: 3px 6px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.catalog-lesson .lesson-title {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.catalog-lesson .lesson-stars {
+  font-size: 0.7rem;
+  color: var(--warn);
+  letter-spacing: -1px;
+  flex-shrink: 0;
+}
+
+.catalog-empty {
+  text-align: center;
+  padding: 30px 12px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-style: italic;
+}
 
 /* ================= DÉTAIL / LEÇON ================= */
 .lesson-detail, .lesson-play {
@@ -180,8 +331,6 @@
 .history-row:last-child { border-bottom: none; }
 .history-row > div { padding: 8px 10px; }
 .history-row .num { color: var(--text-dim); background: var(--surface-3); }
-.history-row .san-w { color: var(--text); }
-.history-row .san-b { color: var(--text); }
 
 /* ================= ANALYSE ================= */
 .analysis-form {
