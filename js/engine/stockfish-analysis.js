@@ -1,6 +1,6 @@
 /* =========================================================
-   stockfish-analysis.js — Analyse + cache (v1.0.12)
-   Correction : le cache inclut la profondeur dans sa clé.
+   stockfish-analysis.js — Analyse + cache (v1.1.1)
+   Ajout : transmission du timeout à Stockfish.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -8,14 +8,20 @@ window.APP = window.APP || {};
 (function () {
   'use strict';
 
-  /* Cache : { "fen|depth": { bestMove, evaluation, pv, depth } } */
   var cache = {};
 
-  function cacheKey(fen, depth) {
-    return fen + '|' + depth;
+  function cacheKey(fen, depth) { return fen + '|' + depth; }
+
+  /* Timeout conseillé selon la profondeur (en ms) */
+  function timeoutForDepth(depth) {
+    if (depth <= 10) return 5000;
+    if (depth <= 12) return 8000;
+    if (depth <= 15) return 15000;
+    if (depth <= 18) return 30000;
+    return 60000;
   }
 
-  function formatEvaluation(evaluation, turn) {
+  function formatEvaluation(evaluation) {
     if (!evaluation) return '—';
 
     if (evaluation.type === 'mate') {
@@ -24,13 +30,11 @@ window.APP = window.APP || {};
       if (v < 0) return '#-' + Math.abs(v);
       return '#0';
     }
-
     if (evaluation.type === 'cp') {
       var cp = evaluation.value / 100;
       var sign = cp > 0 ? '+' : '';
       return sign + cp.toFixed(2);
     }
-
     return '—';
   }
 
@@ -49,25 +53,30 @@ window.APP = window.APP || {};
         sanPv.push(move.san);
       }
       return sanPv;
-    } catch (err) {
-      return [];
-    }
+    } catch (err) { return []; }
   }
 
+  /**
+   * Analyse une position FEN.
+   * @param {string} fen
+   * @param {object} opts
+   *   - depth    : profondeur
+   *   - useCache : true par défaut
+   *   - timeout  : override le timeout automatique
+   */
   function analyze(fen, opts) {
     opts = opts || {};
     var useCache = opts.useCache !== false;
     var depth = opts.depth || 15;
+    var timeoutMs = opts.timeout || timeoutForDepth(depth);
 
     var key = cacheKey(fen, depth);
     if (useCache && cache[key]) {
       return Promise.resolve(Object.assign({}, cache[key], { cached: true }));
     }
 
-    return window.APP.Stockfish.analyze(fen, { depth: depth })
+    return window.APP.Stockfish.analyze(fen, { depth: depth, timeout: timeoutMs })
       .then(function (raw) {
-        var turn = fen.indexOf(' b ') !== -1 ? 'b' : 'w';
-
         var bestMoveSan = null;
         if (raw.bestMove && raw.bestMove.length >= 4) {
           var bestSan = uciPvToSan(fen, [raw.bestMove]);
@@ -81,7 +90,7 @@ window.APP = window.APP || {};
           bestMove: raw.bestMove,
           bestMoveSan: bestMoveSan,
           evaluation: raw.evaluation,
-          evaluationText: formatEvaluation(raw.evaluation, turn),
+          evaluationText: formatEvaluation(raw.evaluation),
           pv: raw.pv || [],
           pvSan: pvSan,
           depth: raw.depth || depth,
@@ -99,6 +108,7 @@ window.APP = window.APP || {};
     analyze: analyze,
     formatEvaluation: formatEvaluation,
     uciPvToSan: uciPvToSan,
+    timeoutForDepth: timeoutForDepth,
     clearCache: clearCache
   };
 })();
