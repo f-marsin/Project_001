@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-tabs.js — Gestion des onglets (v1.2.0)
-   Ajout : onglet « Apprentissage » (renommé depuis Curriculum).
+   ui-tabs.js — Gestion des onglets (v1.3.0)
+   Ajout : gestion de l'onglet Profil (séparé visuellement).
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -11,16 +11,23 @@ window.APP = window.APP || {};
   var currentView = 'learning';
 
   function setActiveTab(viewName) {
+    /* Onglets fonctionnalités */
     var tabs = document.querySelectorAll('.tab');
     for (var i = 0; i < tabs.length; i++) {
       var t = tabs[i];
       if (t.getAttribute('data-view') === viewName) t.classList.add('active');
       else t.classList.remove('active');
     }
+    /* Bouton Profil */
+    var profileTab = document.querySelector('.profile-tab');
+    if (profileTab) {
+      if (profileTab.getAttribute('data-view') === viewName) profileTab.classList.add('active');
+      else profileTab.classList.remove('active');
+    }
   }
 
   function showView(viewName) {
-    var ids = ['view-learning', 'view-freeplay', 'view-analysis', 'view-review'];
+    var ids = ['view-learning', 'view-freeplay', 'view-analysis', 'view-review', 'view-profile'];
     for (var i = 0; i < ids.length; i++) {
       var el = document.getElementById(ids[i]);
       if (el) el.classList.toggle('active', ids[i] === 'view-' + viewName);
@@ -30,7 +37,10 @@ window.APP = window.APP || {};
   function onTabClick(e) {
     var viewName = this.getAttribute('data-view');
     if (!viewName) return;
+    switchTo(viewName);
+  }
 
+  function switchTo(viewName) {
     currentView = viewName;
     setActiveTab(viewName);
     showView(viewName);
@@ -45,6 +55,9 @@ window.APP = window.APP || {};
     } else if (viewName === 'review' && window.APP.UIGameReview) {
       window.APP.UIGameReview.onEnter();
       if (window.APP.Board) window.APP.Board.setLessonMode(false);
+    } else if (viewName === 'profile' && window.APP.UIProfile) {
+      window.APP.UIProfile.onEnter();
+      if (window.APP.Board) window.APP.Board.setLessonMode(false);
     }
 
     setTimeout(function () {
@@ -57,12 +70,16 @@ window.APP = window.APP || {};
     for (var i = 0; i < tabs.length; i++) {
       tabs[i].addEventListener('click', onTabClick);
     }
+    var profileTab = document.querySelector('.profile-tab');
+    if (profileTab) profileTab.addEventListener('click', onTabClick);
+
     showView('learning');
     setActiveTab('learning');
   }
 
   window.APP.UITabs = {
     init: init,
+    switchTo: switchTo,
     getCurrentView: function () { return currentView; }
   };
 })();
