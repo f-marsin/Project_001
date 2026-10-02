@@ -1,10 +1,6 @@
 /* =========================================================
-   ui-catalog.js — Catalogue des leçons (v1.2.1)
-   =========================================================
-   Nouveauté :
-     - Vue détail interne au catalogue (reste dans le Catalogue)
-     - État de navigation indépendant du Parcours
-     - Retour au catalogue après consultation
+   ui-catalog.js — Catalogue (v1.4.0)
+   Utilise LessonEngine.lessonType() pour classer les leçons.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -25,24 +21,18 @@ window.APP = window.APP || {};
     filterTheme: 'all',
     filterStars: 'all',
     sortBy: 'theme',
-    /* Nouveauté : vue interne du catalogue */
-    catalogView: 'list',       /* 'list' | 'lesson' */
-    currentLesson: null        /* { moduleId, lessonId } */
+    catalogView: 'list',
+    currentLesson: null
   };
 
   function contentEl() { return document.getElementById('catalog-content'); }
 
-  /* ================= RENDU GLOBAL ================= */
-
   function render() {
-    if (state.catalogView === 'lesson') {
-      renderLessonDetail();
-    } else {
-      renderList();
-    }
+    if (state.catalogView === 'lesson') renderLessonDetail();
+    else renderList();
   }
 
-  /* ================= VUE DÉTAIL (dans le catalogue) ================= */
+  /* ================= VUE DÉTAIL ================= */
 
   function renderLessonDetail() {
     var el = contentEl();
@@ -54,35 +44,26 @@ window.APP = window.APP || {};
 
     var lt = getLessonDisplayType(l);
 
-    /* Fil d'Ariane interne au catalogue */
-    var crumbHtml =
+    var html =
       '<div class="crumb">' +
         '<a data-catalog-nav="list">Catalogue</a>' +
         '<span class="sep">›</span>' +
         '<span>' + m.id + ' — ' + l.title + '</span>' +
-      '</div>';
-
-    var backHtml =
-      '<button class="back-btn" data-catalog-nav="list" type="button">‹ Catalogue</button>';
-
-    var html = crumbHtml + backHtml;
-    html += '<div class="lesson-detail">';
-    html += '<h3>' + l.title + '</h3>';
-    html += '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>';
+      '</div>' +
+      '<button class="back-btn" data-catalog-nav="list" type="button">‹ Catalogue</button>' +
+      '<div class="lesson-detail">' +
+        '<h3>' + l.title + '</h3>' +
+        '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>';
 
     if (lt === 'interactive' || lt === 'puzzle-live') {
       html +=
-        '<button data-action="catalog-start-lesson" type="button" ' +
-                'class="back-btn" ' +
+        '<button data-action="catalog-start-lesson" type="button" class="back-btn" ' +
                 'style="background:var(--accent);color:#fff;border-color:var(--accent);' +
                        'min-width:100%;justify-content:center;padding:12px;">' +
           '▶ Démarrer la leçon' +
         '</button>';
     } else {
-      html +=
-        '<div class="placeholder">' +
-          'Le contenu de cette leçon sera ajouté dans une étape ultérieure.' +
-        '</div>';
+      html += '<div class="placeholder">Le contenu de cette leçon sera ajouté dans une étape ultérieure.</div>';
     }
     html += '</div>';
 
@@ -93,24 +74,12 @@ window.APP = window.APP || {};
   function bindDetailEvents() {
     var el = contentEl();
     if (!el) return;
-
     el.addEventListener('click', function (e) {
-      /* Navigation interne au catalogue */
       var navEl = e.target.closest('[data-catalog-nav]');
-      if (navEl) {
-        var action = navEl.getAttribute('data-catalog-nav');
-        if (action === 'list') {
-          goToList();
-          return;
-        }
-      }
+      if (navEl && navEl.getAttribute('data-catalog-nav') === 'list') { goToList(); return; }
 
-      /* Démarrer la leçon */
       var actionEl = e.target.closest('[data-action="catalog-start-lesson"]');
-      if (actionEl) {
-        startCurrentLesson();
-        return;
-      }
+      if (actionEl) { startCurrentLesson(); return; }
     });
   }
 
@@ -122,16 +91,8 @@ window.APP = window.APP || {};
 
   function startCurrentLesson() {
     if (!state.currentLesson) return;
-    var l = window.APP.findLesson(state.currentLesson.moduleId, state.currentLesson.id);
-    if (!l || !l.lichessTheme) return;
-
-    /* On informe le moteur de leçon qu'on vient du catalogue */
     if (window.APP.LessonEngine) {
-      window.APP.LessonEngine.startFromCatalog(
-        state.currentLesson.moduleId,
-        state.currentLesson.id,
-        l.lichessTheme
-      );
+      window.APP.LessonEngine.startFromCatalog(state.currentLesson.moduleId, state.currentLesson.id, null);
     }
   }
 
@@ -145,10 +106,7 @@ window.APP = window.APP || {};
     var filtered = applyFilters(lessons);
     var grouped = groupLessons(filtered);
 
-    var html = '';
-
-    html += renderFilters();
-
+    var html = renderFilters();
     html += '<div class="catalog-count">' + filtered.length + ' leçon' +
             (filtered.length > 1 ? 's' : '') + ' affichée' +
             (filtered.length > 1 ? 's' : '') + '</div>';
@@ -158,9 +116,8 @@ window.APP = window.APP || {};
     } else {
       var keys = Object.keys(grouped).sort(compareGroupKeys);
       for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        html += '<div class="catalog-theme-title">' + formatGroupTitle(key) + '</div>';
-        var list = grouped[key];
+        html += '<div class="catalog-theme-title">' + formatGroupTitle(keys[i]) + '</div>';
+        var list = grouped[keys[i]];
         for (var j = 0; j < list.length; j++) {
           html += renderLessonRow(list[j]);
         }
@@ -209,19 +166,31 @@ window.APP = window.APP || {};
   function renderLessonRow(lesson) {
     var starsStr = '';
     for (var i = 0; i < lesson.stars; i++) starsStr += '⭐';
+    var badge = '';
+    if (window.APP.LessonEngine && window.APP.LessonEngine.lessonType) {
+      var t = window.APP.LessonEngine.lessonType(lesson.id);
+      if (t === 'interactive') badge = '<span class="lesson-badge-interactive" title="Exercice jouable">▶</span>';
+      else if (t === 'puzzle-live') badge = '<span class="lesson-badge-puzzle" title="Puzzle Lichess">♟</span>';
+    }
 
     return '' +
-      '<div class="catalog-lesson" ' +
-           'data-action="catalog-open-lesson" ' +
-           'data-module="' + lesson.moduleId + '" ' +
-           'data-lesson="' + lesson.id + '">' +
+      '<div class="catalog-lesson" data-action="catalog-open-lesson" ' +
+           'data-module="' + lesson.moduleId + '" data-lesson="' + lesson.id + '">' +
         '<span class="lesson-module-badge">' + lesson.moduleId + '</span>' +
+        badge +
         '<span class="lesson-title">' + lesson.title + '</span>' +
-        '<span class="lesson-stars" title="Difficulté ' + lesson.stars + '/5">' + starsStr + '</span>' +
+        '<span class="lesson-stars">' + starsStr + '</span>' +
       '</div>';
   }
 
-  /* ================= FILTRES ================= */
+  /* ================= UTILITAIRES ================= */
+
+  function getLessonDisplayType(lesson) {
+    if (window.APP.LessonEngine && window.APP.LessonEngine.lessonType) {
+      return window.APP.LessonEngine.lessonType(lesson.id);
+    }
+    return 'coming';
+  }
 
   function applyFilters(lessons) {
     return lessons.filter(function (l) {
@@ -245,37 +214,20 @@ window.APP = window.APP || {};
   function compareGroupKeys(a, b) {
     if (state.sortBy === 'theme') {
       var order = ['bases', 'tactics', 'endgames', 'opening', 'middlegame'];
-      var ia = order.indexOf(a);
-      var ib = order.indexOf(b);
-      if (ia === -1) ia = 999;
-      if (ib === -1) ib = 999;
+      var ia = order.indexOf(a); var ib = order.indexOf(b);
+      if (ia === -1) ia = 999; if (ib === -1) ib = 999;
       return ia - ib;
     } else {
-      var na = parseInt(a.replace('stars-', ''), 10);
-      var nb = parseInt(b.replace('stars-', ''), 10);
-      return na - nb;
+      return parseInt(a.replace('stars-', ''), 10) - parseInt(b.replace('stars-', ''), 10);
     }
   }
 
   function formatGroupTitle(key) {
-    if (state.sortBy === 'theme') {
-      return THEME_LABELS[key] || key;
-    } else {
-      var stars = parseInt(key.replace('stars-', ''), 10);
-      var s = '';
-      for (var i = 0; i < stars; i++) s += '⭐';
-      return 'Difficulté ' + stars + '/5 ' + s;
-    }
-  }
-
-  /* ================= UTILITAIRES ================= */
-
-  function getLessonDisplayType(lesson) {
-    if (window.APP.LessonEngine && window.APP.LessonEngine.hasContent
-        && window.APP.LessonEngine.hasContent(lesson.id)) {
-      return 'puzzle-live';
-    }
-    return 'coming';
+    if (state.sortBy === 'theme') return THEME_LABELS[key] || key;
+    var stars = parseInt(key.replace('stars-', ''), 10);
+    var s = '';
+    for (var i = 0; i < stars; i++) s += '⭐';
+    return 'Difficulté ' + stars + '/5 ' + s;
   }
 
   /* ================= ÉVÉNEMENTS ================= */
@@ -284,28 +236,16 @@ window.APP = window.APP || {};
     var selTheme = document.getElementById('filter-theme');
     var selStars = document.getElementById('filter-stars');
     var selSort = document.getElementById('filter-sort');
-
-    if (selTheme) selTheme.addEventListener('change', function () {
-      state.filterTheme = this.value;
-      renderList();
-    });
-    if (selStars) selStars.addEventListener('change', function () {
-      state.filterStars = this.value;
-      renderList();
-    });
-    if (selSort) selSort.addEventListener('change', function () {
-      state.sortBy = this.value;
-      renderList();
-    });
+    if (selTheme) selTheme.addEventListener('change', function () { state.filterTheme = this.value; renderList(); });
+    if (selStars) selStars.addEventListener('change', function () { state.filterStars = this.value; renderList(); });
+    if (selSort) selSort.addEventListener('change', function () { state.sortBy = this.value; renderList(); });
 
     var container = contentEl();
     if (container) {
       container.addEventListener('click', function (e) {
         var el = e.target.closest('[data-action="catalog-open-lesson"]');
         if (!el) return;
-        var moduleId = el.getAttribute('data-module');
-        var lessonId = el.getAttribute('data-lesson');
-        openLessonDetail(moduleId, lessonId);
+        openLessonDetail(el.getAttribute('data-module'), el.getAttribute('data-lesson'));
       });
     }
   }
@@ -316,19 +256,10 @@ window.APP = window.APP || {};
     renderLessonDetail();
   }
 
-  /* ================= API PUBLIQUE ================= */
-
-  /* Appelé par le moteur après un exercice : revient au catalogue */
   function returnFromLesson() {
     state.catalogView = 'list';
     state.currentLesson = null;
     renderList();
-  }
-
-  /* Vérifie si on est actuellement dans le catalogue */
-  function isActive() {
-    var el = document.getElementById('learning-catalog');
-    return el && el.classList.contains('active');
   }
 
   window.APP.UICatalog = {
@@ -336,7 +267,6 @@ window.APP = window.APP || {};
     renderList: renderList,
     renderLessonDetail: renderLessonDetail,
     returnFromLesson: returnFromLesson,
-    isActive: isActive,
     openLessonDetail: openLessonDetail,
     goToList: goToList,
     getState: function () { return state; }
