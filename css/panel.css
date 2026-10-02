@@ -1,7 +1,5 @@
 /* =========================================================
-   panel.css — Panneau : curriculum, leçons, partie libre
-   =========================================================
-   v1.0.9 — Ajout styles pour la vue Analyse (Stockfish).
+   panel.css — Panneau (v1.0.10) — ajout styles revue
    ========================================================= */
 
 /* ================= FIL D'ARIANE ================= */
@@ -18,7 +16,7 @@
   background: var(--surface-2); border: 1px solid var(--border);
   border-radius: 10px; padding: 14px; margin-bottom: 10px;
   cursor: pointer; transition: border-color 0.15s, background 0.15s;
-  touch-action: manipulation; position: relative;
+  position: relative;
 }
 .module-card:hover { border-color: var(--accent); background: var(--surface-3); }
 .module-card.locked { opacity: 0.55; cursor: not-allowed; }
@@ -69,13 +67,11 @@
   margin-bottom: 14px; padding: 10px 12px;
   background: #0d0d0d; border-left: 3px solid var(--accent); border-radius: 4px;
 }
-
 .lesson-detail .placeholder {
   font-size: 0.82rem; color: var(--text-dim); text-align: center;
   padding: 24px 12px; border: 1px dashed var(--border);
   border-radius: var(--radius-md); font-style: italic;
 }
-
 .back-btn {
   display: inline-flex; align-items: center; gap: 6px;
   background: transparent; border: 1px solid var(--border); color: var(--accent);
@@ -168,14 +164,20 @@
   margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;
   font-weight: 600;
 }
-.analysis-form textarea {
+.analysis-form textarea,
+.analysis-form select {
   width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);
   border: 1px solid var(--border); background: #0d0d0d;
   color: var(--text); font-family: var(--font-mono);
   font-size: 0.78rem; line-height: 1.4; resize: vertical;
   margin-bottom: 12px;
 }
-.analysis-form textarea:focus {
+.analysis-form select {
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+.analysis-form textarea:focus,
+.analysis-form select:focus {
   outline: none; border-color: var(--accent);
 }
 
@@ -218,6 +220,87 @@
   border: 2px solid var(--border); border-top-color: var(--accent);
   border-radius: 50%; animation: spin 0.7s linear infinite;
 }
-@keyframes spin {
-  to { transform: rotate(360deg); }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ================= REVUE DE PARTIE ================= */
+.review-progress-bar {
+  width: 100%; height: 8px; background: #0d0d0d;
+  border-radius: 4px; overflow: hidden; margin-bottom: 6px;
 }
+.review-progress-bar .bar-fill {
+  height: 100%; background: var(--accent);
+  transition: width 0.3s ease-out;
+}
+
+.review-summary {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px; margin-bottom: 14px;
+}
+.summary-row {
+  display: flex; justify-content: space-between; gap: 10px;
+  margin-bottom: 8px;
+}
+.summary-row:last-child { margin-bottom: 0; }
+.sum-item {
+  flex: 1; text-align: center;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  background: #0d0d0d; font-size: 0.78rem; font-weight: 600;
+}
+.sum-item.best       { color: #60a5fa; }
+.sum-item.good       { color: var(--success); }
+.sum-item.inaccuracy { color: var(--warn); }
+.sum-item.mistake    { color: #ff8c42; }
+.sum-item.blunder    { color: var(--danger); }
+.sum-item.dim        { color: var(--text-dim); }
+
+.review-moves {
+  max-height: 400px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: #0d0d0d;
+}
+
+.review-move {
+  display: grid;
+  grid-template-columns: 40px 1fr 30px auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.review-move:last-child { border-bottom: none; }
+.review-move:hover { background: var(--surface-2); }
+.review-move.selected { background: var(--surface-3); border-left: 3px solid var(--accent); }
+
+.review-move .move-num {
+  font-size: 0.72rem; color: var(--text-dim); font-family: var(--font-mono);
+}
+.review-move .move-san {
+  font-family: var(--font-mono); font-size: 0.88rem; font-weight: 600;
+  color: var(--text);
+}
+.review-move .move-emoji { font-size: 1rem; text-align: center; }
+.review-move .move-label {
+  font-size: 0.7rem; color: var(--text-dim); text-align: right;
+  white-space: nowrap;
+}
+
+/* Coloration des lignes selon la classification */
+.review-move.blunder    { background: rgba(255,87,87,0.08); }
+.review-move.mistake    { background: rgba(255,140,66,0.06); }
+.review-move.inaccuracy { background: rgba(251,191,36,0.05); }
+.review-move.best       { background: rgba(96,165,250,0.05); }
+
+.review-detail {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: 14px; margin-top: 14px;
+}
+.review-detail .detail-title {
+  font-size: 0.9rem; font-weight: 700; margin-bottom: 10px;
+  color: var(--text);
+}
+.review-detail .detail-row {
+  font-size: 0.82rem; margin-bottom: 6px; line-height: 1.5;
+}
+.review-detail .detail-row strong { color: var(--text-dim); }
