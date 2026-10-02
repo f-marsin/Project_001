@@ -1,11 +1,10 @@
 /* =========================================================
-   ui-game-review.js — Vue « Revue de partie »
-   =========================================================
-   Rôle :
-     - Charger un PGN
-     - Lancer l'analyse Stockfish coup par coup
-     - Afficher la liste des coups classés
-     - Naviguer dans la partie (clic sur un coup)
+   ui-game-review.js — Vue Revue (v1.0.12)
+   Corrections :
+     - Affiche la position APRÈS le coup (fenAfter)
+     - Surligne les cases from/to du coup cliqué
+     - Le détail s'affiche dans un conteneur stable (plus écrasé)
+     - Le bouton "Nouvelle analyse" vide aussi le cache
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -24,19 +23,10 @@ window.APP = window.APP || {};
 
   function contentEl() { return document.getElementById('game-review-content'); }
 
-  /* ---------- Rendu principal ---------- */
-
   function render() {
-    var el = contentEl();
-    if (!el) return;
-
-    if (!state.result && !state.analyzing) {
-      renderForm();
-    } else if (state.analyzing) {
-      renderProgress();
-    } else {
-      renderResult();
-    }
+    if (!state.result && !state.analyzing) renderForm();
+    else if (state.analyzing) renderProgress();
+    else renderResult();
   }
 
   function renderForm() {
@@ -98,7 +88,6 @@ window.APP = window.APP || {};
     var s = state.result.summary;
     var moves = state.result.moves;
 
-    /* Résumé */
     var html =
       '<h2>Résultat de la revue</h2>' +
       '<div class="review-summary">' +
@@ -138,20 +127,17 @@ window.APP = window.APP || {};
 
     html += '</div>';
 
+    /* Conteneur STABLE pour le détail (ne sera pas écrasé) */
+    html += '<div id="review-detail-container"></div>';
+
     el.innerHTML = html;
 
-    /* Bind */
     var bNew = document.getElementById('btn-new-review');
     if (bNew) bNew.addEventListener('click', resetReview);
 
-    /* Clic sur les coups */
     var container = document.getElementById('review-moves');
-    if (container) {
-      container.addEventListener('click', onMoveClick);
-    }
+    if (container) container.addEventListener('click', onMoveClick);
   }
-
-  /* ---------- Actions ---------- */
 
   function bindForm() {
     var bStart = document.getElementById('btn-start-review');
@@ -167,6 +153,10 @@ window.APP = window.APP || {};
     if (!pgn) { alert('Colle un PGN d\'abord.'); return; }
 
     var depth = depthEl ? parseInt(depthEl.value, 10) : 12;
+
+    /* ⚠️ Vidage du cache : garantit qu'une nouvelle profondeur
+       force un vrai recalcul (correction bug 3). */
+    window.APP.StockfishAnalysis.clearCache();
 
     state.pgn = pgn;
     state.depth = depth;
@@ -200,9 +190,11 @@ window.APP = window.APP || {};
   }
 
   function resetReview() {
+    /* Retour au formulaire */
     state.result = null;
     state.currentMoveIndex = null;
-    state.pgn = '';
+    /* On garde state.pgn pour permettre de relancer, mais on vide le cache */
+    window.APP.StockfishAnalysis.clearCache();
     render();
   }
 
@@ -216,23 +208,44 @@ window.APP = window.APP || {};
 
     state.currentMoveIndex = idx;
 
-    /* Afficher la position AVANT le coup sur l'échiquier */
+    /* Position APRÈS le coup (correction bug 1) */
     window.APP.Board.setLessonMode(true);
-    window.APP.Board.position(move.fen, false);
+    window.APP.Board.position(move.fenAfter, false);
 
-    /* Mettre en évidence */
+    /* Highlight from/to (correction bug 2) */
+    var fromTo = extractFromTo(move.fen, move.san);
+    if (fromTo) {
+      window.APP.Board.highlightSquares(fromTo.from, fromTo.to);
+    } else {
+      window.APP.Board.clearHighlights();
+    }
+
+    /* Sélection visuelle dans la liste */
     var all = document.querySelectorAll('.review-move');
     for (var i = 0; i < all.length; i++) all[i].classList.remove('selected');
     el.classList.add('selected');
 
-    /* Afficher le détail */
-    var detail = document.getElementById('review-result');
-    if (!detail) return;
+    /* Affichage du détail dans le conteneur STABLE (correction bug 2) */
+    showMoveDetail(move);
+  }
 
-    var existing = document.getElementById('review-detail');
-    if (existing) existing.remove();
+  function extractFromTo(fen, san) {
+    if (!fen || !san) return null;
+    try {
+      var g = new Chess(fen);
+      var move = g.move(san);
+      if (!move) return null;
+      return { from: move.from, to: move.to };
+    } catch (err) {
+      return null;
+    }
+  }
 
-    var detailHtml =
+  function showMoveDetail(move) {
+    var container = document.getElementById('review-detail-container');
+    if (!container) return;
+
+    container.innerHTML =
       '<div class="review-detail" id="review-detail">' +
         '<div class="detail-title">' + move.emoji + ' Coup ' + move.moveNumber +
           (move.color === 'w' ? ' Blancs' : ' Noirs') + ' : ' + move.san + '</div>' +
@@ -245,16 +258,9 @@ window.APP = window.APP || {};
         '<div class="detail-row"><strong>Ligne principale :</strong> ' +
           (move.pvSan && move.pvSan.length ? move.pvSan.slice(0, 6).join(' ') : '—') + '</div>' +
       '</div>';
-
-    detail.insertAdjacentHTML('beforeend', detailHtml);
   }
 
-  /* ---------- Cycle de vie ---------- */
-
-  function init() {
-    render();
-  }
-
+  function init() { render(); }
   function onEnter() {}
 
   window.APP.UIGameReview = {
