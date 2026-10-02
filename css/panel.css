@@ -1,6 +1,6 @@
 /* =========================================================
-   panel.css — Panneau (v1.4.0)
-   Ajout : badges de type dans le catalogue.
+   panel.css — Panneau (v1.5.0)
+   Ajout : styles de la légende du catalogue.
    ========================================================= */
 
 /* ================= SOUS-NAVIGATION INTERNE ================= */
@@ -81,6 +81,72 @@
 .diff-bars span { display: inline-block; width: 4px; height: 10px; background: var(--border-strong); border-radius: 1px; }
 .diff-bars span.on { background: var(--accent); }
 
+/* ================= LÉGENDE CATALOGUE ================= */
+.catalog-legend {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.legend-toggle {
+  width: 100%;
+  text-align: left;
+  padding: 9px 12px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.legend-toggle:hover {
+  background: var(--surface-3);
+  color: var(--text);
+  border-color: transparent;
+}
+
+.legend-content {
+  display: none;
+  padding: 0 12px 10px 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.legend-content.open { display: block; }
+
+.legend-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.legend-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.legend-icon.icon-interactive { color: var(--success); background: var(--success-soft); }
+.legend-icon.icon-puzzle { color: #a855c7; background: rgba(168, 85, 199, 0.12); }
+.legend-icon.icon-none { color: var(--text-faint); background: var(--surface-3); }
+
+.legend-text { flex: 1; color: var(--text-dim); }
+.legend-text strong { color: var(--text); font-weight: 600; }
+
 /* ================= CATALOGUE ================= */
 .catalog-filters {
   background: var(--surface-2); border: 1px solid var(--border);
@@ -121,9 +187,15 @@
 }
 .catalog-lesson .lesson-badge-interactive {
   font-size: 0.8rem; color: var(--success); font-weight: 700; flex-shrink: 0;
+  width: 14px; text-align: center;
 }
 .catalog-lesson .lesson-badge-puzzle {
   font-size: 0.8rem; color: #a855c7; font-weight: 700; flex-shrink: 0;
+  width: 14px; text-align: center;
+}
+.catalog-lesson .lesson-badge-none {
+  font-size: 0.8rem; color: var(--text-faint); font-weight: 700; flex-shrink: 0;
+  width: 14px; text-align: center;
 }
 .catalog-lesson .lesson-title { flex: 1; font-size: 0.85rem; font-weight: 600; color: var(--text); }
 .catalog-lesson .lesson-stars { font-size: 0.7rem; color: var(--warn); letter-spacing: -1px; flex-shrink: 0; }
