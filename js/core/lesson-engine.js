@@ -1,7 +1,7 @@
 /* =========================================================
-   lesson-engine.js — Moteur de leçons (v1.2.1)
-   Ajout : startFromCatalog() pour distinguer le contexte
-   d'où vient la leçon (Parcours ou Catalogue).
+   lesson-engine.js — Moteur de leçons (v1.3.0)
+   Ajout : enregistrement automatique des tentatives
+   dans le profil utilisateur.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -16,8 +16,8 @@ window.APP = window.APP || {};
     puzzle: null,
     awaiting: false,
     solved: false,
-    /* Nouveauté : source de la leçon ('path' ou 'catalog') */
-    source: 'path'
+    source: 'path',
+    startTime: null
   };
 
   function showFeedback(msg, kind) {
@@ -64,6 +64,17 @@ window.APP = window.APP || {};
     return false;
   }
 
+  /* Récupère le thème d'une leçon à partir de son ID */
+  function getThemeForLesson(lessonId) {
+    var arr = window.APP.CURRICULUM || [];
+    for (var i = 0; i < arr.length; i++) {
+      for (var j = 0; j < arr[i].lessons.length; j++) {
+        if (arr[i].lessons[j].id === lessonId) return arr[i].theme;
+      }
+    }
+    return null;
+  }
+
   function isThemeMatch(themes, requestedTheme) {
     if (!themes || themes.length === 0) return false;
     if (!requestedTheme) return true;
@@ -88,7 +99,6 @@ window.APP = window.APP || {};
 
   function startFromCatalog(moduleId, lessonId, theme) {
     if (!lessonId || !theme) {
-      /* Fallback : utiliser les infos du catalogue */
       var lesson = window.APP.findLesson(moduleId, lessonId);
       if (!lesson || !lesson.lichessTheme) {
         showFeedback('Leçon introuvable ou sans contenu.', 'ko');
@@ -100,7 +110,7 @@ window.APP = window.APP || {};
     start(lessonId, theme);
   }
 
-  /* ================= DÉMARRAGE COMMUN ================= */
+  /* ================= DÉMARRAGE ================= */
 
   function start(lessonId, theme) {
     state.active = true;
@@ -108,6 +118,7 @@ window.APP = window.APP || {};
     state.theme = theme;
     state.solved = false;
     state.awaiting = true;
+    state.startTime = Date.now();
 
     window.APP.Board.setLessonMode(true);
     window.APP.Board.clearHighlights();
@@ -143,11 +154,8 @@ window.APP = window.APP || {};
 
   /* ================= RENDUS ================= */
 
-  /* Obtient le conteneur de rendu selon la source */
   function getRenderContainer() {
-    if (state.source === 'catalog') {
-      return document.getElementById('catalog-content');
-    }
+    if (state.source === 'catalog') return document.getElementById('catalog-content');
     return document.getElementById('curriculum-content');
   }
 
@@ -240,20 +248,15 @@ window.APP = window.APP || {};
     bindBackButtons();
   }
 
-  /* Lie les boutons de retour au bon module selon la source */
   function bindBackButtons() {
     var container = getRenderContainer();
     if (!container) return;
-
     var backBtns = container.querySelectorAll('[data-nav="lessons"], [data-catalog-nav="list"]');
     for (var i = 0; i < backBtns.length; i++) {
       (function (btn) {
         btn.onclick = function () {
-          if (btn.getAttribute('data-catalog-nav') === 'list') {
-            returnToCatalog();
-          } else {
-            returnToPath();
-          }
+          if (btn.getAttribute('data-catalog-nav') === 'list') returnToCatalog();
+          else returnToPath();
         };
       })(backBtns[i]);
     }
@@ -266,9 +269,7 @@ window.APP = window.APP || {};
 
   function returnToPath() {
     reset();
-    if (window.APP.UINav) {
-      window.APP.UINav.render();
-    }
+    if (window.APP.UINav) window.APP.UINav.render();
   }
 
   /* ================= ACTIONS ================= */
@@ -286,6 +287,7 @@ window.APP = window.APP || {};
     state.solved = false;
     state.puzzle = null;
     state.awaiting = true;
+    state.startTime = Date.now();
     renderLoading();
     fetchAndValidate(state.theme, 0);
   }
@@ -330,6 +332,13 @@ window.APP = window.APP || {};
       match = (playedUci === state.puzzle.playerMoveUci.substring(0, 4));
     }
 
+    /* Enregistrement de la tentative dans le profil */
+    if (window.APP.UserProfile && state.lessonId) {
+      var theme = getThemeForLesson(state.lessonId);
+      var timeSpent = state.startTime ? Math.round((Date.now() - state.startTime) / 1000) : 0;
+      window.APP.UserProfile.recordAttempt(state.lessonId, theme, match, timeSpent);
+    }
+
     if (match) {
       state.solved = true;
       B.position(game.fen(), false);
@@ -362,6 +371,7 @@ window.APP = window.APP || {};
     state.awaiting = false;
     state.solved = false;
     state.source = 'path';
+    state.startTime = null;
     if (window.APP.Board) {
       window.APP.Board.setLessonMode(false);
       window.APP.Board.setOnDropHandler(null);
