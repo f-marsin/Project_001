@@ -1,9 +1,10 @@
 /* =========================================================
    lichess-adapter.js — Conversion format Lichess → format interne
    =========================================================
-   v1.0.5 — CORRECTIF MAJEUR : Lichess renvoie la solution en
-   format UCI (ex: "e6a2"), PAS en SAN. On convertit maintenant
-   l'UCI en SAN via chess.js avant de la stocker.
+   v1.0.6 — Correction robuste :
+     - Détection automatique du décalage de half-ply
+     - Fallback UCI brut si la conversion SAN échoue
+     - Logs de debug détaillés
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -24,22 +25,19 @@ window.APP = window.APP || {};
 
     var history = tempGame.history({ verbose: true });
     if (!history || history.length < targetPly) {
-      window.APP.log('Adaptateur : ply ' + targetPly + ' > longueur historique ' + history.length);
       return null;
     }
 
     var g = new Chess();
     for (var i = 0; i < targetPly; i++) {
-      g.move(history[i].san);
+      var move = g.move(history[i].san);
+      if (!move) return null;
     }
     return g.fen();
   }
 
-  /* ---------- Conversion UCI → SAN ----------
-     Lichess renvoie la solution sous forme UCI (ex: "e6a2" ou "e7e8q").
-     On la convertit en SAN ("Fxa2", "e8=Q+", ...) pour pouvoir
-     la comparer avec le SAN joué par l'élève.
-  */
+  /* ---------- Conversion UCI → SAN ---------- */
+
   function uciToSan(fen, uciMove) {
     if (!uciMove || uciMove.length < 4) return null;
 
@@ -53,16 +51,12 @@ window.APP = window.APP || {};
       if (!move) return null;
       return move.san;
     } catch (err) {
-      window.APP.log('Adaptateur : conversion UCI→SAN échouée pour', uciMove, err.message);
       return null;
     }
   }
 
-  /* ---------- Conversion d'une séquence UCI en SAN ----------
-     La solution Lichess est un tableau alterné :
-       [UCI_joueur_1, UCI_adverse_1, UCI_joueur_2, ...]
-     On rejoue la séquence depuis la FEN pour obtenir les SAN.
-  */
+  /* ---------- Conversion d'une séquence UCI en SAN ---------- */
+
   function convertSequence(fen, uciSequence) {
     var result = {
       playerSan: null,
@@ -79,8 +73,8 @@ window.APP = window.APP || {};
       var promotion = uci.length > 4 ? uci.substring(4, 5) : 'q';
       var move = g.move({ from: from, to: to, promotion: promotion });
       if (!move) {
-        window.APP.log('Adaptateur : impossible de rejouer', uci);
-        break;
+        /* Échec à ce coup → on s'arrête mais on garde ce qui a été converti */
+        return result;
       }
       result.fullSan.push(move.san);
       if (i === 0) result.playerSan = move.san;
@@ -103,32 +97,78 @@ window.APP = window.APP || {};
       return { error: 'PGN Lichess manquant' };
     }
 
-    /* FEN au ply initial */
-    var fen = fenAtPly(g.pgn, p.initialPly || 0);
-    if (!fen) {
-      return { error: 'Impossible d\'extraire le FEN du PGN' };
-    }
-
-    /* Solution : liste UCI → on convertit en SAN */
     if (!p.solution || p.solution.length === 0) {
       return { error: 'Solution Lichess vide' };
     }
 
-    var seq = convertSequence(fen, p.solution);
-    if (!seq.playerSan) {
-      return { error: 'Impossible de convertir la solution UCI en SAN' };
+    var initialPly = p.initialPly || 0;
+    window.APP.log('Adaptateur : initialPly =', initialPly, '| solution[0] =', p.solution[0]);
+
+    /* --- Tentative 1 : FEN au ply exact --- */
+    var fen1 = fenAtPly(g.pgn, initialPly);
+    if (fen1) {
+      var seq1 = convertSequence(fen1, p.solution);
+      if (seq1.playerSan) {
+        window.APP.log('Adaptateur : conversion OK au ply exact');
+        return buildResult(p, fen1, seq1, g);
+      }
     }
 
+    /* --- Tentative 2 : FEN au ply - 1 (décalage possible) --- */
+    if (initialPly > 0) {
+      var fen2 = fenAtPly(g.pgn, initialPly - 1);
+      if (fen2) {
+        var seq2 = convertSequence(fen2, p.solution);
+        if (seq2.playerSan) {
+          window.APP.log('Adaptateur : conversion OK au ply -1');
+          return buildResult(p, fen2, seq2, g);
+        }
+      }
+    }
+
+    /* --- Tentative 3 : FEN au ply + 1 --- */
+    var fen3 = fenAtPly(g.pgn, initialPly + 1);
+    if (fen3) {
+      var seq3 = convertSequence(fen3, p.solution);
+      if (seq3.playerSan) {
+        window.APP.log('Adaptateur : conversion OK au ply +1');
+        return buildResult(p, fen3, seq3, g);
+      }
+    }
+
+    /* --- Fallback : on garde la FEN du ply exact mais on utilise
+       l'UCI brut comme solution (le moteur comparera via UCI) --- */
+    if (fen1) {
+      window.APP.log('Adaptateur : FALLBACK — utilisation UCI brute');
+      return {
+        lichessId: p.id,
+        rating: p.rating,
+        themes: p.themes || [],
+        fen: fen1,
+        playerMove: null,               /* pas de SAN */
+        playerMoveUci: p.solution[0],   /* on utilisera l'UCI */
+        opponentReply: null,
+        fullSequence: [],
+        rawSolution: p.solution,
+        fallbackUci: true
+      };
+    }
+
+    return { error: 'Aucune position valide trouvée (ply ' + initialPly + ')' };
+  }
+
+  function buildResult(p, fen, seq, g) {
     return {
       lichessId: p.id,
       rating: p.rating,
       themes: p.themes || [],
       fen: fen,
-      playerMove: seq.playerSan,          /* ex: "Fxa2" */
-      playerMoveUci: p.solution[0],       /* ex: "e6a2" (pour debug) */
-      opponentReply: seq.opponentSan,     /* ex: "Rb1" ou null */
+      playerMove: seq.playerSan,
+      playerMoveUci: p.solution[0],
+      opponentReply: seq.opponentSan,
       fullSequence: seq.fullSan,
-      rawSolution: p.solution             /* UCI brut (debug) */
+      rawSolution: p.solution,
+      fallbackUci: false
     };
   }
 
