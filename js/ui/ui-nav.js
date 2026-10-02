@@ -1,6 +1,6 @@
 /* =========================================================
-   ui-nav.js — Navigation du Parcours + sous-nav (v1.2.1)
-   Le catalogue est désormais 100% autonome.
+   ui-nav.js — Navigation du Parcours (v1.4.0)
+   Utilise LessonEngine.lessonType() pour classer les leçons.
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -28,10 +28,10 @@ window.APP = window.APP || {};
     return t;
   }
 
+  /* Utilise le moteur de leçon pour connaître le type réel */
   function lessonDisplayType(lesson) {
-    if (window.APP.LessonEngine && window.APP.LessonEngine.hasContent
-        && window.APP.LessonEngine.hasContent(lesson.id)) {
-      return 'puzzle-live';
+    if (window.APP.LessonEngine && window.APP.LessonEngine.lessonType) {
+      return window.APP.LessonEngine.lessonType(lesson.id);
     }
     return 'coming';
   }
@@ -76,8 +76,7 @@ window.APP = window.APP || {};
     var tabs = document.querySelectorAll('#learning-subnav .subnav-tab');
     for (var i = 0; i < tabs.length; i++) {
       tabs[i].addEventListener('click', function () {
-        var sub = this.getAttribute('data-subview');
-        switchSubview(sub);
+        switchSubview(this.getAttribute('data-subview'));
       });
     }
   }
@@ -87,51 +86,38 @@ window.APP = window.APP || {};
   function renderCrumb() {
     var el = crumbEl();
     if (!el) return;
-
-    if (state.curriculumView === 'modules') {
-      el.innerHTML = '<span>Parcours</span>';
-      return;
-    }
-
+    if (state.curriculumView === 'modules') { el.innerHTML = '<span>Parcours</span>'; return; }
     var m = window.APP.findModule(state.currentModuleId);
     if (!m) { el.innerHTML = '<span>Parcours</span>'; return; }
 
     if (state.curriculumView === 'lessons') {
-      el.innerHTML =
-        '<a data-nav="modules">Parcours</a>' +
-        '<span class="sep">›</span>' +
-        '<span>' + m.id + ' — ' + m.title + '</span>';
+      el.innerHTML = '<a data-nav="modules">Parcours</a>' +
+        '<span class="sep">›</span><span>' + m.id + ' — ' + m.title + '</span>';
     } else {
       var l = window.APP.findLesson(state.currentModuleId, state.currentLessonId);
-      el.innerHTML =
-        '<a data-nav="modules">Parcours</a>' +
-        '<span class="sep">›</span>' +
-        '<a data-nav="lessons">' + m.id + '</a>' +
-        '<span class="sep">›</span>' +
-        '<span>' + l.title + '</span>';
+      el.innerHTML = '<a data-nav="modules">Parcours</a>' +
+        '<span class="sep">›</span><a data-nav="lessons">' + m.id + '</a>' +
+        '<span class="sep">›</span><span>' + l.title + '</span>';
     }
   }
 
   function renderModules() {
     var arr = window.APP.CURRICULUM || [];
     var html = '<h2>Modules du parcours</h2>';
-
     for (var i = 0; i < arr.length; i++) {
       var m = arr[i];
       var unlocked = window.APP.isModuleUnlocked(m);
       var lock = unlocked ? '' : '<span class="module-lock">🔒</span>';
-
-      html +=
-        '<div class="module-card' + (unlocked ? '' : ' locked') + '" ' +
-             'data-action="open-module" data-module="' + m.id + '">' +
-          lock +
-          '<div class="module-head">' +
-            '<span class="module-id">' + m.id + '</span>' +
-            '<span class="module-count">' + m.lessons.length + ' leçons</span>' +
-          '</div>' +
-          '<div class="module-title">' + m.title + '</div>' +
-          '<div class="module-sub">' + m.subtitle + '</div>' +
-        '</div>';
+      html += '<div class="module-card' + (unlocked ? '' : ' locked') + '" ' +
+                'data-action="open-module" data-module="' + m.id + '">' +
+                lock +
+                '<div class="module-head">' +
+                  '<span class="module-id">' + m.id + '</span>' +
+                  '<span class="module-count">' + m.lessons.length + ' leçons</span>' +
+                '</div>' +
+                '<div class="module-title">' + m.title + '</div>' +
+                '<div class="module-sub">' + m.subtitle + '</div>' +
+              '</div>';
     }
     contentEl().innerHTML = html;
   }
@@ -139,29 +125,22 @@ window.APP = window.APP || {};
   function renderLessons() {
     var m = window.APP.findModule(state.currentModuleId);
     if (!m) return;
-
-    var html =
-      '<button class="back-btn" data-nav="modules">‹ Modules</button>' +
-      '<h2>' + m.id + ' — ' + m.title + '</h2>';
-
+    var html = '<button class="back-btn" data-nav="modules">‹ Modules</button>' +
+               '<h2>' + m.id + ' — ' + m.title + '</h2>';
     for (var i = 0; i < m.lessons.length; i++) {
       var l = m.lessons[i];
       var lt = lessonDisplayType(l);
-
-      html +=
-        '<div class="lesson-row" ' +
-             'data-action="open-lesson" ' +
-             'data-module="' + m.id + '" ' +
-             'data-lesson="' + l.id + '">' +
-          '<span class="lesson-num">' + (i + 1) + '</span>' +
-          '<div class="lesson-info">' +
-            '<div class="lesson-title">' + l.title + '</div>' +
-            '<div class="lesson-meta">' +
-              '<span class="lesson-type ' + lt + '">' + typeLabel(lt) + '</span>' +
-              diffBars(l.difficulty) +
-            '</div>' +
-          '</div>' +
-        '</div>';
+      html += '<div class="lesson-row" data-action="open-lesson" ' +
+                'data-module="' + m.id + '" data-lesson="' + l.id + '">' +
+                '<span class="lesson-num">' + (i + 1) + '</span>' +
+                '<div class="lesson-info">' +
+                  '<div class="lesson-title">' + l.title + '</div>' +
+                  '<div class="lesson-meta">' +
+                    '<span class="lesson-type ' + lt + '">' + typeLabel(lt) + '</span>' +
+                    diffBars(l.difficulty) +
+                  '</div>' +
+                '</div>' +
+              '</div>';
     }
     contentEl().innerHTML = html;
   }
@@ -172,28 +151,19 @@ window.APP = window.APP || {};
     if (!m || !l) return;
 
     var lt = lessonDisplayType(l);
-
-    var html =
-      '<button class="back-btn" data-nav="lessons">‹ ' + m.id + '</button>' +
+    var html = '<button class="back-btn" data-nav="lessons">‹ ' + m.id + '</button>' +
       '<div class="lesson-detail">' +
         '<h3>' + l.title + '</h3>' +
         '<div class="objective"><strong>Objectif :</strong> ' + l.objective + '</div>';
 
     if (lt === 'interactive' || lt === 'puzzle-live') {
-      html +=
-        '<button data-action="start-lesson" type="button" ' +
-                'class="back-btn" ' +
-                'style="background:var(--accent);color:#fff;border-color:var(--accent);' +
-                       'min-width:100%;justify-content:center;padding:12px;">' +
-          '▶ Démarrer la leçon' +
-        '</button>';
+      html += '<button data-action="start-lesson" type="button" class="back-btn" ' +
+              'style="background:var(--accent);color:#fff;border-color:var(--accent);' +
+              'min-width:100%;justify-content:center;padding:12px;">' +
+              '▶ Démarrer la leçon</button>';
     } else {
-      html +=
-        '<div class="placeholder">' +
-          'Le contenu de cette leçon sera ajouté dans une étape ultérieure.' +
-        '</div>';
+      html += '<div class="placeholder">Le contenu de cette leçon sera ajouté dans une étape ultérieure.</div>';
     }
-
     html += '</div>';
     contentEl().innerHTML = html;
   }
@@ -228,7 +198,6 @@ window.APP = window.APP || {};
       if (target === 'modules') { goToModules(); return; }
       if (target === 'lessons') { goToLessons(); return; }
     }
-
     var actionEl = e.target.closest('[data-action]');
     if (!actionEl) return;
     var action = actionEl.getAttribute('data-action');
@@ -249,8 +218,6 @@ window.APP = window.APP || {};
       if (window.APP.LessonEngine) window.APP.LessonEngine.startCurrent();
     }
   }
-
-  /* ================= API PUBLIQUE ================= */
 
   function init() {
     var el = contentEl();
