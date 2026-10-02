@@ -1,5 +1,5 @@
 /* =========================================================
-   layout.css — Structure générale (v1.0.13)
+   layout.css — Structure générale (v1.1.0)
    ========================================================= */
 
 header {
@@ -9,11 +9,13 @@ header {
   border-bottom: 1px solid var(--border);
   display: flex; align-items: center; justify-content: space-between;
   gap: 10px; position: sticky; top: 0; z-index: 10;
+  box-shadow: var(--shadow-sm);
 }
 
 header .brand { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; }
 header h1 { font-size: 1.05rem; font-weight: 600; letter-spacing: 0.3px;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 header .badge {
   font-size: 0.65rem; background: var(--accent); color: #fff;
   padding: 3px 8px; border-radius: 20px; font-weight: 600;
@@ -32,7 +34,7 @@ header .badge {
   white-space: nowrap;
 }
 .tab.active { background: var(--accent); color: #fff; }
-.tab:hover:not(.active) { color: var(--text); }
+.tab:hover:not(.active) { color: var(--text); background: var(--surface-3); }
 
 main {
   display: grid; grid-template-columns: 1fr; gap: 14px;
@@ -46,16 +48,20 @@ main {
   }
 }
 
-/* Zone échiquier + barre (gérée dans board.css pour le flex) */
-.board-area {
+.board-wrap {
   width: 100%;
   max-width: min(94vw, 620px);
   margin: 0 auto;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  position: relative;
 }
 
 .panel {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: var(--radius-lg); padding: 18px; min-height: 300px;
+  box-shadow: var(--shadow-md);
 }
 
 @media (min-width: 900px) { .panel { position: sticky; top: 90px; } }
@@ -79,5 +85,5 @@ main {
 @media print {
   header, .tabs { display: none; }
   main { display: block; padding: 0; }
-  .panel { position: static; }
+  .panel { position: static; box-shadow: none; }
 }
