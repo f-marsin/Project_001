@@ -1,8 +1,8 @@
 /* =========================================================
    lesson-engine.js — Moteur de leçons (puzzles Lichess)
    =========================================================
-   v1.0.5 — Affichage debug complet (SAN + UCI) pour faciliter
-   le diagnostic en cas de mismatch.
+   v1.0.6 — Gère le fallback UCI : si la conversion SAN a échoué,
+   on compare le coup joué en UCI (from/to).
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -45,23 +45,20 @@ window.APP = window.APP || {};
     B.clearHighlights();
   }
 
-  /* ---------- Debug : afficher la solution ---------- */
-
   function debugSolution() {
     if (!state.puzzle) {
       console.log('[DEBUG] Pas de puzzle chargé.');
       return;
     }
     console.log('%c[DEBUG] 🧩 Solution du puzzle', 'color:#4ade80;font-weight:bold;font-size:14px;');
-    console.log('  FEN         :', state.puzzle.fen);
-    console.log('  Trait       :', state.puzzle.fen.indexOf(' w ') !== -1 ? 'Blancs' : 'Noirs');
-    console.log('  SAN attendu :', state.puzzle.playerMove);
-    console.log('  UCI attendu :', state.puzzle.playerMoveUci);
-    console.log('  Réponse     :', state.puzzle.opponentReply || '—');
-    console.log('  Rating      :', state.puzzle.rating);
-    console.log('  Thèmes      :', state.puzzle.themes.join(', '));
-    console.log('  Séquence SAN complète :', state.puzzle.fullSequence);
-    console.log('  Solution UCI brute    :', state.puzzle.rawSolution);
+    console.log('  FEN            :', state.puzzle.fen);
+    console.log('  Trait          :', state.puzzle.fen.indexOf(' w ') !== -1 ? 'Blancs' : 'Noirs');
+    console.log('  SAN attendu    :', state.puzzle.playerMove || '(fallback UCI)');
+    console.log('  UCI attendu    :', state.puzzle.playerMoveUci);
+    console.log('  Réponse        :', state.puzzle.opponentReply || '—');
+    console.log('  Rating         :', state.puzzle.rating);
+    console.log('  Thèmes         :', state.puzzle.themes.join(', '));
+    console.log('  Fallback UCI   :', state.puzzle.fallbackUci ? 'OUI' : 'non');
   }
 
   function getLessonFromState() {
@@ -101,7 +98,6 @@ window.APP = window.APP || {};
 
     window.APP.Board.setLessonMode(true);
     window.APP.Board.clearHighlights();
-
     renderLoading();
 
     console.log('[DEBUG] Chargement puzzle thème :', theme);
@@ -202,14 +198,27 @@ window.APP = window.APP || {};
       return 'snapback';
     }
     var playedSan = played.san;
+    var playedUci = source + target;
 
-    var expected = state.puzzle.playerMove;
-    var match = normSan(playedSan) === normSan(expected);
+    var match = false;
+    var expectedLabel = '';
+
+    /* --- Comparaison : SAN si dispo, sinon UCI --- */
+    if (state.puzzle.playerMove) {
+      /* Comparaison SAN */
+      match = normSan(playedSan) === normSan(state.puzzle.playerMove);
+      expectedLabel = state.puzzle.playerMove;
+    } else if (state.puzzle.playerMoveUci) {
+      /* Fallback : comparaison UCI */
+      match = (playedUci === state.puzzle.playerMoveUci.substring(0, 4));
+      expectedLabel = state.puzzle.playerMoveUci + ' (UCI)';
+    }
 
     console.log('%c[DEBUG] 🎯 Tentative', 'color:#fbbf24;font-weight:bold;');
-    console.log('  Joué (SAN)    :', playedSan);
-    console.log('  Attendu (SAN) :', expected);
-    console.log('  Match         :', match ? '✅ OUI' : '❌ NON');
+    console.log('  Joué (SAN)   :', playedSan);
+    console.log('  Joué (UCI)   :', playedUci);
+    console.log('  Attendu      :', expectedLabel);
+    console.log('  Match        :', match ? '✅ OUI' : '❌ NON');
 
     if (match) {
       state.solved = true;
