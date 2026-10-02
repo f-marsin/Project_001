@@ -1,8 +1,11 @@
 /* =========================================================
    lesson-engine.js — Moteur de leçons (puzzles Lichess)
    =========================================================
-   v1.0.6 — Gère le fallback UCI : si la conversion SAN a échoué,
-   on compare le coup joué en UCI (from/to).
+   v1.0.8 — Nettoyage + UX :
+     - Suppression des logs de debug et de debugSolution
+     - Ajout bouton « Voir la solution » (avec confirmation)
+     - Ajout bouton « Puzzle suivant » après réussite
+     - Message de réussite amélioré
    ========================================================= */
 
 window.APP = window.APP || {};
@@ -16,8 +19,13 @@ window.APP = window.APP || {};
     theme: null,
     puzzle: null,
     awaiting: false,
-    solved: false
+    solved: false,
+    solvedOnce: false
   };
+
+  /* =========================================================
+     HELPERS
+     ========================================================= */
 
   function showFeedback(msg, kind) {
     var el = document.getElementById('lesson-feedback');
@@ -45,22 +53,6 @@ window.APP = window.APP || {};
     B.clearHighlights();
   }
 
-  function debugSolution() {
-    if (!state.puzzle) {
-      console.log('[DEBUG] Pas de puzzle chargé.');
-      return;
-    }
-    console.log('%c[DEBUG] 🧩 Solution du puzzle', 'color:#4ade80;font-weight:bold;font-size:14px;');
-    console.log('  FEN            :', state.puzzle.fen);
-    console.log('  Trait          :', state.puzzle.fen.indexOf(' w ') !== -1 ? 'Blancs' : 'Noirs');
-    console.log('  SAN attendu    :', state.puzzle.playerMove || '(fallback UCI)');
-    console.log('  UCI attendu    :', state.puzzle.playerMoveUci);
-    console.log('  Réponse        :', state.puzzle.opponentReply || '—');
-    console.log('  Rating         :', state.puzzle.rating);
-    console.log('  Thèmes         :', state.puzzle.themes.join(', '));
-    console.log('  Fallback UCI   :', state.puzzle.fallbackUci ? 'OUI' : 'non');
-  }
-
   function getLessonFromState() {
     var navState = window.APP.UINav.getState();
     if (!navState || !navState.currentModuleId || !navState.currentLessonId) return null;
@@ -78,6 +70,19 @@ window.APP = window.APP || {};
     }
     return false;
   }
+
+  /* Vérifie que le thème demandé est bien dans les 2 premiers
+     thèmes du puzzle (Lichess les trie par importance). */
+  function isThemeMatch(themes, requestedTheme) {
+    if (!themes || themes.length === 0) return false;
+    if (!requestedTheme) return true;
+    var top = themes.slice(0, 2);
+    return top.indexOf(requestedTheme) !== -1;
+  }
+
+  /* =========================================================
+     DÉMARRAGE D'UNE LEÇON
+     ========================================================= */
 
   function startCurrent() {
     var lesson = getLessonFromState();
@@ -99,18 +104,27 @@ window.APP = window.APP || {};
     window.APP.Board.setLessonMode(true);
     window.APP.Board.clearHighlights();
     renderLoading();
+    fetchAndValidate(theme, 0);
+  }
 
-    console.log('[DEBUG] Chargement puzzle thème :', theme);
+  function fetchAndValidate(theme, attempt) {
+    var MAX_ATTEMPTS = 3;
 
     window.APP.LichessClient.fetchPuzzle(theme)
       .then(function (result) {
         var adapted = window.APP.LichessAdapter.adapt(result.data);
         if (adapted.error) throw new Error(adapted.error);
+
+        /* Vérification thème */
+        if (!isThemeMatch(adapted.themes, theme) && attempt < MAX_ATTEMPTS) {
+          setTimeout(function () { fetchAndValidate(theme, attempt + 1); }, 300);
+          return;
+        }
+
         state.puzzle = adapted;
         state.awaiting = false;
         renderPuzzle();
         reloadPuzzlePosition();
-        debugSolution();
       })
       .catch(function (err) {
         state.awaiting = false;
@@ -119,6 +133,10 @@ window.APP = window.APP || {};
         renderError('Impossible de charger le puzzle : ' + err.message);
       });
   }
+
+  /* =========================================================
+     RENDUS
+     ========================================================= */
 
   function renderLoading() {
     var content = document.getElementById('curriculum-content');
@@ -148,7 +166,7 @@ window.APP = window.APP || {};
     if (!content || !p) return;
 
     var isWhiteToMove = p.fen.indexOf(' w ') !== -1;
-    var rating = p.rating ? ' (rating ' + p.rating + ')' : '';
+    var rating = p.rating ? ' — Rating ' + p.rating : '';
 
     content.innerHTML =
       '<button class="back-btn" data-nav="lessons">‹ Retour</button>' +
@@ -162,11 +180,73 @@ window.APP = window.APP || {};
           'Trouve la solution. Joue le coup gagnant sur l\'échiquier.' +
         '</div>' +
         '<div class="feedback" id="lesson-feedback"></div>' +
-        '<p class="text-dim" style="font-size:0.75rem;margin-top:12px;">' +
-          '💡 <em>Solution dans la console (F12 → onglet Console).</em>' +
-        '</p>' +
+        '<div class="btn-row">' +
+          '<button id="btn-see-solution" type="button">💡 Voir la solution</button>' +
+        '</div>' +
       '</div>';
+
+    /* Bind bouton solution */
+    var bSol = document.getElementById('btn-see-solution');
+    if (bSol) bSol.addEventListener('click', onSeeSolution);
   }
+
+  function renderSuccess() {
+    var p = state.puzzle;
+    var content = document.getElementById('curriculum-content');
+    if (!content || !p) return;
+
+    var seq = p.playerMove;
+    if (p.opponentReply) seq += ' ' + p.opponentReply;
+
+    content.innerHTML =
+      '<button class="back-btn" data-nav="lessons">‹ Retour</button>' +
+      '<div class="lesson-play">' +
+        '<h3>✅ Résolu !</h3>' +
+        '<div class="lesson-complete">' +
+          '<div class="icon">🏆</div>' +
+          '<h4>Bravo !</h4>' +
+          '<p>Solution : <strong>' + seq + '</strong></p>' +
+          '<div class="btn-row" style="flex-direction:column;">' +
+            '<button id="btn-next-puzzle" type="button">▶ Puzzle suivant</button>' +
+            '<button class="back-btn" data-nav="lessons" ' +
+                    'style="min-width:100%;justify-content:center;">‹ Retour aux leçons</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    var bNext = document.getElementById('btn-next-puzzle');
+    if (bNext) bNext.addEventListener('click', onNextPuzzle);
+  }
+
+  /* =========================================================
+     ACTIONS
+     ========================================================= */
+
+  function onSeeSolution() {
+    var p = state.puzzle;
+    if (!p) return;
+
+    var seq = p.playerMove;
+    if (p.opponentReply) seq += ' puis ' + p.opponentReply;
+
+    showFeedback('💡 Solution : ' + seq + '. Observe bien pourquoi ce coup gagne.', 'hint');
+  }
+
+  function onNextPuzzle() {
+    if (!state.theme) return;
+    /* Reset l'état du puzzle en gardant la leçon */
+    state.solved = false;
+    state.solvedOnce = true;
+    state.puzzle = null;
+    state.awaiting = true;
+
+    renderLoading();
+    fetchAndValidate(state.theme, 0);
+  }
+
+  /* =========================================================
+     VALIDATION DU COUP
+     ========================================================= */
 
   function onDrop(source, target) {
     if (!state.active || state.awaiting || state.solved || !state.puzzle) {
@@ -185,7 +265,6 @@ window.APP = window.APP || {};
       }
     }
     if (!found) {
-      console.log('[DEBUG] Coup illégal :', source, '→', target);
       B.flashIllegal(target);
       reloadPuzzlePosition();
       return 'snapback';
@@ -201,47 +280,46 @@ window.APP = window.APP || {};
     var playedUci = source + target;
 
     var match = false;
-    var expectedLabel = '';
-
-    /* --- Comparaison : SAN si dispo, sinon UCI --- */
     if (state.puzzle.playerMove) {
-      /* Comparaison SAN */
       match = normSan(playedSan) === normSan(state.puzzle.playerMove);
-      expectedLabel = state.puzzle.playerMove;
     } else if (state.puzzle.playerMoveUci) {
-      /* Fallback : comparaison UCI */
       match = (playedUci === state.puzzle.playerMoveUci.substring(0, 4));
-      expectedLabel = state.puzzle.playerMoveUci + ' (UCI)';
     }
 
-    console.log('%c[DEBUG] 🎯 Tentative', 'color:#fbbf24;font-weight:bold;');
-    console.log('  Joué (SAN)   :', playedSan);
-    console.log('  Joué (UCI)   :', playedUci);
-    console.log('  Attendu      :', expectedLabel);
-    console.log('  Match        :', match ? '✅ OUI' : '❌ NON');
-
     if (match) {
+      /* Bonne réponse */
       state.solved = true;
       B.position(game.fen(), false);
-      showFeedback('✅ Bravo ! ' + playedSan + ' est le coup gagnant.', 'ok');
 
+      /* Jouer la réponse adverse auto si présente */
       if (state.puzzle.opponentReply) {
         setTimeout(function () {
           var reply = game.move(state.puzzle.opponentReply);
           if (reply) {
             B.position(game.fen(), false);
-            showFeedback('✅ Bravo ! Solution : ' + playedSan + ' puis ' + reply.san, 'ok');
           }
+          setTimeout(function () {
+            renderSuccess();
+          }, 500);
         }, 700);
+      } else {
+        setTimeout(function () {
+          renderSuccess();
+        }, 500);
       }
       return;
     }
 
+    /* Mauvais coup */
     showFeedback('❌ Ce n\'est pas le coup gagnant. Réessaie.', 'ko');
     B.flashIllegal(target);
     reloadPuzzlePosition();
     return 'snapback';
   }
+
+  /* =========================================================
+     RESET + INIT
+     ========================================================= */
 
   function reset() {
     state.active = false;
@@ -250,6 +328,7 @@ window.APP = window.APP || {};
     state.puzzle = null;
     state.awaiting = false;
     state.solved = false;
+    state.solvedOnce = false;
     if (window.APP.Board) {
       window.APP.Board.setLessonMode(false);
       window.APP.Board.setOnDropHandler(null);
@@ -268,7 +347,6 @@ window.APP = window.APP || {};
     start: start,
     reset: reset,
     hasContent: hasContent,
-    getState: function () { return state; },
-    debugSolution: debugSolution
+    getState: function () { return state; }
   };
 })();
